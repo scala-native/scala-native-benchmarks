@@ -85,6 +85,12 @@ benchmarks = [
         'permute',
         'richards',
         'sudoku',
+        'gcbench',
+        'havlak',
+        'mandelbrot',
+        'nbody',
+        'queens',
+        'tracer',
 ]
 
 runs = 10
