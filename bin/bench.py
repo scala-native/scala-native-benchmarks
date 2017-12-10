@@ -4,15 +4,27 @@ import os
 import errno
 import subprocess as subp
 
+def where(cmd):
+    if os.path.isfile(cmd):
+        return cmd
+    else:
+        paths = os.environ['PATH'].split(os.pathsep)
+        for p in paths:
+            f = os.path.join(p, cmd)
+            if os.path.isfile(f):
+                return f
+        else:
+            return None
+
 def run(cmd):
     print(">>> " + str(cmd))
-    process = subp.Popen(cmd)#, stdout=subp.PIPE, stderr=subp.PIPE)
+    process = subp.Popen(cmd)
     result = process.communicate()
     if process.returncode != 0:
         print '>>> non-zero return code ' + str(process.returncode)
     return process.returncode == 0
 
-def mkdir_p(path):
+def mkdir(path):
     try:
         os.makedirs(path)
     except OSError as exc: # Python >2.5
@@ -22,32 +34,44 @@ def mkdir_p(path):
             raise
 
 def link(bench, conf):
-    with open('project/plugins.sbt', 'w') as f:
-        version = conf[0].split('-')[0]
-        f.write('addSbtPlugin("org.scala-native" % "sbt-scala-native" % "{}")'.format(version))
-    command = [sbt, 'clean']
+    sbt = where('sbt')
+    command = ['sbt', 'clean']
     command.append('set nativeBenchmark := "{}"'.format(bench))
-    command.extend(conf[1:])
+    command.extend(settings(conf))
     command.append('nativeLink')
     return run(command)
 
-def compile(bench):
-    command = [sbt, 'clean']
-    command.append('set nativeBenchmark := "{}"'.format(bench))
-    command.append('compile')
-    return run(command)
+def settings(conf):
+    out = []
+    for key, value in conf.iteritems():
+        if key == 'name':
+            pass
+        elif key == 'native':
+            with open('project/plugins.sbt', 'w') as f:
+                f.write('addSbtPlugin("org.scala-native" % "sbt-scala-native" % "{}")'.format(value))
+        elif key == 'clang':
+            clang = where('clang-{}'.format(value))
+            clangpp = where('clang++-{}'.format(value))
+            out.append('set nativeClang := file("{}")'.format(clang))
+            out.append('set nativeClangPP := file("{}")'.format(clangpp))
+        elif key == 'scala':
+            out.append('set scalaVersion := "{}"'.format(value))
+        elif key == 'mode':
+            out.append('set nativeMode := "{}"'.format(value))
+        elif key == 'gc':
+            out.append('set nativeGC := "{}"'.format(value))
+        else:
+            raise Exception('Unkown configuration key: ' + key)
+    return out
 
-def mode(n):
-    return 'set nativeMode := "{}"'.format(n)
-
-def gc(n):
-    return 'set nativeGC := "{}"'.format(n)
+def conf(**kwargs):
+    return kwargs
 
 configurations = [
-        # ['version-label', setting1, setting2, ...]
-        ['0.3.3-release-none', mode('release'), gc('none')],
-        ['0.3.3-release-boehm', mode('release'), gc('boehm')],
-        ['0.3.3-release-immix', mode('release'), gc('immix')],
+        conf(name='0.3.3-none', native='0.3.3', clang='5.0', scala='2.11.11', mode='release', gc='none'),
+        conf(name='0.3.3-immix', native='0.3.3', clang='5.0', scala='2.11.11', mode='release', gc='immix'),
+        conf(name='0.3.4-none', native='0.3.4', clang='5.0', scala='2.11.11', mode='release', gc='none'),
+        conf(name='0.3.4-immix', native='0.3.4', clang='5.0', scala='2.11.11', mode='release', gc='immix'),
 ]
 
 benchmarks = [
@@ -63,17 +87,15 @@ benchmarks = [
         'sudoku',
 ]
 
-runs = int(os.environ['BENCH_RUNS'])
+runs = 10
 
-iterations = int(os.environ['BENCH_ITER'])
-
-sbt = os.environ['BENCH_SBT']
+iterations = 500
 
 if __name__ == "__main__":
     for bench in benchmarks:
         for conf in configurations:
-            mkdir_p('results/{}/{}/'.format(bench, conf[0]))
+            mkdir('results/{}/{}/'.format(bench, conf['name']))
             link(bench, conf)
             for runid in xrange(runs):
-                outfile = 'results/{}/{}/{}.data'.format(bench, conf[0], runid)
+                outfile = 'results/{}/{}/{}.data'.format(bench, conf['name'], runid)
                 run(['target/scala-2.11/benchmarks-out', str(iterations), outfile])
