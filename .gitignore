@@ -1,0 +1,3 @@
+bin/.coursier
+bin/.scalafmt*
+results/
