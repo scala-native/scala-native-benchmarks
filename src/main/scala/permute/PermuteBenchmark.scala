@@ -24,7 +24,7 @@ class PermuteBenchmark extends benchmarks.Benchmark[Int] {
   }
 
   private def factorial(i: Int): Int = {
-    var n = i
+    var n    = i
     var fact = 1
     while (n > 0) {
       fact *= n

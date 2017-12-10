@@ -31,19 +31,19 @@
 package deltablue
 
 /**
-  * A Scala implementation of the DeltaBlue constraint-solving
-  * algorithm, as described in:
-  *
-  * "The DeltaBlue Algorithm: An Incremental Constraint Hierarchy Solver"
-  *   Bjorn N. Freeman-Benson and John Maloney
-  *   January 1990 Communications of the ACM,
-  *   also available as University of Washington TR 89-08-06.
-  *
-  * Beware: this benchmark is written in a grotesque style where
-  * the constraint model is built by side-effects from constructors.
-  * I've kept it this way to avoid deviating too much from the original
-  * implementation.
-  */
+ * A Scala implementation of the DeltaBlue constraint-solving
+ * algorithm, as described in:
+ *
+ * "The DeltaBlue Algorithm: An Incremental Constraint Hierarchy Solver"
+ *   Bjorn N. Freeman-Benson and John Maloney
+ *   January 1990 Communications of the ACM,
+ *   also available as University of Washington TR 89-08-06.
+ *
+ * Beware: this benchmark is written in a grotesque style where
+ * the constraint model is built by side-effects from constructors.
+ * I've kept it this way to avoid deviating too much from the original
+ * implementation.
+ */
 import benchmarks.{BenchmarkRunningTime, MediumRunningTime}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, Stack}
@@ -61,23 +61,23 @@ class DeltaBlueBenchmark extends benchmarks.Benchmark[Unit] {
     true
 
   /**
-    * This is the standard DeltaBlue benchmark. A long chain of equality
-    * constraints is constructed with a stay constraint on one end. An
-    * edit constraint is then added to the opposite end and the time is
-    * measured for adding and removing this constraint, and extracting
-    * and executing a constraint satisfaction plan. There are two cases.
-    * In case 1, the added constraint is stronger than the stay
-    * constraint and values must propagate down the entire length of the
-    * chain. In case 2, the added constraint is weaker than the stay
-    * constraint so it cannot be accomodated. The cost in this case is,
-    * of course, very low. Typical situations lie somewhere between these
-    * two extremes.
-    */
+   * This is the standard DeltaBlue benchmark. A long chain of equality
+   * constraints is constructed with a stay constraint on one end. An
+   * edit constraint is then added to the opposite end and the time is
+   * measured for adding and removing this constraint, and extracting
+   * and executing a constraint satisfaction plan. There are two cases.
+   * In case 1, the added constraint is stronger than the stay
+   * constraint and values must propagate down the entire length of the
+   * chain. In case 2, the added constraint is weaker than the stay
+   * constraint so it cannot be accomodated. The cost in this case is,
+   * of course, very low. Typical situations lie somewhere between these
+   * two extremes.
+   */
   def chainTest(n: Int) {
     implicit val planner = new Planner()
-    var prev: Variable = null
-    var first: Variable = null
-    var last: Variable = null
+    var prev: Variable   = null
+    var first: Variable  = null
+    var last: Variable   = null
 
     // Build chain of n equality constraints.
     for (i <- 0 to n) {
@@ -100,17 +100,17 @@ class DeltaBlueBenchmark extends benchmarks.Benchmark[Unit] {
   }
 
   /**
-    * This test constructs a two sets of variables related to each
-    * other by a simple linear transformation (scale and offset). The
-    * time is measured to change a variable on either side of the
-    * mapping and to change the scale and offset factors.
-    */
+   * This test constructs a two sets of variables related to each
+   * other by a simple linear transformation (scale and offset). The
+   * time is measured to change a variable on either side of the
+   * mapping and to change the scale and offset factors.
+   */
   def projectionTest(n: Int) {
     implicit val planner = new Planner()
-    val scale = new Variable("scale", 10)
-    val offset = new Variable("offset", 1000)
-    var src: Variable = null
-    var dst: Variable = null
+    val scale            = new Variable("scale", 10)
+    val offset           = new Variable("offset", 1000)
+    var src: Variable    = null
+    var dst: Variable    = null
 
     val dests = new ArrayBuffer[Variable](n)
     for (i <- 0 until n) {
@@ -146,11 +146,11 @@ class DeltaBlueBenchmark extends benchmarks.Benchmark[Unit] {
 }
 
 /**
-  * Strengths are used to measure the relative importance of constraints.
-  * New strengths may be inserted in the strength hierarchy without
-  * disrupting current constraints.  Strengths cannot be created outside
-  * this class, so == can be used for value comparison.
-  */
+ * Strengths are used to measure the relative importance of constraints.
+ * New strengths may be inserted in the strength hierarchy without
+ * disrupting current constraints.  Strengths cannot be created outside
+ * this class, so == can be used for value comparison.
+ */
 sealed class Strength(val value: Int, val name: String) {
   def nextWeaker = value match {
     case 0 => STRONG_PREFERRED
@@ -162,13 +162,13 @@ sealed class Strength(val value: Int, val name: String) {
   }
 }
 
-case object REQUIRED extends Strength(0, "required")
+case object REQUIRED         extends Strength(0, "required")
 case object STRONG_PREFERRED extends Strength(1, "strongPreferred")
-case object PREFERRED extends Strength(2, "preferred")
-case object STRONG_DEFAULT extends Strength(3, "strongDefault")
-case object NORMAL extends Strength(4, "normal")
-case object WEAK_DEFAULT extends Strength(5, "weakDefault")
-case object WEAKEST extends Strength(6, "weakest")
+case object PREFERRED        extends Strength(2, "preferred")
+case object STRONG_DEFAULT   extends Strength(3, "strongDefault")
+case object NORMAL           extends Strength(4, "normal")
+case object WEAK_DEFAULT     extends Strength(5, "weakDefault")
+case object WEAKEST          extends Strength(6, "weakest")
 
 // Compile time computed constants.
 object Strength {
@@ -206,12 +206,12 @@ abstract class Constraint(val strength: Strength)(implicit planner: Planner) {
   }
 
   /**
-    * Attempt to find a way to enforce this constraint. If successful,
-    * record the solution, perhaps modifying the current dataflow
-    * graph. Answer the constraint that this constraint overrides, if
-    * there is one, or nil, if there isn't.
-    * Assume: I am not already satisfied.
-    */
+   * Attempt to find a way to enforce this constraint. If successful,
+   * record the solution, perhaps modifying the current dataflow
+   * graph. Answer the constraint that this constraint overrides, if
+   * there is one, or nil, if there isn't.
+   * Assume: I am not already satisfied.
+   */
   def satisfy(mark: Int): Constraint = {
     chooseMethod(mark)
     if (!isSatisfied()) {
@@ -221,7 +221,7 @@ abstract class Constraint(val strength: Strength)(implicit planner: Planner) {
       null
     } else {
       markInputs(mark)
-      val out = output()
+      val out        = output()
       val overridden = out.determinedBy
       if (overridden != null)
         overridden.markUnsatisfied()
@@ -240,16 +240,16 @@ abstract class Constraint(val strength: Strength)(implicit planner: Planner) {
   }
 
   /**
-    * Normal constraints are not input constraints.  An input constraint
-    * is one that depends on external state, such as the mouse, the
-    * keybord, a clock, or some arbitraty piece of imperative code.
-    */
+   * Normal constraints are not input constraints.  An input constraint
+   * is one that depends on external state, such as the mouse, the
+   * keybord, a clock, or some arbitraty piece of imperative code.
+   */
   def isInput = false
 }
 
 /**
-  * Abstract superclass for constraints having a single possible output variable.
-  */
+ * Abstract superclass for constraints having a single possible output variable.
+ */
 abstract class UnaryConstraint(myOutput: Variable, strength: Strength)(
     implicit planner: Planner)
     extends Constraint(strength) {
@@ -281,10 +281,10 @@ abstract class UnaryConstraint(myOutput: Variable, strength: Strength)(
   def output() = myOutput
 
   /**
-    * Calculate the walkabout strength, the stay flag, and, if it is
-    * 'stay', the value for the current output of this constraint. Assume
-    * this constraint is satisfied.
-    */
+   * Calculate the walkabout strength, the stay flag, and, if it is
+   * 'stay', the value for the current output of this constraint. Assume
+   * this constraint is satisfied.
+   */
   def recalculate() {
     myOutput.walkStrength = strength
     myOutput.stay = !isInput
@@ -305,11 +305,11 @@ abstract class UnaryConstraint(myOutput: Variable, strength: Strength)(
 }
 
 /**
-  * Variables that should, with some level of preference, stay the same.
-  * Planners may exploit the fact that instances, if satisfied, will not
-  * change their output during plan execution.  This is called "stay
-  * optimization".
-  */
+ * Variables that should, with some level of preference, stay the same.
+ * Planners may exploit the fact that instances, if satisfied, will not
+ * change their output during plan execution.  This is called "stay
+ * optimization".
+ */
 class StayConstraint(v: Variable, str: Strength)(implicit planner: Planner)
     extends UnaryConstraint(v, str) {
   def execute() {
@@ -318,9 +318,9 @@ class StayConstraint(v: Variable, str: Strength)(implicit planner: Planner)
 }
 
 /**
-  * A unary input constraint used to mark a variable that the client
-  * wishes to change.
-  */
+ * A unary input constraint used to mark a variable that the client
+ * wishes to change.
+ */
 class EditConstraint(v: Variable, str: Strength)(implicit planner: Planner)
     extends UnaryConstraint(v, str) {
 
@@ -333,15 +333,15 @@ class EditConstraint(v: Variable, str: Strength)(implicit planner: Planner)
 }
 
 object Direction {
-  final val NONE = 1
-  final val FORWARD = 2
+  final val NONE     = 1
+  final val FORWARD  = 2
   final val BACKWARD = 0
 }
 
 /**
-  * Abstract superclass for constraints having two possible output
-  * variables.
-  */
+ * Abstract superclass for constraints having two possible output
+ * variables.
+ */
 abstract class BinaryConstraint(v1: Variable, v2: Variable, strength: Strength)(
     implicit planner: Planner)
     extends Constraint(strength) {
@@ -351,10 +351,10 @@ abstract class BinaryConstraint(v1: Variable, v2: Variable, strength: Strength)(
   addConstraint()
 
   /**
-    * Decides if this constraint can be satisfied and which way it
-    * should flow based on the relative strength of the variables related,
-    * and record that decision.
-    */
+   * Decides if this constraint can be satisfied and which way it
+   * should flow based on the relative strength of the variables related,
+   * and record that decision.
+   */
   def chooseMethod(mark: Int) {
     if (v1.mark == mark) {
       direction =
@@ -407,10 +407,10 @@ abstract class BinaryConstraint(v1: Variable, v2: Variable, strength: Strength)(
   def output() = if (direction == Direction.FORWARD) v2 else v1
 
   /**
-    * Calculate the walkabout strength, the stay flag, and, if it is
-    * 'stay', the value for the current output of this
-    * constraint. Assume this constraint is satisfied.
-    */
+   * Calculate the walkabout strength, the stay flag, and, if it is
+   * 'stay', the value for the current output of this
+   * constraint. Assume this constraint is satisfied.
+   */
   def recalculate() {
     val ihn = input()
     val out = output()
@@ -437,11 +437,11 @@ abstract class BinaryConstraint(v1: Variable, v2: Variable, strength: Strength)(
 }
 
 /**
-  * Relates two variables by the linear scaling relationship: "v2 =
-  * (v1 * scale) + offset". Either v1 or v2 may be changed to maintain
-  * this relationship but the scale factor and offset are considered
-  * read-only.
-  */
+ * Relates two variables by the linear scaling relationship: "v2 =
+ * (v1 * scale) + offset". Either v1 or v2 may be changed to maintain
+ * this relationship but the scale factor and offset are considered
+ * read-only.
+ */
 class ScaleConstraint(v1: Variable,
                       scale: Variable,
                       offset: Variable,
@@ -479,10 +479,10 @@ class ScaleConstraint(v1: Variable,
   }
 
   /**
-    * Calculate the walkabout strength, the stay flag, and, if it is
-    * 'stay', the value for the current output of this constraint. Assume
-    * this constraint is satisfied.
-    */
+   * Calculate the walkabout strength, the stay flag, and, if it is
+   * 'stay', the value for the current output of this constraint. Assume
+   * this constraint is satisfied.
+   */
   override def recalculate() {
     val ihn = input()
     val out = output()
@@ -494,8 +494,8 @@ class ScaleConstraint(v1: Variable,
 }
 
 /**
-  * Constrains two variables to have the same value.
-  */
+ * Constrains two variables to have the same value.
+ */
 class EqualityConstraint(v1: Variable, v2: Variable, strength: Strength)(
     implicit planner: Planner)
     extends BinaryConstraint(v1, v2, strength) {
@@ -506,23 +506,23 @@ class EqualityConstraint(v1: Variable, v2: Variable, strength: Strength)(
 }
 
 /**
-  * A constrained variable. In addition to its value, it maintain the
-  * structure of the constraint graph, the current dataflow graph, and
-  * various parameters of interest to the DeltaBlue incremental
-  * constraint solver.
-  */
+ * A constrained variable. In addition to its value, it maintain the
+ * structure of the constraint graph, the current dataflow graph, and
+ * various parameters of interest to the DeltaBlue incremental
+ * constraint solver.
+ */
 class Variable(val name: String, var value: Int) {
 
-  val constraints = new ListBuffer[Constraint]()
+  val constraints              = new ListBuffer[Constraint]()
   var determinedBy: Constraint = null
-  var mark = 0
-  var walkStrength: Strength = WEAKEST
-  var stay = true
+  var mark                     = 0
+  var walkStrength: Strength   = WEAKEST
+  var stay                     = true
 
   /**
-    * Add the given constraint to the set of all constraints that refer
-    * this variable.
-    */
+   * Add the given constraint to the set of all constraints that refer
+   * this variable.
+   */
   def addConstraint(c: Constraint) {
     constraints += c
   }
@@ -539,41 +539,41 @@ class Planner {
   var currentMark = 0
 
   /**
-    * Attempt to satisfy the given constraint and, if successful,
-    * incrementally update the dataflow graph.  Details: If satifying
-    * the constraint is successful, it may override a weaker constraint
-    * on its output. The algorithm attempts to resatisfy that
-    * constraint using some other method. This process is repeated
-    * until either a) it reaches a variable that was not previously
-    * determined by any constraint or b) it reaches a constraint that
-    * is too weak to be satisfied using any of its methods. The
-    * variables of constraints that have been processed are marked with
-    * a unique mark value so that we know where we've been. This allows
-    * the algorithm to avoid getting into an infinite loop even if the
-    * constraint graph has an inadvertent cycle.
-    */
+   * Attempt to satisfy the given constraint and, if successful,
+   * incrementally update the dataflow graph.  Details: If satifying
+   * the constraint is successful, it may override a weaker constraint
+   * on its output. The algorithm attempts to resatisfy that
+   * constraint using some other method. This process is repeated
+   * until either a) it reaches a variable that was not previously
+   * determined by any constraint or b) it reaches a constraint that
+   * is too weak to be satisfied using any of its methods. The
+   * variables of constraints that have been processed are marked with
+   * a unique mark value so that we know where we've been. This allows
+   * the algorithm to avoid getting into an infinite loop even if the
+   * constraint graph has an inadvertent cycle.
+   */
   def incrementalAdd(c: Constraint) {
-    val mark = newMark()
+    val mark       = newMark()
     var overridden = c.satisfy(mark)
     while (overridden != null) overridden = overridden.satisfy(mark)
   }
 
   /**
-    * Entry point for retracting a constraint. Remove the given
-    * constraint and incrementally update the dataflow graph.
-    * Details: Retracting the given constraint may allow some currently
-    * unsatisfiable downstream constraint to be satisfied. We therefore collect
-    * a list of unsatisfied downstream constraints and attempt to
-    * satisfy each one in turn. This list is traversed by constraint
-    * strength, strongest first, as a heuristic for avoiding
-    * unnecessarily adding and then overriding weak constraints.
-    * Assume: [c] is satisfied.
-    */
+   * Entry point for retracting a constraint. Remove the given
+   * constraint and incrementally update the dataflow graph.
+   * Details: Retracting the given constraint may allow some currently
+   * unsatisfiable downstream constraint to be satisfied. We therefore collect
+   * a list of unsatisfied downstream constraints and attempt to
+   * satisfy each one in turn. This list is traversed by constraint
+   * strength, strongest first, as a heuristic for avoiding
+   * unnecessarily adding and then overriding weak constraints.
+   * Assume: [c] is satisfied.
+   */
   def incrementalRemove(c: Constraint) {
     val out = c.output()
     c.markUnsatisfied()
     c.removeFromGraph()
-    val unsatisfied = removePropagateFrom(out)
+    val unsatisfied        = removePropagateFrom(out)
     var strength: Strength = REQUIRED
     do {
       for (u <- unsatisfied) {
@@ -590,24 +590,24 @@ class Planner {
   }
 
   /**
-    * Extract a plan for resatisfaction starting from the given source
-    * constraints, usually a set of input constraints. This method
-    * assumes that stay optimization is desired; the plan will contain
-    * only constraints whose output variables are not stay. Constraints
-    * that do no computation, such as stay and edit constraints, are
-    * not included in the plan.
-    * Details: The outputs of a constraint are marked when it is added
-    * to the plan under construction. A constraint may be appended to
-    * the plan when all its input variables are known. A variable is
-    * known if either a) the variable is marked (indicating that has
-    * been computed by a constraint appearing earlier in the plan), b)
-    * the variable is 'stay' (i.e. it is a constant at plan execution
-    * time), or c) the variable is not determined by any
-    * constraint. The last provision is for past states of history
-    * variables, which are not stay but which are also not computed by
-    * any constraint.
-    * Assume: [sources] are all satisfied.
-    */
+   * Extract a plan for resatisfaction starting from the given source
+   * constraints, usually a set of input constraints. This method
+   * assumes that stay optimization is desired; the plan will contain
+   * only constraints whose output variables are not stay. Constraints
+   * that do no computation, such as stay and edit constraints, are
+   * not included in the plan.
+   * Details: The outputs of a constraint are marked when it is added
+   * to the plan under construction. A constraint may be appended to
+   * the plan when all its input variables are known. A variable is
+   * known if either a) the variable is marked (indicating that has
+   * been computed by a constraint appearing earlier in the plan), b)
+   * the variable is 'stay' (i.e. it is a constant at plan execution
+   * time), or c) the variable is not determined by any
+   * constraint. The last provision is for past states of history
+   * variables, which are not stay but which are also not computed by
+   * any constraint.
+   * Assume: [sources] are all satisfied.
+   */
   def makePlan(sources: Stack[Constraint]) = {
     val mark = newMark()
     val plan = new Plan()
@@ -624,9 +624,9 @@ class Planner {
   }
 
   /**
-    * Extract a plan for resatisfying starting from the output of the
-    * given [constraints], usually a set of input constraints.
-    */
+   * Extract a plan for resatisfying starting from the output of the
+   * given [constraints], usually a set of input constraints.
+   */
   def extractPlanFromConstraints(constraints: Seq[Constraint]) = {
     val sources = new Stack[Constraint]()
     for (c <- constraints) {
@@ -637,18 +637,18 @@ class Planner {
   }
 
   /**
-    * Recompute the walkabout strengths and stay flags of all variables
-    * downstream of the given constraint and recompute the actual
-    * values of all variables whose stay flag is true. If a cycle is
-    * detected, remove the given constraint and answer
-    * false. Otherwise, answer true.
-    * Details: Cycles are detected when a marked variable is
-    * encountered downstream of the given constraint. The sender is
-    * assumed to have marked the inputs of the given constraint with
-    * the given mark. Thus, encountering a marked node downstream of
-    * the output constraint means that there is a path from the
-    * constraint's output to one of its inputs.
-    */
+   * Recompute the walkabout strengths and stay flags of all variables
+   * downstream of the given constraint and recompute the actual
+   * values of all variables whose stay flag is true. If a cycle is
+   * detected, remove the given constraint and answer
+   * false. Otherwise, answer true.
+   * Details: Cycles are detected when a marked variable is
+   * encountered downstream of the given constraint. The sender is
+   * assumed to have marked the inputs of the given constraint with
+   * the given mark. Thus, encountering a marked node downstream of
+   * the output constraint means that there is a path from the
+   * constraint's output to one of its inputs.
+   */
   def addPropagate(c: Constraint, mark: Int): Boolean = {
     val todo = new Stack[Constraint]().push(c)
     while (!todo.isEmpty) {
@@ -664,16 +664,16 @@ class Planner {
   }
 
   /**
-    * Update the walkabout strengths and stay flags of all variables
-    * downstream of the given constraint. Answer a collection of
-    * unsatisfied constraints sorted in order of decreasing strength.
-    */
+   * Update the walkabout strengths and stay flags of all variables
+   * downstream of the given constraint. Answer a collection of
+   * unsatisfied constraints sorted in order of decreasing strength.
+   */
   def removePropagateFrom(out: Variable): Seq[Constraint] = {
     out.determinedBy = null
     out.walkStrength = WEAKEST
     out.stay = true
     val unsatisfied = new ListBuffer[Constraint]()
-    val todo = new Stack[Variable]().push(out)
+    val todo        = new Stack[Variable]().push(out)
     while (!todo.isEmpty) {
       val v = todo.pop()
       for (c <- v.constraints) {
@@ -699,10 +699,10 @@ class Planner {
 }
 
 /**
-  * A Plan is an ordered list of constraints to be executed in sequence
-  * to resatisfy all currently satisfiable constraints in the face of
-  * one or more changing inputs.
-  */
+ * A Plan is an ordered list of constraints to be executed in sequence
+ * to resatisfy all currently satisfiable constraints in the face of
+ * one or more changing inputs.
+ */
 class Plan {
   private val list = new ListBuffer[Constraint]()
 

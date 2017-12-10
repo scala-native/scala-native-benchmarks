@@ -7,10 +7,10 @@ class Motion(val callsign: CallSign,
     posTwo.minus(this.posOne);
 
   def findIntersection(other: Motion): Vector3D = {
-    var init1 = this.posOne
-    var init2 = other.posOne
-    var vec1 = delta()
-    var vec2 = other.delta()
+    var init1  = this.posOne
+    var init2  = other.posOne
+    var vec1   = delta()
+    var vec2   = other.delta()
     val radius = Constants.PROXIMITY_RADIUS
 
     // this test is not geometrical 3-d intersection test, it takes the fact that the aircraft move

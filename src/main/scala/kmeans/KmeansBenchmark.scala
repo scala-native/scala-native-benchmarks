@@ -9,7 +9,7 @@ class Point(val x: Double, val y: Double, val z: Double) {
     square(that.x - x) + square(that.y - y) + square(that.z - z)
   }
   private def round(v: Double): Double = (v * 100).toInt / 100.0
-  override def toString = s"(${round(x)}, ${round(y)}, ${round(z)})"
+  override def toString                = s"(${round(x)}, ${round(y)}, ${round(z)})"
 }
 
 class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
@@ -37,7 +37,7 @@ class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
   def findClosest(p: Point, means: GenSeq[Point]): Point = {
     assert(means.size > 0)
     var minDistance = p.squareDistance(means(0))
-    var closest = means(0)
+    var closest     = means(0)
     for (mean <- means) {
       val distance = p.squareDistance(mean)
       if (distance < minDistance) {
@@ -111,11 +111,11 @@ class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
     benchmarks.LongRunningTime
 
   override def run(): GenSeq[Point] = {
-    val numPoints = 100000
-    val eta = 0.01
-    val k = 32
-    val points = generatePoints(k, numPoints)
-    val means = initializeMeans(k, points)
+    val numPoints              = 100000
+    val eta                    = 0.01
+    val k                      = 32
+    val points                 = generatePoints(k, numPoints)
+    val means                  = initializeMeans(k, points)
     var centers: GenSeq[Point] = null
     kMeans(points, means, eta)
   }

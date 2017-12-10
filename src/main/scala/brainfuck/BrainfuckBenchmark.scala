@@ -40,17 +40,17 @@ class BrainfuckBenchmark extends benchmarks.Benchmark[String] {
 }
 
 abstract class Op
-case class Inc(v: Int) extends Op
-case class Move(v: Int) extends Op
-case class Print() extends Op
+case class Inc(v: Int)           extends Op
+case class Move(v: Int)          extends Op
+case class Print()               extends Op
 case class Loop(loop: Array[Op]) extends Op
-case class Nop() extends Op
+case class Nop()                 extends Op
 
 class Tape() {
   private var tape = Array(0)
-  private var pos = 0
+  private var pos  = 0
 
-  def get = tape(pos)
+  def get         = tape(pos)
   def inc(x: Int) = tape(pos) += x
   def move(x: Int) = {
     pos += x

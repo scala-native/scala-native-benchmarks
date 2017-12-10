@@ -6,8 +6,8 @@ import java.util.Comparator
 class Vector[E <: AnyRef](size: Int) {
   def this() = this(50)
   var storage: Array[AnyRef] = new Array[AnyRef](size)
-  var firstIdx: Int = 0
-  var lastIdx: Int = 0
+  var firstIdx: Int          = 0
+  var lastIdx: Int           = 0
 
   def at(idx: Int): E = {
     if (idx >= storage.length) {
@@ -83,8 +83,8 @@ class Vector[E <: AnyRef](size: Int) {
 
   def remove(obj: E): Boolean = {
     val newArray = new Array[AnyRef](capacity())
-    val newLast = Array(0)
-    val found = Array(false)
+    val newLast  = Array(0)
+    val found    = Array(false)
 
     forEach { it =>
       if (it == obj) {

@@ -255,7 +255,7 @@ final class RedBlackTree[K <: Comparable[K], V] {
   }
 
   def removeFixup(_x: Node[K, V], _xParent: Node[K, V]): Unit = {
-    var x = _x
+    var x       = _x
     var xParent = _xParent
     while (x != root && (x == null || x.color == Color.BLACK)) {
       if (x == xParent.left) {
@@ -339,7 +339,7 @@ final class RedBlackTree[K <: Comparable[K], V] {
 object RedBlackTree {
   type Color = Int
   object Color {
-    val RED = 1
+    val RED   = 1
     val BLACK = 2
   }
 
@@ -352,10 +352,10 @@ object RedBlackTree {
   }
 
   final class Node[K, V](val key: K, var value: V) {
-    var left: Node[K, V] = null
-    var right: Node[K, V] = null
+    var left: Node[K, V]   = null
+    var right: Node[K, V]  = null
     var parent: Node[K, V] = null
-    var color: Color = Color.RED
+    var color: Color       = Color.RED
 
     def successor(): Node[K, V] = {
       var x = this

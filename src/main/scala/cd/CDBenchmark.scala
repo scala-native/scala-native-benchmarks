@@ -35,13 +35,13 @@ class CDBenchmark extends benchmarks.Benchmark[Int] {
     res == 4305
 
   def benchmark(numAircrafts: Int): Int = {
-    val numFrames = 200
-    val simulator = new Simulator(numAircrafts);
-    val detector = new CollisionDetector();
+    val numFrames        = 200
+    val simulator        = new Simulator(numAircrafts);
+    val detector         = new CollisionDetector();
     var actualCollisions = 0
 
     (0 until numFrames).map { i =>
-      val time = i / 10.0
+      val time       = i / 10.0
       val collisions = detector.handleNewFrame(simulator.simulate(time))
       actualCollisions += collisions.size()
     }

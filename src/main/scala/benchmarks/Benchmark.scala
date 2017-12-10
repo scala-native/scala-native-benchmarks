@@ -17,10 +17,10 @@ case class BenchmarkDisabled(override val name: String)
 sealed class BenchmarkRunningTime(val iterations: Int)
 
 case object VeryLongRunningTime extends BenchmarkRunningTime(100)
-case object LongRunningTime extends BenchmarkRunningTime(1000)
-case object MediumRunningTime extends BenchmarkRunningTime(10000)
-case object ShortRunningTime extends BenchmarkRunningTime(100000)
-case object UnknownRunningTime extends BenchmarkRunningTime(1)
+case object LongRunningTime     extends BenchmarkRunningTime(1000)
+case object MediumRunningTime   extends BenchmarkRunningTime(10000)
+case object ShortRunningTime    extends BenchmarkRunningTime(100000)
+case object UnknownRunningTime  extends BenchmarkRunningTime(1)
 
 abstract class Benchmark[T]() {
   def run(): T
@@ -35,14 +35,14 @@ abstract class Benchmark[T]() {
 
   final def loop(iterations: Int): BenchmarkResult =
     try {
-      var success: Boolean = true
-      var i: Int = 0
+      var success: Boolean   = true
+      var i: Int             = 0
       val times: Array[Long] = new Array[Long](iterations)
 
       while (i < iterations) {
-        val start = System.nanoTime()
+        val start  = System.nanoTime()
         val result = run()
-        val end = System.nanoTime()
+        val end    = System.nanoTime()
 
         success = success && check(result)
         times(i) = end - start

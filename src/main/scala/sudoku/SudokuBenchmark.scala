@@ -35,9 +35,9 @@ class SudokuBenchmark
   def cross(as: String, bs: String) =
     for (a <- as.map(_.toString); b <- bs.map(_.toString)) yield a + b
 
-  val digits = "123456789"
-  val rows = "ABCDEFGHI"
-  val cols = digits
+  val digits  = "123456789"
+  val rows    = "ABCDEFGHI"
+  val cols    = digits
   val squares = cross(rows, cols)
 
   val unitlist =
@@ -51,7 +51,7 @@ class SudokuBenchmark
     squares.map(s => (s, units(s).flatten.toSet.filterNot(_ == s))).toMap
 
   type Grid = scala.collection.mutable.Map[String, String]
-  val False = scala.collection.mutable.Map[String, String]()
+  val False                                       = scala.collection.mutable.Map[String, String]()
   implicit def gridToBoolean(grid: Grid): Boolean = grid.nonEmpty
 
   // ################ Parse a Grid ################
@@ -109,7 +109,7 @@ class SudokuBenchmark
     // (2) If a unit u is reduced to only one place for a value d, then put it there.
     val iter = units(s).iterator
     while (iter.hasNext) {
-      val u = iter.next
+      val u       = iter.next
       val dplaces = for (s <- u; if (values(s).contains(d))) yield s
       if (dplaces.isEmpty)
         return False // Contradiction: no place for d
@@ -179,7 +179,7 @@ class SudokuBenchmark
   // Display these values as a 2-D grid.
   def display(values: Grid) = {
     val width = squares.map(values(_).length).max + 1
-    val line = (for (i <- 0 to 2) yield ("-" * width * 3)).mkString("+")
+    val line  = (for (i <- 0 to 2) yield ("-" * width * 3)).mkString("+")
     for (r <- rows.map(_.toString)) {
       val cells = (for (c <- cols) yield center(values(r + c), width))
       println(cells.sliding(3, 3).map(_.mkString).mkString("|"))

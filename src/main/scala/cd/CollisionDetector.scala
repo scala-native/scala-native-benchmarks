@@ -10,7 +10,7 @@ final class CollisionDetector {
 
   def handleNewFrame(frame: Vector[Aircraft]): Vector[Collision] = {
     val motions = new Vector[Motion]()
-    val seen = new RedBlackTree[CallSign, Boolean]()
+    val seen    = new RedBlackTree[CallSign, Boolean]()
 
     frame.forEach { aircraft =>
       var oldPosition = state.put(aircraft.callsign, aircraft.position)
@@ -43,7 +43,7 @@ final class CollisionDetector {
       (0 until reduced.size()).foreach { i =>
         val motion1 = reduced.at(i)
         ((i + 1) until reduced.size()).foreach { j =>
-          val motion2 = reduced.at(j)
+          val motion2   = reduced.at(j)
           val collision = motion1.findIntersection(motion2)
           if (collision != null) {
             collisions.append(
@@ -60,7 +60,7 @@ final class CollisionDetector {
 
 object CollisionDetector {
   val horizontal = new Vector2D(Constants.GOOD_VOXEL_SIZE, 0.0);
-  val vertical = new Vector2D(0.0, Constants.GOOD_VOXEL_SIZE);
+  val vertical   = new Vector2D(0.0, Constants.GOOD_VOXEL_SIZE);
 
   def isInVoxel(voxel: Vector2D, motion: Motion): Boolean = {
     if (voxel.x > Constants.MAX_X ||
@@ -71,20 +71,20 @@ object CollisionDetector {
     }
 
     val init = motion.posOne
-    val fin = motion.posTwo
+    val fin  = motion.posTwo
 
     val v_s = Constants.GOOD_VOXEL_SIZE;
-    val r = Constants.PROXIMITY_RADIUS / 2.0;
+    val r   = Constants.PROXIMITY_RADIUS / 2.0;
 
     val v_x = voxel.x
-    val x0 = init.x
-    val xv = fin.x - init.x
+    val x0  = init.x
+    val xv  = fin.x - init.x
 
     val v_y = voxel.y
-    val y0 = init.y
-    val yv = fin.y - init.y
+    val y0  = init.y
+    val yv  = fin.y - init.y
 
-    var low_x = 0.0d
+    var low_x  = 0.0d
     var high_x = 0.0d
     low_x = (v_x - r - x0) / xv
     high_x = (v_x + v_s + r - x0) / xv
@@ -95,7 +95,7 @@ object CollisionDetector {
       high_x = tmp
     }
 
-    var low_y = 0.0d
+    var low_y  = 0.0d
     var high_y = 0.0d
     low_y = (v_y - r - y0) / yv
     high_y = (v_y + v_s + r - y0) / yv

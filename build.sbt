@@ -14,7 +14,7 @@ lazy val nativeBenchmark =
 nativeBenchmark := ""
 
 sourceGenerators in Compile += Def.task {
-  val dir = (scalaSource in Compile).value
+  val dir       = (scalaSource in Compile).value
   val benchmark = nativeBenchmark.value
 
   assert(benchmark.nonEmpty)

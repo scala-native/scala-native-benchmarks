@@ -4,7 +4,7 @@ import som.Dictionary._
 
 class Dictionary[K <: CustomHash, V <: AnyRef](size: Int = INITIAL_CAPACITY) {
   private var buckets = new Array[Entry[K, V]](size)
-  private var _size = 0
+  private var _size   = 0
 
   class Entry[K, V](val hash: Int,
                     val key: K,
@@ -26,7 +26,7 @@ class Dictionary[K <: CustomHash, V <: AnyRef](size: Int = INITIAL_CAPACITY) {
 
   def at(key: K): V = {
     val _hash = hash(key)
-    var e = getBucket(_hash)
+    var e     = getBucket(_hash)
 
     while (e != null) {
       if (e.match_(_hash, key)) {
@@ -40,7 +40,7 @@ class Dictionary[K <: CustomHash, V <: AnyRef](size: Int = INITIAL_CAPACITY) {
 
   def containsKey(key: K): Boolean = {
     val _hash = hash(key)
-    var e = getBucket(_hash)
+    var e     = getBucket(_hash)
 
     while (e != null) {
       if (e.match_(_hash, key)) {
@@ -52,8 +52,8 @@ class Dictionary[K <: CustomHash, V <: AnyRef](size: Int = INITIAL_CAPACITY) {
   }
 
   def atPut(key: K, value: V): Unit = {
-    var _hash = hash(key)
-    var i = getBucketIdx(_hash)
+    var _hash   = hash(key)
+    var i       = getBucketIdx(_hash)
     var current = buckets(i)
 
     if (current == null) {
@@ -120,7 +120,7 @@ class Dictionary[K <: CustomHash, V <: AnyRef](size: Int = INITIAL_CAPACITY) {
     var loTail: Entry[K, V] = null
     var hiHead: Entry[K, V] = null
     var hiTail: Entry[K, V] = null
-    var current = head
+    var current             = head
 
     while (current != null) {
       if ((current.hash & oldStorage.length) == 0) {
