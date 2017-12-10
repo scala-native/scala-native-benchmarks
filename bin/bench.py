@@ -68,9 +68,7 @@ def conf(**kwargs):
     return kwargs
 
 configurations = [
-        conf(name='0.3.3-none', native='0.3.3', clang='5.0', scala='2.11.11', mode='release', gc='none'),
         conf(name='0.3.3-immix', native='0.3.3', clang='5.0', scala='2.11.11', mode='release', gc='immix'),
-        conf(name='0.3.4-none', native='0.3.4', clang='5.0', scala='2.11.11', mode='release', gc='none'),
         conf(name='0.3.4-immix', native='0.3.4', clang='5.0', scala='2.11.11', mode='release', gc='immix'),
 ]
 
@@ -79,23 +77,22 @@ benchmarks = [
         'brainfuck',
         'cd',
         'deltablue',
+        'gcbench',
         'json',
         'kmeans',
         'list',
-        'permute',
-        'richards',
-        'sudoku',
-        'gcbench',
-        'havlak',
         'mandelbrot',
         'nbody',
+        'permute',
         'queens',
+        'richards',
+        'sudoku',
         'tracer',
 ]
 
-runs = 10
+runs = 50
 
-iterations = 500
+iterations = 1000
 
 if __name__ == "__main__":
     for bench in benchmarks:
