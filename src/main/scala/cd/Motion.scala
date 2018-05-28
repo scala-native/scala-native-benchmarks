@@ -1,5 +1,7 @@
 package cd
 
+import java.lang.Math
+
 class Motion(val callsign: CallSign,
              val posOne: Vector3D,
              val posTwo: Vector3D) {

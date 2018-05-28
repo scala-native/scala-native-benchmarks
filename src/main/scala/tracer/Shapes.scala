@@ -16,6 +16,9 @@
 
 package tracer
 
+import java.lang.String
+import scala.{Double, Boolean, Int}
+
 case class IntersectionInfo(shape: Shape = null,
                             position: Vector = null,
                             normal: Vector = null,
@@ -61,8 +64,6 @@ class Plane(position: Vector, val d: Double, material: Material)
       color = color
     )
   }
-
-  override def toString = s"Plane [$position, d=$d]"
 }
 
 class Sphere(position: Vector, radius: Double, material: Material)
@@ -78,7 +79,7 @@ class Sphere(position: Vector, radius: Double, material: Material)
     if (D <= 0)
       return new IntersectionInfo(null) // no intersection
 
-    val distance = (-B) - math.sqrt(D)
+    val distance = (-B) - java.lang.Math.sqrt(D)
     val pos      = ray.position + ray.direction.multiplyScalar(distance)
 
     new IntersectionInfo(
@@ -90,6 +91,4 @@ class Sphere(position: Vector, radius: Double, material: Material)
       color = this.material.getColor(0, 0)
     )
   }
-
-  override def toString = s"Sphere [position=$position, radius=$radius]"
 }

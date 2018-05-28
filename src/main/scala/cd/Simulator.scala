@@ -1,6 +1,9 @@
 package cd
 
 import som._
+import scala.Predef.intWrapper
+import scala.{Int, Unit, Double}
+import java.lang.Math
 
 final class Simulator(numAircraft: Int) {
   val aircraft = new Vector[CallSign]();

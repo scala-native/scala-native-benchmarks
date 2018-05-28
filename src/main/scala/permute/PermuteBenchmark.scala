@@ -1,14 +1,13 @@
 package permute
 
-import benchmarks.{BenchmarkRunningTime, LongRunningTime}
+import scala.Predef.intWrapper
+import scala.Predef.augmentString
+import scala.{Int, Boolean, Unit}
+import java.lang.String
 
-class PermuteBenchmark extends benchmarks.Benchmark[Int] {
-  val size = 6
-
-  override val runningTime: BenchmarkRunningTime =
-    LongRunningTime
-
-  override def run(): Int = {
+object PermuteBenchmark extends communitybench.Benchmark {
+  def run(input: String): Int = {
+    val size     = input.toInt
     val permIter = (0 until size).toList.permutations
 
     var count = 0
@@ -17,10 +16,6 @@ class PermuteBenchmark extends benchmarks.Benchmark[Int] {
       count += 1
     }
     count
-  }
-
-  override def check(value: Int): Boolean = {
-    value == factorial(size)
   }
 
   private def factorial(i: Int): Int = {
@@ -32,4 +27,7 @@ class PermuteBenchmark extends benchmarks.Benchmark[Int] {
     }
     fact
   }
+
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }

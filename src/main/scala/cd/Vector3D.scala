@@ -1,5 +1,8 @@
 package cd
 
+import scala.Double
+import java.lang.Math
+
 final class Vector3D(val x: Double, val y: Double, val z: Double) {
   def plus(other: Vector3D) =
     new Vector3D(x + other.x, y + other.y, z + other.z)

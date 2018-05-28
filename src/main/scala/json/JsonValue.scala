@@ -19,7 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  ******************************************************************************/
-package json;
+package json
+
+import java.lang.String
+import scala.Boolean
 
 /**
  * Represents a JSON value. This can be a JSON <strong>object</strong>, an <strong> array</strong>,
@@ -98,21 +101,21 @@ abstract class JsonValue {
    *
    * @return <code>true</code> if this value represents the JSON literal <code>true</code>
    */
-  def isTrue(): Boolean = false
+  def isTrue: Boolean = false
 
   /**
    * Detects whether this value represents the JSON literal <code>false</code>.
    *
    * @return <code>true</code> if this value represents the JSON literal <code>false</code>
    */
-  def isFalse(): Boolean = false
+  def isFalse: Boolean = false
 
   /**
    * Detects whether this value represents the JSON literal <code>null</code>.
    *
    * @return <code>true</code> if this value represents the JSON literal <code>null</code>
    */
-  def isNull(): Boolean = false
+  def isNull: Boolean = false
 
   /**
    * Returns this JSON value as {@link JsonObject}, assuming that this value represents a JSON
@@ -123,7 +126,8 @@ abstract class JsonValue {
    *           if this value is not a JSON object
    */
   def asObject(): JsonObject =
-    throw new UnsupportedOperationException("Not an object: " + toString());
+    throw new scala.UnsupportedOperationException(
+      "Not an object: " + toString());
 
   /**
    * Returns this JSON value as {@link JsonArray}, assuming that this value represents a JSON array.
@@ -134,5 +138,6 @@ abstract class JsonValue {
    *           if this value is not a JSON array
    */
   def asArray(): JsonArray =
-    throw new UnsupportedOperationException("Not an array: " + toString());
+    throw new scala.UnsupportedOperationException(
+      "Not an array: " + toString());
 }

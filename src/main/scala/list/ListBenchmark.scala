@@ -22,9 +22,11 @@
  */
 package list
 
-import benchmarks.{BenchmarkRunningTime, ShortRunningTime}
+import scala.{Int, Boolean, Any}
+import java.lang.String
+import scala.Predef.augmentString
 
-class ListBenchmark extends benchmarks.Benchmark[Int] {
+object ListBenchmark extends communitybench.Benchmark {
   final class Element(var value: Any, var next: Element = null) {
     def length(): Int = {
       if (next == null) {
@@ -35,12 +37,14 @@ class ListBenchmark extends benchmarks.Benchmark[Int] {
     }
   }
 
-  override val runningTime: BenchmarkRunningTime = ShortRunningTime
-
-  override def run(): Int = {
-    val result = tail(makeList(15), makeList(10), makeList(6))
+  def run(input: String): Int = {
+    val n      = input.toInt
+    val result = tail(makeList(n * 3), makeList(n * 2), makeList(n))
     result.length()
   }
+
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 
   def makeList(length: Int): Element = {
     if (length == 0) { return null } else {
@@ -70,7 +74,4 @@ class ListBenchmark extends benchmarks.Benchmark[Int] {
       z
     }
   }
-
-  override def check(result: Int): Boolean =
-    result == 10
 }

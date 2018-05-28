@@ -21,6 +21,8 @@
  ******************************************************************************/
 package json
 
+import java.lang.String
+
 final class JsonLiteral(val value: String) extends JsonValue {
   override val isNull  = "null".equals(value)
   override val isTrue  = "true".equals(value)

@@ -16,9 +16,11 @@
 
 package tracer
 
-class Ray(val position: Vector, val direction: Vector) {
-  override def toString = s"Ray [$position, $direction]"
-}
+import java.lang.String
+import scala.Double
+import scala.{Vector => _}
+
+class Ray(val position: Vector, val direction: Vector)
 
 class Camera(val position: Vector, val lookAt: Vector, val up: Vector) {
   val equator          = lookAt.normalize.cross(this.up)

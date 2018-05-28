@@ -16,6 +16,8 @@
 
 package tracer
 
+import scala.Unit
+
 // 'event' null means scalar we are benchmarking
 class RenderScene extends Scene {
 
@@ -64,7 +66,7 @@ class RenderScene extends Scene {
     )
   )
 
-  val shapes = List(plane, sphere, sphere1)
+  val shapes = plane :: sphere :: sphere1 :: Nil
 
   var light = new Light(
     new Vector(5.0, 10.0, -1.0),
@@ -77,7 +79,7 @@ class RenderScene extends Scene {
     100.0
   )
 
-  val lights = List(light, light1)
+  val lights = light :: light1 :: Nil
 
   def renderScene(config: EngineConfiguration,
                   canvas: CanvasRenderingContext2D): Unit = {

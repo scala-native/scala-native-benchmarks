@@ -16,6 +16,10 @@
 
 package tracer
 
+import scala.Predef.intWrapper
+import java.lang.{String, Math}
+import scala.{Int, Boolean, Unit}
+
 case class EngineConfiguration(imageWidth: Int = 100,
                                imageHeight: Int = 100,
                                pixelWidth: Int = 2,
@@ -43,10 +47,10 @@ class Engine(val config: EngineConfiguration) {
 
     if (canvasContext != null) {
       canvasContext.fillStyle = color.toString
-      canvasContext.fillRect(x * pxW, y * pxH, pxW, pxH)
+      // canvasContext.fillRect(x * pxW, y * pxH, pxW, pxH)
     } else {
       if (x == y) {
-        diagonalColorBrightnessCheckSum += color.brightness
+        diagonalColorBrightnessCheckSum += color.brightness()
       }
     }
   }
@@ -67,7 +71,7 @@ class Engine(val config: EngineConfiguration) {
     }
 
     if (canvasContext == null && diagonalColorBrightnessCheckSum != 2321) {
-      throw new Error("Scene rendered incorrectly")
+      throw new scala.Error("Scene rendered incorrectly")
     }
   }
 
@@ -113,7 +117,7 @@ class Engine(val config: EngineConfiguration) {
     // Calc ambient
     var color     = info.color.multiplyScalar(scene.background.ambience)
     val oldColor  = color
-    val shininess = math.pow(10, info.shape.material.gloss + 1)
+    val shininess = Math.pow(10, info.shape.material.gloss + 1)
 
     for (light <- scene.lights) {
       // Calc diffuse lighting
@@ -156,7 +160,7 @@ class Engine(val config: EngineConfiguration) {
         shadowInfo = testIntersection(shadowRay, scene, info.shape)
         if (shadowInfo.isHit && shadowInfo.shape != info.shape) {
           val vA = color.multiplyScalar(0.5)
-          val dB = (0.5 * math.pow(shadowInfo.shape.material.transparency, 0.5))
+          val dB = (0.5 * Math.pow(shadowInfo.shape.material.transparency, 0.5))
           color = vA.addScalar(dB)
         }
       }
@@ -168,13 +172,10 @@ class Engine(val config: EngineConfiguration) {
 
         var H = (E - Lv).normalize
 
-        var glossWeight = math.pow(math.max(info.normal.dot(H), 0), shininess)
+        var glossWeight = Math.pow(Math.max(info.normal.dot(H), 0), shininess)
         color = light.color.multiplyScalar(glossWeight) + color
       }
     }
     color.limit()
   }
-
-  override def toString() =
-    s"Engine [canvasWidth: $config.canvasWidth, canvasHeight: $config.canvasHeight]"
 }

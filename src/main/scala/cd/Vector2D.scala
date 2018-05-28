@@ -1,5 +1,8 @@
 package cd
 
+import scala.{Double, Int}
+import java.lang.Comparable
+
 final class Vector2D(val x: Double, val y: Double)
     extends Comparable[Vector2D] {
   import Vector2D._
@@ -10,8 +13,7 @@ final class Vector2D(val x: Double, val y: Double)
   def minus(other: Vector2D): Vector2D =
     return new Vector2D(x - other.x, y - other.y)
 
-  @Override
-  def compareTo(other: Vector2D): Int = {
+  override def compareTo(other: Vector2D): Int = {
     val result = compareNumbers(this.x, other.x)
     if (result != 0) {
       return result

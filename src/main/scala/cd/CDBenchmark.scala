@@ -21,23 +21,18 @@
  */
 package cd
 
-import benchmarks._
 import som._
+import scala.Predef.augmentString
+import scala.Predef.intWrapper
+import scala.{Int, Boolean}
+import java.lang.String
 
-class CDBenchmark extends benchmarks.Benchmark[Int] {
-  override val runningTime: BenchmarkRunningTime =
-    LongRunningTime
-
-  override def run(): Int =
-    benchmark(100)
-
-  override def check(res: Int): Boolean =
-    res == 4305
-
-  def benchmark(numAircrafts: Int): Int = {
+object CDBenchmark extends communitybench.Benchmark {
+  def run(input: String): Int = {
+    val numAircrafts     = input.toInt
     val numFrames        = 200
-    val simulator        = new Simulator(numAircrafts);
-    val detector         = new CollisionDetector();
+    val simulator        = new Simulator(numAircrafts)
+    val detector         = new CollisionDetector()
     var actualCollisions = 0
 
     (0 until numFrames).map { i =>
@@ -48,4 +43,7 @@ class CDBenchmark extends benchmarks.Benchmark[Int] {
 
     actualCollisions
   }
+
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }

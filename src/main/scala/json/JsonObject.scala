@@ -22,6 +22,8 @@
 package json
 
 import som.Vector
+import java.lang.String
+import scala.{Int, Boolean, Unit, Array}
 
 /**
  * Represents a JSON object, a set of name/value pairs, where the names are strings and the values
@@ -65,10 +67,10 @@ final class JsonObject extends JsonValue {
    */
   def add(name: String, value: JsonValue): JsonObject = {
     if (name == null) {
-      throw new NullPointerException("name is null")
+      throw new scala.NullPointerException("name is null")
     }
     if (value == null) {
-      throw new NullPointerException("value is null")
+      throw new scala.NullPointerException("value is null")
     }
     table.add(name, names.size())
     names.append(name)
@@ -87,7 +89,7 @@ final class JsonObject extends JsonValue {
    */
   def get(name: String): JsonValue = {
     if (name == null) {
-      throw new NullPointerException("name is null")
+      throw new scala.NullPointerException("name is null")
     }
     val index = indexOf(name)
 
@@ -117,7 +119,7 @@ final class JsonObject extends JsonValue {
     if (index != -1 && name.equals(names.at(index))) {
       return index
     }
-    ??? // Not needed for benchmark
+    throw new java.lang.Exception("Not needed for benchmark")
   }
 
   private class HashIndexTable {

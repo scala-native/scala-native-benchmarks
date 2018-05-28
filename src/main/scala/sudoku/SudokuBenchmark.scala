@@ -10,27 +10,18 @@
 
 package sudoku
 
-import benchmarks.{BenchmarkRunningTime, LongRunningTime}
-
 import scala.language.implicitConversions
+import scala.Predef.wrapString
+import scala.Predef.require
+import java.lang.String
+import scala.{Int, Boolean, Unit, Option, Some, None, Nil}
 
-class SudokuBenchmark
-    extends benchmarks.Benchmark[Option[
-      scala.collection.mutable.Map[String, String]]] {
+object SudokuBenchmark extends communitybench.Benchmark {
+  override def run(input: String): Option[Grid] =
+    solve(input)
 
-  override val runningTime: BenchmarkRunningTime = LongRunningTime
-
-  override def run(): Option[Grid] = {
-    solve(grid1)
-  }
-
-  override def check(grid: Option[Grid]): Boolean =
-    grid match {
-      case Some(values) =>
-        grid1Solutions.contains(asString(values))
-      case None =>
-        false
-    }
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 
   def cross(as: String, bs: String) =
     for (a <- as.map(_.toString); b <- bs.map(_.toString)) yield a + b
@@ -43,12 +34,16 @@ class SudokuBenchmark
   val unitlist =
     cols.map(_.toString).map(cross(rows, _)) ++
       rows.map(_.toString).map(cross(_, cols)) ++
-      (for (rs <- List("ABC", "DEF", "GHI"); cs <- List("123", "456", "789"))
+      (for (rs <- "ABC" :: "DEF" :: "GHI" :: Nil;
+            cs <- "123" :: "456" :: "789" :: Nil)
         yield cross(rs, cs))
 
   val units = squares.map(s => (s, unitlist.filter(_.contains(s)))).toMap
   val peers =
-    squares.map(s => (s, units(s).flatten.toSet.filterNot(_ == s))).toMap
+    squares
+      .map(s =>
+        (s, units(s).flatten(scala.Predef.conforms).toSet.filterNot(_ == s)))
+      .toMap
 
   type Grid = scala.collection.mutable.Map[String, String]
   val False                                       = scala.collection.mutable.Map[String, String]()
@@ -130,63 +125,61 @@ class SudokuBenchmark
     "4.....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......"
   val hard1 =
     ".....6....59.....82....8....45........3........6..3.54...325..6.................."
-  val grid1Solutions = List(
-    "483921657967345821251876493548132976729564138136798245372689514814253769695417382")
-  val grid2Solutions = List(
-    "417369825632158947958724316825437169791586432346912758289643571573291684164875293")
-  val hard1Solutions = List(
-    "874196325359742618261538497145679832783254169926813754417325986598461273632987541",
-    "834596217659712438271438569745169382923854671186273954417325896562987143398641725"
-  )
+  val grid1Solutions =
+    "483921657967345821251876493548132976729564138136798245372689514814253769695417382" :: Nil
+  val grid2Solutions =
+    "417369825632158947958724316825437169791586432346912758289643571573291684164875293" :: Nil
+  val hard1Solutions =
+    "874196325359742618261538497145679832783254169926813754417325986598461273632987541" ::
+      "834596217659712438271438569745169382923854671186273954417325896562987143398641725" :: Nil
 
-  def test() {
-    require(squares.length == 81)
-    require(unitlist.length == 27)
-    require(squares.forall(s => units(s).size == 3))
-    require(squares.forall(s => peers(s).size == 20))
-    require(
-      units("C2") == Vector(
-        Vector("A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2"),
-        Vector("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"),
-        Vector("A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3")
-      ))
-    require(
-      peers("C2") == Set("A2",
-                         "B2",
-                         "D2",
-                         "E2",
-                         "F2",
-                         "G2",
-                         "H2",
-                         "I2",
-                         "C1",
-                         "C3",
-                         "C4",
-                         "C5",
-                         "C6",
-                         "C7",
-                         "C8",
-                         "C9",
-                         "A1",
-                         "A3",
-                         "B1",
-                         "B3"))
-    println("All tests pass")
-  }
+  // def test(): Unit = {
+  //   require(squares.length == 81)
+  //   require(unitlist.length == 27)
+  //   require(squares.forall(s => units(s).size == 3))
+  //   require(squares.forall(s => peers(s).size == 20))
+  //   require(
+  //     units("C2") == Vector(
+  //       Vector("A2", "B2", "C2", "D2", "E2", "F2", "G2", "H2", "I2"),
+  //       Vector("C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"),
+  //       Vector("A1", "A2", "A3", "B1", "B2", "B3", "C1", "C2", "C3")
+  //     ))
+  //   require(
+  //     peers("C2") == collection.Set("A2",
+  //                        "B2",
+  //                        "D2",
+  //                        "E2",
+  //                        "F2",
+  //                        "G2",
+  //                        "H2",
+  //                        "I2",
+  //                        "C1",
+  //                        "C3",
+  //                        "C4",
+  //                        "C5",
+  //                        "C6",
+  //                        "C7",
+  //                        "C8",
+  //                        "C9",
+  //                        "A1",
+  //                        "A3",
+  //                        "B1",
+  //                        "B3"))
+  // }
 
   // ################ Display as 2-D grid ################
 
   // Display these values as a 2-D grid.
   def display(values: Grid) = {
-    val width = squares.map(values(_).length).max + 1
-    val line  = (for (i <- 0 to 2) yield ("-" * width * 3)).mkString("+")
-    for (r <- rows.map(_.toString)) {
-      val cells = (for (c <- cols) yield center(values(r + c), width))
-      println(cells.sliding(3, 3).map(_.mkString).mkString("|"))
-      if ("CF".contains(r))
-        println(line)
-    }
-    println
+    // val width = squares.map(values(_).length).max + 1
+    // val line  = (for (i <- 0 to 2) yield ("-" * width * 3)).mkString("+")
+    // for (r <- rows.map(_.toString)) {
+    //   val cells = (for (c <- cols) yield center(values(r + c), width))
+    //   println(cells.sliding(3, 3).map(_.mkString).mkString("|"))
+    //   if ("CF".contains(r))
+    //     println(line)
+    // }
+    // println
   }
 
   def asString(values: Grid): String =
@@ -207,7 +200,7 @@ class SudokuBenchmark
     // Chose the unfilled square s with the fewest possibilities
     val (s, n) = values.filter(_._2.length > 1).minBy(_._2.length)
 
-    values(s).toStream
+    values(s)
       .map { d =>
         val solution = values.clone
         if (assign(solution, s, d.toString))
@@ -231,5 +224,4 @@ class SudokuBenchmark
     else
       repeat(pad, padLen / 2) + s + repeat(pad, (padLen + 1) / 2)
   }
-
 }

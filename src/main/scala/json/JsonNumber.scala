@@ -21,9 +21,11 @@
  ******************************************************************************/
 package json
 
+import java.lang.String
+
 final class JsonNumber(val string: String) extends JsonValue {
   if (string == null) {
-    throw new NullPointerException("string is null")
+    throw new java.lang.NullPointerException("string is null")
   }
 
   override def toString() = string

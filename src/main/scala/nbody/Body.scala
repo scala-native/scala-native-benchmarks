@@ -5,6 +5,8 @@
  */
 package nbody
 
+import scala.{Double, Unit}
+
 final class Body private () {
   private[this] var x: Double    = 0.0
   private[this] var y: Double    = 0.0
@@ -41,7 +43,7 @@ final class Body private () {
            vx: Double,
            vy: Double,
            vz: Double,
-           mass: Double) {
+           mass: Double) = {
     this()
     this.x = x
     this.y = y

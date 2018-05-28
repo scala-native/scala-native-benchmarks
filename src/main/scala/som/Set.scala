@@ -1,5 +1,7 @@
 package som
 
+import scala.{Int, Boolean, Unit, AnyRef}
+
 class Set[E <: AnyRef](_size: Int = Constants.INITIAL_SIZE) {
   private val items = new Vector[E](_size)
 

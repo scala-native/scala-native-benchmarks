@@ -16,6 +16,9 @@
 
 package tracer
 
+import java.lang.String
+import scala.{Double, Int}
+
 class Color(val red: Double, val green: Double, val blue: Double) {
 
   def trim(light: Double): Double =
@@ -47,13 +50,5 @@ class Color(val red: Double, val green: Double, val blue: Double) {
     val b = (this.blue * 255).toInt
 
     (r * 77 + g * 150 + b * 29) >> 8;
-  }
-
-  override def toString(): String = {
-    val r = (this.red * 255).toInt
-    val g = (this.green * 255).toInt
-    val b = (this.blue * 255).toInt
-
-    s"rgb($r,$g,$b)"
   }
 }

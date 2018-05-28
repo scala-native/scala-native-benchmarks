@@ -22,6 +22,7 @@
 package json
 
 import som.Vector
+import scala.Int
 
 /**
  * Represents a JSON array, an ordered collection of JSON values.
@@ -52,7 +53,7 @@ final class JsonArray(val values: Vector[JsonValue] = new Vector[JsonValue]())
    */
   def add(value: JsonValue): JsonArray = {
     if (value == null) {
-      throw new NullPointerException("value is null")
+      throw new scala.NullPointerException("value is null")
     }
     values.append(value)
     this

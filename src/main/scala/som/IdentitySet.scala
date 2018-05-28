@@ -22,6 +22,8 @@
  */
 package som
 
+import scala.{AnyRef, Int}
+
 final class IdentitySet[E <: AnyRef](_size: Int = Constants.INITIAL_SIZE)
     extends Set[E](_size) {
   override def contains(obj: E) =

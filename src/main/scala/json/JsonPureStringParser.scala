@@ -21,6 +21,9 @@
  ******************************************************************************/
 package json
 
+import java.lang.String
+import scala.Boolean
+
 final class JsonPureStringParser(input: String) {
   var index           = -1
   var line            = 1

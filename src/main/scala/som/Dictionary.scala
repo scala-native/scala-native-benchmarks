@@ -1,9 +1,12 @@
 package som
 
 import som.Dictionary._
+import scala.Predef.intWrapper
+import scala.{Int, Boolean, Unit, Array, AnyRef}
 
-class Dictionary[K <: CustomHash, V <: AnyRef](size: Int = INITIAL_CAPACITY) {
-  private var buckets = new Array[Entry[K, V]](size)
+class Dictionary[K <: CustomHash, V <: AnyRef](
+    initialSize: Int = INITIAL_CAPACITY) {
+  private var buckets = new Array[Entry[K, V]](initialSize)
   private var _size   = 0
 
   class Entry[K, V](val hash: Int,

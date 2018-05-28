@@ -40,21 +40,20 @@
 
 package gcbench
 
-import benchmarks.{BenchmarkRunningTime, VeryLongRunningTime}
-
-class GCBenchBenchmark extends benchmarks.Benchmark[(Node, Array[Double])] {
-  override val runningTime: BenchmarkRunningTime = VeryLongRunningTime
-
-  override def run(): (Node, Array[Double]) = GCBenchBenchmark.start()
-
-  override def check(result: (Node, Array[Double])): Boolean =
-    result._1 != null && result._2(1000) == 1.0 / 1000
-
-}
+import scala.{Int, Double, Boolean, Unit, Array}
+import java.lang.String
 
 class Node(var left: Node, var right: Node, var i: Int, var j: Int)
 
-object GCBenchBenchmark {
+object GCBenchBenchmark extends communitybench.Benchmark {
+  def run(input: String): Boolean = {
+    val (node, doubles) = GCBenchBenchmark.start()
+    node != null && doubles(1000) == 1.0 / 1000
+  }
+
+  override def main(args: Array[String]): Unit =
+    super.main(args)
+
   val kStretchTreeDepth: Int   = 18 // about 16Mb
   val kLongLivedTreeDepth: Int = 16 // about 4Mb
   val kArraySize: Int          = 500000 // about 4Mb

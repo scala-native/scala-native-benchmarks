@@ -21,11 +21,14 @@
  ******************************************************************************/
 package json;
 
+import java.lang.String
+import scala.Int
+
 /**
  * An unchecked exception to indicate that an input does not qualify as valid JSON.
  */
 final class ParseException(message: String, offset: Int, line: Int, column: Int)
-    extends RuntimeException(message + " at " + line + ":" + column) {
+    extends java.lang.RuntimeException(message + " at " + line + ":" + column) {
 
   /**
    * Returns the absolute index of the character at which the error occurred. The

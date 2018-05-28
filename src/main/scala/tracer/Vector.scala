@@ -16,6 +16,8 @@
 
 package tracer
 
+import scala.{Double, `inline`}
+
 @inline
 class Vector(val x: Double, val y: Double, val z: Double) {
 
@@ -25,7 +27,7 @@ class Vector(val x: Double, val y: Double, val z: Double) {
   }
 
   @inline def magnitude: Double =
-    math.sqrt((x * x) + (y * y) + (z * z))
+    java.lang.Math.sqrt((x * x) + (y * y) + (z * z))
 
   @inline def cross(that: Vector): Vector = {
     new Vector(-this.z * that.y + this.y * that.z,
@@ -47,7 +49,4 @@ class Vector(val x: Double, val y: Double, val z: Double) {
 
   @inline def multiplyScalar(w: Double): Vector =
     new Vector(x * w, y * w, z * w)
-
-  override def toString =
-    s"Vector [$x, $y, $z]"
 }

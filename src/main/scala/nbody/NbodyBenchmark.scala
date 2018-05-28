@@ -5,24 +5,24 @@
  */
 package nbody
 
-import benchmarks.{BenchmarkRunningTime, VeryLongRunningTime}
+import scala.{Double, Boolean}
+import java.lang.String
+import scala.Predef.augmentString
 
-class NbodyBenchmark extends benchmarks.Benchmark[Double] {
-
-  override val runningTime: BenchmarkRunningTime = VeryLongRunningTime
-
-  override def run(): Double = {
+object NbodyBenchmark extends communitybench.Benchmark {
+  def run(input: String): Boolean = {
     val system = new NBodySystem()
+    val n      = input.toInt
 
     var i = 0
-    while (i < 250000) {
+    while (i < n) {
       system.advance(0.01)
       i += 1
     }
 
-    system.energy()
+    system.energy() == -0.1690859889909308
   }
 
-  override def check(result: Double): Boolean =
-    result == -0.1690859889909308
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }

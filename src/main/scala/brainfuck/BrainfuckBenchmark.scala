@@ -1,6 +1,5 @@
 //  Taken from https://github.com/kostya/benchmarks/blob/master/brainfuck2/bf.scala
-//
-//  Copyright (c) 2014 'Konstantin Makarchev'
+// Copyright (c) 2014 'Konstantin Makarchev'
 //
 //    MIT License
 //
@@ -26,17 +25,17 @@
 
 package brainfuck
 
-import benchmarks.{BenchmarkRunningTime, LongRunningTime}
+import scala.Predef.genericArrayOps
+import scala.Predef.wrapString
+import java.lang.String
+import scala.{Int, Unit, Char, Array}
 
-class BrainfuckBenchmark extends benchmarks.Benchmark[String] {
-  override val runningTime: BenchmarkRunningTime = LongRunningTime
+object BrainfuckBenchmark extends communitybench.Benchmark {
+  def run(input: String): Int =
+    new Program(input).run.size
 
-  override def run(): String = {
-    new Program(Program.asText).run
-  }
-
-  override def check(result: String) =
-    Program.expectedOutput == result.size
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }
 
 abstract class Op
@@ -58,31 +57,45 @@ class Tape() {
   }
 }
 
-class Program(text: String) {
-  var ops = parse(text.iterator)
+class Parser(text: String) {
+  val chars = text.toArray
+  var pos   = 0
 
-  def parse(iterator: Iterator[Char]): Array[Op] = {
-    var res = Array[Op]()
-    while (iterator.hasNext) {
-      val op = iterator.next() match {
+  def parse(): Array[Op] = {
+    var ops = new java.util.ArrayList[Op]
+    def res = {
+      val arr = new Array[Op](ops.size)
+      ops.toArray(arr)
+      arr
+    }
+
+    while (pos < chars.length) {
+      val char = chars(pos)
+      pos += 1
+
+      val op = char match {
         case '+' => new Inc(1)
         case '-' => new Inc(-1)
         case '>' => new Move(1)
         case '<' => new Move(-1)
         case '.' => new Print()
-        case '[' => new Loop(parse(iterator))
+        case '[' => new Loop(parse())
         case ']' => return res
         case _   => new Nop()
       }
 
       op match {
         case Nop() => ()
-        case _     => res :+= op
+        case _     => ops.add(op)
       }
     }
 
     res
   }
+}
+
+class Program(text: String) {
+  var ops = (new Parser(text)).parse()
 
   def run = {
     val stringBuilder = new StringBuilder
@@ -92,7 +105,7 @@ class Program(text: String) {
     stringBuilder.toString
   }
 
-  def _run(program: Array[Op], tape: Tape, output: StringBuilder) {
+  def _run(program: Array[Op], tape: Tape, output: StringBuilder): Unit = {
     for (op <- program) op match {
       case Inc(x)     => tape.inc(x)
       case Move(x)    => tape.move(x)

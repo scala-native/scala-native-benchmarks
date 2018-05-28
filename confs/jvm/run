@@ -1,0 +1,1 @@
+java -Xmx1024M -Xms1024M -classpath /home/denys/.src/bench/target/scala-2.11/classes:/home/denys/.ivy2/cache/org.scala-lang/scala-library/jars/scala-library-2.11.12.jar $BENCH

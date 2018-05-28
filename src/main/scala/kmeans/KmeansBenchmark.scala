@@ -2,6 +2,10 @@ package kmeans
 
 import scala.collection._
 import scala.util.Random
+import scala.Predef.augmentString
+import scala.Predef.intWrapper
+import scala.{Int, Double, Boolean}
+import java.lang.String
 
 class Point(val x: Double, val y: Double, val z: Double) {
   private def square(v: Double): Double = v * v
@@ -9,10 +13,11 @@ class Point(val x: Double, val y: Double, val z: Double) {
     square(that.x - x) + square(that.y - y) + square(that.z - z)
   }
   private def round(v: Double): Double = (v * 100).toInt / 100.0
-  override def toString                = s"(${round(x)}, ${round(y)}, ${round(z)})"
+  override def toString =
+    "(" + round(x) + "}, " + round(y) + ", " + round(z) + ")"
 }
 
-class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
+object KmeansBenchmark extends communitybench.Benchmark {
   def generatePoints(k: Int, num: Int): Seq[Point] = {
     val randx = new Random(1)
     val randy = new Random(3)
@@ -35,7 +40,7 @@ class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
   }
 
   def findClosest(p: Point, means: GenSeq[Point]): Point = {
-    assert(means.size > 0)
+    scala.Predef.assert(means.size > 0)
     var minDistance = p.squareDistance(means(0))
     var closest     = means(0)
     for (mean <- means) {
@@ -107,21 +112,15 @@ class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
     }
   }
 
-  override val runningTime =
-    benchmarks.LongRunningTime
-
-  override def run(): GenSeq[Point] = {
-    val numPoints              = 100000
+  def run(input: String): Boolean = {
+    val numPoints              = input.toInt
     val eta                    = 0.01
     val k                      = 32
     val points                 = generatePoints(k, numPoints)
     val means                  = initializeMeans(k, points)
     var centers: GenSeq[Point] = null
-    kMeans(points, means, eta)
-  }
-
-  override def check(result: GenSeq[Point]): Boolean = {
-    var sum = 0D
+    val result                 = kMeans(points, means, eta)
+    var sum                    = 0D
     result.foreach { p =>
       sum += p.x
       sum += p.y
@@ -129,4 +128,7 @@ class KmeansBenchmark extends benchmarks.Benchmark[GenSeq[Point]] {
     }
     sum == 71.5437923802926D
   }
+
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }

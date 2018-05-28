@@ -1,6 +1,7 @@
 package som;
 
 import som.Dictionary._
+import scala.{Int, Boolean, AnyRef}
 
 class IdentityDictionary[K <: CustomHash, V <: AnyRef](
     size: Int = INITIAL_CAPACITY)

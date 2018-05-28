@@ -1,6 +1,8 @@
 package cd
 
 import java.lang.Boolean.{TRUE, FALSE}
+import scala.{Int, Boolean, Unit}
+import scala.Predef.intWrapper
 import som._
 
 final class CollisionDetector {
@@ -59,22 +61,22 @@ final class CollisionDetector {
 }
 
 object CollisionDetector {
-  val horizontal = new Vector2D(Constants.GOOD_VOXEL_SIZE, 0.0);
-  val vertical   = new Vector2D(0.0, Constants.GOOD_VOXEL_SIZE);
+  val horizontal = new Vector2D(cd.Constants.GOOD_VOXEL_SIZE, 0.0);
+  val vertical   = new Vector2D(0.0, cd.Constants.GOOD_VOXEL_SIZE);
 
   def isInVoxel(voxel: Vector2D, motion: Motion): Boolean = {
-    if (voxel.x > Constants.MAX_X ||
-        voxel.x < Constants.MIN_X ||
-        voxel.y > Constants.MAX_Y ||
-        voxel.y < Constants.MIN_Y) {
+    if (voxel.x > cd.Constants.MAX_X ||
+        voxel.x < cd.Constants.MIN_X ||
+        voxel.y > cd.Constants.MAX_Y ||
+        voxel.y < cd.Constants.MIN_Y) {
       return false;
     }
 
     val init = motion.posOne
     val fin  = motion.posTwo
 
-    val v_s = Constants.GOOD_VOXEL_SIZE;
-    val r   = Constants.PROXIMITY_RADIUS / 2.0;
+    val v_s = cd.Constants.GOOD_VOXEL_SIZE;
+    val r   = cd.Constants.PROXIMITY_RADIUS / 2.0;
 
     val v_x = voxel.x
     val x0  = init.x
@@ -169,17 +171,17 @@ object CollisionDetector {
   }
 
   def voxelHash(position: Vector3D): Vector2D = {
-    val xDiv = (position.x / Constants.GOOD_VOXEL_SIZE).toInt
-    val yDiv = (position.y / Constants.GOOD_VOXEL_SIZE).toInt
+    val xDiv = (position.x / cd.Constants.GOOD_VOXEL_SIZE).toInt
+    val yDiv = (position.y / cd.Constants.GOOD_VOXEL_SIZE).toInt
 
-    var x = Constants.GOOD_VOXEL_SIZE * xDiv;
-    var y = Constants.GOOD_VOXEL_SIZE * yDiv;
+    var x = cd.Constants.GOOD_VOXEL_SIZE * xDiv;
+    var y = cd.Constants.GOOD_VOXEL_SIZE * yDiv;
 
     if (position.x < 0) {
-      x -= Constants.GOOD_VOXEL_SIZE;
+      x -= cd.Constants.GOOD_VOXEL_SIZE;
     }
     if (position.y < 0) {
-      y -= Constants.GOOD_VOXEL_SIZE;
+      y -= cd.Constants.GOOD_VOXEL_SIZE;
     }
 
     new Vector2D(x, y)

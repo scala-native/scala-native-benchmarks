@@ -22,30 +22,21 @@
  */
 package queens
 
-import benchmarks.{BenchmarkRunningTime, MediumRunningTime}
+import scala.Predef.intWrapper
+import scala.{Int, Boolean, Array, Unit}
+import java.lang.String
 
-class QueensBenchmark extends benchmarks.Benchmark[Boolean] {
+object QueensBenchmark extends communitybench.Benchmark {
   var freeMaxs: Array[Boolean] = _
   var freeRows: Array[Boolean] = _
   var freeMins: Array[Boolean] = _
   var queenRows: Array[Int]    = _
 
-  override val runningTime: BenchmarkRunningTime = MediumRunningTime
-
-  override def run(): Boolean = {
-    var result = true
-    (0 until 10).foreach { i =>
-      result = result && queens()
-    }
-    result
-  }
-
-  def queens(): Boolean = {
+  def run(input: String): Boolean = {
     freeRows = Array.fill(8)(true)
     freeMaxs = Array.fill(16)(true)
     freeMins = Array.fill(16)(true)
     queenRows = Array.fill(8)(-1)
-
     placeQueen(0)
   }
 
@@ -77,5 +68,6 @@ class QueensBenchmark extends benchmarks.Benchmark[Boolean] {
     freeMins(c - r + 7) = v
   }
 
-  override def check(result: Boolean) = result
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }

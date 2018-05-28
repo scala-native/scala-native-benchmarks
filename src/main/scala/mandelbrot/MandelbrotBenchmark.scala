@@ -42,42 +42,13 @@
 // http://benchmarksgame.alioth.debian.org/u64q/program.php?test=mandelbrot&lang=yarv&id=3
 package mandelbrot
 
-import benchmarks.{BenchmarkRunningTime, VeryLongRunningTime}
+import scala.{Int, Double, Boolean}
+import java.lang.String
+import scala.Predef.augmentString
 
-class MandelbrotBenchmark extends benchmarks.Benchmark[(Int, Int)] {
-
-  private val sizes = List(750, 500, 1)
-  private var i     = 0
-
-  override val runningTime: BenchmarkRunningTime = VeryLongRunningTime
-
-  override def run(): (Int, Int) = {
-    val size = sizes(i % sizes.length)
-    i = i + 1
-    (size, mandelbrot(size))
-  }
-
-  override def check(t: (Int, Int)): Boolean =
-    check(t._2, t._1)
-
-  def check(result: Int, innerIterations: Int): Boolean = {
-    if (innerIterations == 500) {
-      return result == 191
-    }
-    if (innerIterations == 750) {
-      return result == 50
-    }
-    if (innerIterations == 1) {
-      return result == 128
-    }
-
-    System.out.println(
-      "No verification result for " + innerIterations + " found")
-    System.out.println("Result is: " + result)
-    return false
-  }
-
-  def mandelbrot(size: Int): Int = {
+object MandelbrotBenchmark extends communitybench.Benchmark {
+  def run(input: String): Int = {
+    val size         = input.toInt
     var sum: Int     = 0
     var byteAcc: Int = 0
     var bitNum: Int  = 0
@@ -133,4 +104,7 @@ class MandelbrotBenchmark extends benchmarks.Benchmark[(Int, Int)] {
     }
     return sum
   }
+
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }

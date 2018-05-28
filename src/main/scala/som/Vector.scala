@@ -3,9 +3,12 @@ package som
 import java.util.Arrays
 import java.util.Comparator
 
-class Vector[E <: AnyRef](size: Int) {
+import scala.Predef.intWrapper
+import scala.{Int, Unit, Boolean, AnyRef, Array}
+
+class Vector[E <: AnyRef](initialSize: Int) {
   def this() = this(50)
-  var storage: Array[AnyRef] = new Array[AnyRef](size)
+  var storage: Array[AnyRef] = new Array[AnyRef](initialSize)
   var firstIdx: Int          = 0
   var lastIdx: Int           = 0
 

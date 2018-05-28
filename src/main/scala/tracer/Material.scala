@@ -16,6 +16,8 @@
 
 package tracer
 
+import scala.Double
+
 // gloss:        [0...infinity] 0 = matt
 // transparency:  0=opaque
 // reflection:   [0...infinity] 0 = no reflection

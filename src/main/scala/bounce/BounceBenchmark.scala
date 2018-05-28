@@ -22,10 +22,14 @@
  */
 package bounce
 
-import benchmarks.{BenchmarkRunningTime, ShortRunningTime}
 import som.Random
+import scala.Predef.augmentString
+import scala.Predef.intWrapper
+import scala.Predef.genericArrayOps
+import scala.{Int, Boolean, Array}
+import java.lang.{Math, String}
 
-class BounceBenchmark extends benchmarks.Benchmark[Int] {
+object BounceBenchmark extends communitybench.Benchmark {
   private class Ball(random: Random) {
     private var x: Int    = random.next()  % 500
     private var y: Int    = random.next()  % 500
@@ -52,12 +56,10 @@ class BounceBenchmark extends benchmarks.Benchmark[Int] {
     }
   }
 
-  override val runningTime: BenchmarkRunningTime = ShortRunningTime
-
-  override def run(): Int = {
+  def run(input: String): Int = {
     val random = new Random()
 
-    val ballCount = 100
+    val ballCount = input.toInt
     var bounces   = 0
     val balls     = Array.fill(ballCount)(new Ball(random))
 
@@ -72,6 +74,6 @@ class BounceBenchmark extends benchmarks.Benchmark[Int] {
     bounces
   }
 
-  override def check(result: Int): Boolean =
-    result == 1331
+  override def main(args: Array[String]): Unit =
+    super.main(args)
 }
