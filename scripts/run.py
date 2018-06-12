@@ -65,6 +65,12 @@ configurations = [
         'scala-native-0.3.7',
 ]
 
+if 'GRAALVM_HOME' in os.environ:
+    configurations += [
+            'native-image',
+            'native-image-pgo',
+    ]
+
 runs = 20
 batches = 3000
 batch_size = 1
@@ -77,7 +83,7 @@ if __name__ == "__main__":
             input = slurp(os.path.join('input', bench))
             output = slurp(os.path.join('output', bench))
             compilecmd = slurp(os.path.join('confs', conf, 'compile'))
-            runcmd = slurp(os.path.join('confs', conf, 'run')).replace('$BENCH', bench).split(' ')
+            runcmd = slurp(os.path.join('confs', conf, 'run')).replace('$BENCH', bench).replace('$HOME', os.environ['HOME']).split(' ')
 
             if os.path.exists(os.path.join('confs', conf, 'build.sbt')):
                 sh.copyfile(os.path.join('confs', conf, 'build.sbt'), 'build.sbt')
