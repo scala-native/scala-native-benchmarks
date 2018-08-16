@@ -35,7 +35,7 @@ def run(cmd):
     return subp.check_output(cmd)
 
 def compile(bench, compilecmd):
-    cmd = [sbt, 'clean']
+    cmd = [sbt, '-J-Xmx2G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
     cmd.append(compilecmd)
     return run(cmd)
