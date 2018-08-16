@@ -2,3 +2,4 @@ bin/.coursier
 bin/.scalafmt*
 results/
 *.iprof
+.idea
