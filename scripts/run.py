@@ -60,14 +60,20 @@ benchmarks = [
         'sudoku.SudokuBenchmark',
 ]
 
-configurations = [
+
+baseline = [
         'jvm',
         'scala-native-0.3.8',
+]
+
+latest = [
         'scala-native-0.3.9-SNAPSHOT',
 ]
 
+configurations = baseline + latest
+
 if 'GRAALVM_HOME' in os.environ:
-    configurations += [
+    baseline += [
             'native-image',
             'native-image-pgo',
     ]
@@ -77,6 +83,11 @@ batches = 3000
 batch_size = 1
 
 if __name__ == "__main__":
+    if "baseline" in sys.argv:
+        configurations = baseline
+    elif "latest" in sys.argv:
+        configurations = latest
+
     for conf in configurations:
         for bench in benchmarks:
             print('--- conf: {}, bench: {}'.format(conf, bench))
@@ -92,7 +103,7 @@ if __name__ == "__main__":
                 os.remove('build.sbt')
 
             if os.path.exists(os.path.join('confs', conf, 'plugins.sbt')):
-                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/build.sbt')
+                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/plugins.sbt')
             else:
                 os.remove('project/plugins.sbt')
 
