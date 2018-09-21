@@ -62,7 +62,8 @@ benchmarks = [
 
 configurations = [
         'jvm',
-        'scala-native-0.3.7',
+        'scala-native-0.3.8',
+        'scala-native-0.3.9-SNAPSHOT',
 ]
 
 if 'GRAALVM_HOME' in os.environ:
