@@ -91,7 +91,7 @@ if __name__ == "__main__":
                 os.remove('build.sbt')
 
             if os.path.exists(os.path.join('confs', conf, 'plugins.sbt')):
-                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/build.sbt')
+                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/plugins.sbt')
             else:
                 os.remove('project/plugins.sbt')
 
