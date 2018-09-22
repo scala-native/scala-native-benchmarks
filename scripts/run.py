@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import sys
 import os
 import errno
@@ -62,7 +62,7 @@ benchmarks = [
 
 
 baseline = [
-        'jvm',
+#        'jvm',
         'scala-native-0.3.8',
 ]
 
