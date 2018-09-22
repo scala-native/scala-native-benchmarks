@@ -1,6 +1,9 @@
+#!/usr/bin/env python2
 from run import benchmarks, runs, configurations
 
 import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
 
 def config_data(bench, conf):
     out = []
@@ -33,11 +36,27 @@ def peak_performance():
         out.append(res)
     return out
 
+def p50_chart(plt):
+    ind = np.arange(len(benchmarks))
+    for conf in configurations:
+        res = []
+        for bench in benchmarks:
+            try:
+                res.append(np.percentile(config_data(bench, conf), 50))
+            except IndexError:
+                res.append(0)
+        plt.bar(ind, res, align='center', label=conf)
+    plt.xticks(ind, map(lambda x: x.split(".")[0],benchmarks))
+    plt.legend()
+    plt.show()
+
+
 if __name__ == '__main__':
     leading = ['name']
     for conf in configurations:
         leading.append(conf)
     print ','.join(leading)
     for bench, res in zip(benchmarks, peak_performance()):
-        print ','.join([bench] + list(map(str, res)))
+        print ','.join([bench.split(".")[0]] + list(map(str, res)))
+    p50_chart(plt)
 
