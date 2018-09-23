@@ -39,6 +39,8 @@ def percentile(configurations, percentile):
 
 
 def bar_chart_relative(plt, configurations, percentile):
+    plt.clf()
+    plt.cla()
     ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
     base = []
@@ -66,7 +68,30 @@ def bar_chart_relative(plt, configurations, percentile):
     return plt
 
 
+def example_run_plot(plt, configurations, bench, run=3):
+    plt.clf()
+    plt.cla()
+
+    for conf in configurations:
+        points = []
+        try:
+            with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
+                for line in data.readlines():
+                    points.append(float(line) / 1000000)
+        except IOError:
+            pass
+        ind = np.arange(len(points))
+        plt.plot(ind, points, label=conf)
+    plt.title("{} run #{}".format(bench, str(run)))
+    plt.xlabel("Iteration")
+    plt.ylabel("Run time (s)")
+    plt.legend()
+    return plt
+
+
 def percentiles_chart(plt, configurations, bench, limit=99):
+    plt.clf()
+    plt.cla()
     for conf in configurations:
         data = config_data(bench, conf)
         percentiles = np.arange(0, limit)
@@ -132,8 +157,6 @@ def write_md_file(rootdir, md_file, configurations):
         md_file.write("## Benchmark run time (s) at {} percentile \n".format(p))
         chart_name = "relative_percentile_" + str(p) + ".png"
         bar_chart_relative(plt, configurations, p).savefig(rootdir + chart_name)
-        plt.clf()
-        plt.cla()
 
         md_file.write("![Chart]({})\n\n".format(chart_name))
 
@@ -148,9 +171,12 @@ def write_md_file(rootdir, md_file, configurations):
         chart_name = "percentile_" + bench + ".png"
         chart_file = rootdir + chart_name
         percentiles_chart(plt, configurations, bench).savefig(chart_file)
-        plt.clf()
-        plt.cla()
 
+        md_file.write("![Chart]({})\n".format(chart_name))
+
+        chart_name = "example_run_3_" + bench + ".png"
+        chart_file = rootdir + chart_name
+        example_run_plot(plt, configurations, bench).savefig(chart_file)
         md_file.write("![Chart]({})\n".format(chart_name))
 
 
