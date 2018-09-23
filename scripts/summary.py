@@ -16,7 +16,7 @@ def config_data(bench, conf):
             points = []
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
                 for line in data.readlines():
-                    points.append(float(line))
+                    points.append(float(line) / 1000000)
             # take only last 1000 to account for startup
             out += points[-1000:]
         except IOError:
@@ -61,6 +61,7 @@ def percentiles_chart(plt, bench, limit=99):
         plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
     plt.title(bench)
+    plt.ylim(ymin=0)
     plt.xlabel("Percentile")
     plt.ylabel("Run time (s)")
     return plt
@@ -90,8 +91,12 @@ def write_md_table(file, data):
 
     for bench, res in zip(benchmarks, data):
         file.write('|')
-        file.write('|'.join([bench] + list(map(str, res))))
+        file.write('|'.join([benchmark_md_link(bench)] + list(map(str, res))))
         file.write('|\n')
+
+
+def benchmark_md_link(bench):
+    return "[{}]({})".format(bench, bench.replace(".","").lower())
 
 
 def benchmark_short_name(bench):
