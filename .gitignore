@@ -1,5 +1,6 @@
 bin/.coursier
 bin/.scalafmt*
 results/
+reports/
 *.iprof
 .idea
