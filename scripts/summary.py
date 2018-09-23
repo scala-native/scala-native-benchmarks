@@ -2,31 +2,12 @@
 from run import benchmarks, runs, configurations, mkdir
 
 import numpy as np
+import time
 import matplotlib
 import matplotlib.pyplot as plt
 
 
 def config_data(bench, conf):
-    out = []
-    for run in xrange(runs):
-        try:
-            points = []
-            with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
-                for line in data.readlines():
-                    points.append(float(line))
-            # take only last 1000 to account for startup
-            points = points[-1000:]
-            # filter out 1% worst measurements as outliers
-            pmax = np.percentile(points, 99)
-            for point in points:
-                if point <= pmax:
-                    out.append(point)
-        except IOError:
-            pass
-    return np.array(out)
-
-
-def hot_config_data(bench, conf):
     out = []
     for run in xrange(runs):
         try:
@@ -41,7 +22,7 @@ def hot_config_data(bench, conf):
     return np.array(out)
 
 
-def peak_performance(percentile):
+def percentile(percentile):
     out = []
     for bench in benchmarks:
         res = []
@@ -72,13 +53,16 @@ def bar_chart(plt, percentile):
 
 def percentiles_chart(plt, bench, limit=99):
     for conf in configurations:
-        data = hot_config_data(bench, conf)
+        data = config_data(bench, conf)
         percentiles = np.arange(0, limit)
         percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
-        plt.plot(percentiles, percvalue, label = conf)
+        plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
     plt.title(bench)
+    plt.xlabel("Percentile (%)")
+    plt.ylabel("Run time (s)")
     return plt
+
 
 def print_table(data):
     leading = ['name']
@@ -94,10 +78,11 @@ def benchmark_short_name(bench):
 
 
 if __name__ == '__main__':
-    print_table(peak_performance(50))
+    print_table(percentile(50))
     # bar_chart(plt, 50).show()
-    mkdir("reports")
+    rootdir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "/"
+    mkdir(rootdir)
     for bench in benchmarks:
-        percentiles_chart(plt, bench).savefig("reports/percentile_" + bench + ".png")
+        percentiles_chart(plt, bench).savefig(rootdir + "percentile_" + bench + ".png")
         plt.clf()
         plt.cla()
