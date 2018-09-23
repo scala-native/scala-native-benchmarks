@@ -77,26 +77,35 @@ def print_table(data):
 
 
 def write_md_table(file, data):
-    leading = ['name']
-    for conf in configurations:
-        leading.append(conf)
+    header = ['name']
+    header.append(configurations[0])
+    for conf in configurations[1:]:
+        header.append(conf)
+        header.append("")
     file.write('|')
-    file.write(' | '.join(leading))
+    file.write(' | '.join(header))
     file.write('|\n')
 
     file.write('|')
-    for _ in leading:
+    for _ in header:
         file.write(' -- |')
     file.write('\n')
 
-    for bench, res in zip(benchmarks, data):
+    for bench, res0 in zip(benchmarks, data):
+        base = res0[0]
+        res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
         file.write('|')
-        file.write('|'.join([benchmark_md_link(bench)] + list(map(str, res))))
+        file.write('|'.join([benchmark_md_link(bench)] + list(res)))
         file.write('|\n')
 
 
+def cell(x, base):
+    percent_diff = (float(x) / base - 1) * 100
+    return [("%.4f" % x), ("+" if percent_diff > 0 else "") + ("%.2f" % percent_diff) + "%"]
+
+
 def benchmark_md_link(bench):
-    return "[{}]({})".format(bench, bench.replace(".","").lower())
+    return "[{}]({})".format(bench, bench.replace(".", "").lower())
 
 
 def benchmark_short_name(bench):
