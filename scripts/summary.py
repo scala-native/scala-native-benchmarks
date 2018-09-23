@@ -7,6 +7,7 @@ import sys
 import matplotlib
 import matplotlib.pyplot as plt
 import os
+import argparse
 
 
 def config_data(bench, conf):
@@ -154,19 +155,38 @@ def write_md_file(rootdir, md_file, configurations):
 
 
 if __name__ == '__main__':
+    dirs = next(os.walk("results"))[1]
+    results = dirs
+    for dir in dirs:
+        if dir.startswith(latest):
+            results += ["latest" + dir[len(latest):]]
+        if dir.startswith(stable):
+            results += ["stable" + dir[len(stable):]]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--comment", help="comment at the suffix of the report name")
+    parser.add_argument("comparisons", nargs='*', choices= results + ["all"],
+                        default="all")
+    args = parser.parse_args()
+
     configurations = []
-    if len(sys.argv) > 1:
-        for arg in sys.argv[1:]:
+    if args.comparisons == "all":
+        configurations = all_configs
+    else:
+        for arg in args.comparisons:
             if arg.startswith("latest"):
                 configurations += [latest + arg[len("latest"):]]
             elif arg.startswith("stable"):
                 configurations += [stable + arg[len("stable"):]]
             else:
                 configurations += arg
-    else:
-        configurations = all_configs
+
+    comment = "_vs_".join(configurations)
+    if args.comment is not None:
+        comment = args.comment
+
+    report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
-    report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + "_vs_".join(configurations) + "/"
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
         write_md_file(report_dir, md_file, configurations)
