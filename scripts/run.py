@@ -6,18 +6,21 @@ import subprocess as subp
 import shutil as sh
 import argparse
 
+
 def mkdir(path):
     try:
         os.makedirs(path)
-    except OSError as exc: # Python >2.5
+    except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST and os.path.isdir(path):
             pass
         else:
             raise
 
+
 def slurp(path):
     with open(path) as f:
         return f.read().strip()
+
 
 def where(cmd):
     if os.path.isfile(cmd):
@@ -31,9 +34,11 @@ def where(cmd):
         else:
             return None
 
+
 def run(cmd):
     print(">>> " + str(cmd))
     return subp.check_output(cmd)
+
 
 def compile(bench, compilecmd):
     cmd = [sbt, '-J-Xmx2G', 'clean']
@@ -41,24 +46,25 @@ def compile(bench, compilecmd):
     cmd.append(compilecmd)
     return run(cmd)
 
+
 sbt = where('sbt')
 
 benchmarks = [
-        'bounce.BounceBenchmark',
-        'list.ListBenchmark',
-        'richards.RichardsBenchmark',
-        'queens.QueensBenchmark',
-        'permute.PermuteBenchmark',
-        'deltablue.DeltaBlueBenchmark',
-        'tracer.TracerBenchmark',
-        'brainfuck.BrainfuckBenchmark',
-        'json.JsonBenchmark',
-        'cd.CDBenchmark',
-        'kmeans.KmeansBenchmark',
-        'gcbench.GCBenchBenchmark',
-        'mandelbrot.MandelbrotBenchmark',
-        'nbody.NbodyBenchmark',
-        'sudoku.SudokuBenchmark',
+    'bounce.BounceBenchmark',
+    'list.ListBenchmark',
+    'richards.RichardsBenchmark',
+    'queens.QueensBenchmark',
+    'permute.PermuteBenchmark',
+    'deltablue.DeltaBlueBenchmark',
+    'tracer.TracerBenchmark',
+    'brainfuck.BrainfuckBenchmark',
+    'json.JsonBenchmark',
+    'cd.CDBenchmark',
+    'kmeans.KmeansBenchmark',
+    'gcbench.GCBenchBenchmark',
+    'mandelbrot.MandelbrotBenchmark',
+    'nbody.NbodyBenchmark',
+    'sudoku.SudokuBenchmark',
 ]
 
 stable = 'scala-native-0.3.8'
@@ -69,13 +75,12 @@ baseline = [
 
 latest = 'scala-native-0.3.9-SNAPSHOT'
 
-
 configurations = all_configs = baseline + [latest]
 
 if 'GRAALVM_HOME' in os.environ:
     baseline += [
-            'native-image',
-            'native-image-pgo',
+        'native-image',
+        'native-image-pgo',
     ]
 
 runs = 20
@@ -110,7 +115,8 @@ if __name__ == "__main__":
             input = slurp(os.path.join('input', bench))
             output = slurp(os.path.join('output', bench))
             compilecmd = slurp(os.path.join('confs', conf, 'compile'))
-            runcmd = slurp(os.path.join('confs', conf, 'run')).replace('$BENCH', bench).replace('$HOME', os.environ['HOME']).split(' ')
+            runcmd = slurp(os.path.join('confs', conf, 'run')).replace('$BENCH', bench).replace('$HOME', os.environ[
+                'HOME']).split(' ')
 
             if os.path.exists(os.path.join('confs', conf, 'build.sbt')):
                 sh.copyfile(os.path.join('confs', conf, 'build.sbt'), 'build.sbt')
@@ -135,4 +141,3 @@ if __name__ == "__main__":
                 out = run(cmd)
                 with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
                     resultfile.write(out)
-
