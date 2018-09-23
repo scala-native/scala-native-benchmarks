@@ -3,8 +3,10 @@ from run import benchmarks, runs, configurations, mkdir
 
 import numpy as np
 import time
+import sys
 import matplotlib
 import matplotlib.pyplot as plt
+import os
 
 
 def config_data(bench, conf):
@@ -59,7 +61,7 @@ def percentiles_chart(plt, bench, limit=99):
         plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
     plt.title(bench)
-    plt.xlabel("Percentile (%)")
+    plt.xlabel("Percentile")
     plt.ylabel("Run time (s)")
     return plt
 
@@ -70,7 +72,26 @@ def print_table(data):
         leading.append(conf)
     print ','.join(leading)
     for bench, res in zip(benchmarks, data):
-        print ','.join([benchmark_short_name(bench)] + list(map(str, res)))
+        print ','.join([bench] + list(map(str, res)))
+
+
+def write_md_table(file, data):
+    leading = ['name']
+    for conf in configurations:
+        leading.append(conf)
+    file.write('|')
+    file.write(' | '.join(leading))
+    file.write('|\n')
+
+    file.write('|')
+    for _ in leading:
+        file.write(' -- |')
+    file.write('\n')
+
+    for bench, res in zip(benchmarks, data):
+        file.write('|')
+        file.write('|'.join([bench] + list(map(str, res))))
+        file.write('|\n')
 
 
 def benchmark_short_name(bench):
@@ -78,11 +99,31 @@ def benchmark_short_name(bench):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        configurations = sys.argv[1:]
     print_table(percentile(50))
     # bar_chart(plt, 50).show()
-    rootdir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "/"
+    rootdir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + "_vs_".join(configurations) + "/"
     mkdir(rootdir)
-    for bench in benchmarks:
-        percentiles_chart(plt, bench).savefig(rootdir + "percentile_" + bench + ".png")
-        plt.clf()
-        plt.cla()
+    with open(os.path.join(rootdir, "Readme.md"), 'w+') as md_file:
+        md_file.write("# Summary\n")
+        md_file.write("## Benchmark run time (s) at 50 percentile \n")
+        write_md_table(md_file, percentile(50))
+        md_file.write("## Benchmark run time (s) at 90 percentile \n")
+        write_md_table(md_file, percentile(90))
+        md_file.write("## Benchmark run time (s) at 99 percentile \n")
+        write_md_table(md_file, percentile(99))
+
+        md_file.write("# Individual benchmarks\n")
+        for bench in benchmarks:
+            md_file.write("## ")
+            md_file.write(bench)
+            md_file.write("\n")
+
+            chart_name = "percentile_" + bench + ".png"
+            chart_file = rootdir + chart_name
+            percentiles_chart(plt, bench).savefig(chart_file)
+            plt.clf()
+            plt.cla()
+
+            md_file.write("![Chart]({})\n".format(chart_name))
