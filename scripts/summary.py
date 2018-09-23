@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from run import benchmarks, runs, configurations, mkdir
+from run import benchmarks, runs, mkdir, all_configs, latest, stable
 
 import numpy as np
 import time
@@ -24,7 +24,7 @@ def config_data(bench, conf):
     return np.array(out)
 
 
-def percentile(percentile):
+def percentile(configurations, percentile):
     out = []
     for bench in benchmarks:
         res = []
@@ -37,7 +37,7 @@ def percentile(percentile):
     return out
 
 
-def bar_chart_relative(plt, percentile):
+def bar_chart_relative(plt, configurations, percentile):
     ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
     base = []
@@ -65,7 +65,7 @@ def bar_chart_relative(plt, percentile):
     return plt
 
 
-def percentiles_chart(plt, bench, limit=99):
+def percentiles_chart(plt, configurations, bench, limit=99):
     for conf in configurations:
         data = config_data(bench, conf)
         percentiles = np.arange(0, limit)
@@ -79,7 +79,7 @@ def percentiles_chart(plt, bench, limit=99):
     return plt
 
 
-def print_table(data):
+def print_table(configurations, data):
     leading = ['name']
     for conf in configurations:
         leading.append(conf)
@@ -88,7 +88,7 @@ def print_table(data):
         print ','.join([bench] + list(map(str, res)))
 
 
-def write_md_table(file, data):
+def write_md_table(file, configurations, data):
     header = ['name']
     header.append(configurations[0])
     for conf in configurations[1:]:
@@ -125,18 +125,18 @@ def benchmark_short_name(bench):
     return bench.split(".")[0]
 
 
-def write_md_file(rootdir, md_file):
+def write_md_file(rootdir, md_file, configurations):
     md_file.write("# Summary\n")
     for p in [50, 90, 99]:
         md_file.write("## Benchmark run time (s) at {} percentile \n".format(p))
         chart_name = "relative_percentile_" + str(p) + ".png"
-        bar_chart_relative(plt, p).savefig(rootdir + chart_name)
+        bar_chart_relative(plt, configurations, p).savefig(rootdir + chart_name)
         plt.clf()
         plt.cla()
 
         md_file.write("![Chart]({})\n\n".format(chart_name))
 
-        write_md_table(md_file, percentile(p))
+        write_md_table(md_file, configurations, percentile(configurations, p))
 
     md_file.write("# Individual benchmarks\n")
     for bench in benchmarks:
@@ -146,7 +146,7 @@ def write_md_file(rootdir, md_file):
 
         chart_name = "percentile_" + bench + ".png"
         chart_file = rootdir + chart_name
-        percentiles_chart(plt, bench).savefig(chart_file)
+        percentiles_chart(plt, configurations, bench).savefig(chart_file)
         plt.clf()
         plt.cla()
 
@@ -154,11 +154,20 @@ def write_md_file(rootdir, md_file):
 
 
 if __name__ == '__main__':
+    configurations = []
     if len(sys.argv) > 1:
-        configurations = sys.argv[1:]
+        for arg in sys.argv[1:]:
+            if arg == "latest":
+                configurations += [latest]
+            elif arg == "stable":
+                configurations += [stable]
+            else:
+                configurations += arg
+    else:
+        configurations = all_configs
     # print_table(percentile(50))
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
     rootdir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + "_vs_".join(configurations) + "/"
     mkdir(rootdir)
     with open(os.path.join(rootdir, "Readme.md"), 'w+') as md_file:
-        write_md_file(rootdir, md_file)
+        write_md_file(rootdir, md_file, configurations)
