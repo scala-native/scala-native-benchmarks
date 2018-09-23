@@ -101,7 +101,7 @@ def write_md_table(file, data):
 
 def cell(x, base):
     percent_diff = (float(x) / base - 1) * 100
-    return [("%.4f" % x), ("+" if percent_diff > 0 else "") + ("%.2f" % percent_diff) + "%"]
+    return [("%.4f" % x), ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")]
 
 
 def benchmark_md_link(bench):
