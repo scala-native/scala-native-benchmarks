@@ -37,22 +37,6 @@ def percentile(percentile):
     return out
 
 
-# not good
-def bar_chart(plt, percentile):
-    ind = np.arange(len(benchmarks))
-    for conf in configurations:
-        res = []
-        for bench in benchmarks:
-            try:
-                res.append(np.percentile(config_data(bench, conf), percentile))
-            except IndexError:
-                res.append(0)
-        plt.bar(ind, res, align='center', label=conf)
-    plt.xticks(ind, map(benchmark_short_name, benchmarks))
-    plt.legend()
-    return plt
-
-
 def bar_chart_relative(plt, percentile):
     ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
@@ -67,7 +51,7 @@ def bar_chart_relative(plt, percentile):
             ref.append(0.0)
     plt.bar(ind * conf_count, ref, label=configurations[0])
 
-    for i,conf in enumerate(configurations[1:]):
+    for i, conf in enumerate(configurations[1:]):
         res = []
         for bench, base_val in zip(benchmarks, base):
             try:
@@ -75,8 +59,8 @@ def bar_chart_relative(plt, percentile):
             except IndexError:
                 res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf)
-    plt.xticks((ind * conf_count + (conf_count - 1)/2.0), map(benchmark_short_name, benchmarks))
-    plt.title("Relative performance against " + configurations[0] + " at " + str(percentile) + " percentile")
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
+    plt.title("Relative test execution times against " + configurations[0] + " at " + str(percentile) + " percentile")
     plt.legend()
     return plt
 
@@ -141,14 +125,19 @@ def benchmark_short_name(bench):
     return bench.split(".")[0]
 
 
-def write_md_file(md_file):
+def write_md_file(rootdir, md_file):
     md_file.write("# Summary\n")
-    md_file.write("## Benchmark run time (s) at 50 percentile \n")
-    write_md_table(md_file, percentile(50))
-    md_file.write("## Benchmark run time (s) at 90 percentile \n")
-    write_md_table(md_file, percentile(90))
-    md_file.write("## Benchmark run time (s) at 99 percentile \n")
-    write_md_table(md_file, percentile(99))
+    for p in [50, 90, 99]:
+        md_file.write("## Benchmark run time (s) at {} percentile \n".format(p))
+        chart_name = "relative_percentile_" + str(p) + ".png"
+        bar_chart_relative(plt, p).savefig(rootdir + chart_name)
+        plt.clf()
+        plt.cla()
+
+        md_file.write("![Chart]({})\n\n".format(chart_name))
+
+        write_md_table(md_file, percentile(p))
+
     md_file.write("# Individual benchmarks\n")
     for bench in benchmarks:
         md_file.write("## ")
@@ -168,9 +157,8 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         configurations = sys.argv[1:]
     # print_table(percentile(50))
-    # bar_chart(plt, 50).show()
+    plt.rcParams["figure.figsize"] = [16.0, 12.0]
     rootdir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + "_vs_".join(configurations) + "/"
     mkdir(rootdir)
-    # with open(os.path.join(rootdir, "Readme.md"), 'w+') as md_file:
-    #     write_md_file(md_file)
-    bar_chart_relative(plt, 50).show()
+    with open(os.path.join(rootdir, "Readme.md"), 'w+') as md_file:
+        write_md_file(rootdir, md_file)
