@@ -62,7 +62,7 @@ benchmarks = [
 
 
 baseline = [
-       'jvm',
+        'jvm',
         'scala-native-0.3.8',
 ]
 
