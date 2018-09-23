@@ -165,9 +165,10 @@ if __name__ == '__main__':
                 configurations += arg
     else:
         configurations = all_configs
-    # print_table(percentile(50))
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
-    rootdir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + "_vs_".join(configurations) + "/"
-    mkdir(rootdir)
-    with open(os.path.join(rootdir, "Readme.md"), 'w+') as md_file:
-        write_md_file(rootdir, md_file, configurations)
+    report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + "_vs_".join(configurations) + "/"
+    mkdir(report_dir)
+    with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
+        write_md_file(report_dir, md_file, configurations)
+
+    print report_dir
