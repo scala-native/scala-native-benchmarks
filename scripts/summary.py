@@ -157,10 +157,10 @@ if __name__ == '__main__':
     configurations = []
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
-            if arg == "latest":
-                configurations += [latest]
-            elif arg == "stable":
-                configurations += [stable]
+            if arg.startswith("latest"):
+                configurations += [latest + arg[len("latest"):]]
+            elif arg.startswith("stable"):
+                configurations += [stable + arg[len("stable"):]]
             else:
                 configurations += arg
     else:
