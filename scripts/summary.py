@@ -144,7 +144,7 @@ def cell(x, base):
 
 
 def benchmark_md_link(bench):
-    return "[{}]({})".format(bench, bench.replace(".", "").lower())
+    return "[{}](#{})".format(bench, bench.replace(".", "").lower())
 
 
 def benchmark_short_name(bench):
