@@ -4,6 +4,7 @@ import os
 import errno
 import subprocess as subp
 import shutil as sh
+import argparse
 
 def mkdir(path):
     try:
@@ -60,17 +61,16 @@ benchmarks = [
         'sudoku.SudokuBenchmark',
 ]
 
-
+stable = 'scala-native-0.3.8'
 baseline = [
-        'jvm',
-        'scala-native-0.3.8',
+    'jvm',
+    stable,
 ]
 
-latest = [
-        'scala-native-0.3.9-SNAPSHOT',
-]
+latest = 'scala-native-0.3.9-SNAPSHOT'
 
-configurations = baseline + latest
+
+configurations = all_configs = baseline + [latest]
 
 if 'GRAALVM_HOME' in os.environ:
     baseline += [
@@ -83,10 +83,25 @@ batches = 3000
 batch_size = 1
 
 if __name__ == "__main__":
-    if "baseline" in sys.argv:
-        configurations = baseline
-    elif "latest" in sys.argv:
-        configurations = latest
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--suffix", help="suffix added to results")
+    parser.add_argument("set", nargs='*', choices=configurations + ["baseline", "latest", "stable", "all"],
+                        default="all")
+    args = parser.parse_args()
+
+    if args.set != all_configs:
+        configurations = []
+        for choice in args.set:
+            if choice == "baseline":
+                configurations += baseline
+            elif choice == "latest" in args.set:
+                configurations += [latest]
+            elif choice == "stable" in args.set:
+                configurations += [stable]
+            else:
+                configurations + [choice]
+    else:
+        configurations = all_configs
 
     for conf in configurations:
         for bench in benchmarks:
@@ -108,7 +123,7 @@ if __name__ == "__main__":
                 os.remove('project/plugins.sbt')
 
             compile(bench, compilecmd)
-            resultsdir = os.path.join('results', conf, bench)
+            resultsdir = os.path.join('results', conf + "_" + args.suffix, bench)
             mkdir(resultsdir)
 
             for n in xrange(runs):
