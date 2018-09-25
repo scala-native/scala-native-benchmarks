@@ -129,7 +129,11 @@ if __name__ == "__main__":
                 os.remove('project/plugins.sbt')
 
             compile(bench, compilecmd)
-            resultsdir = os.path.join('results', conf + "_" + args.suffix, bench)
+            suffix = ""
+            if args.suffix is not None:
+                suffix =  "_" + args.suffix
+
+            resultsdir = os.path.join('results', conf  + suffix, bench)
             mkdir(resultsdir)
 
             for n in xrange(runs):
