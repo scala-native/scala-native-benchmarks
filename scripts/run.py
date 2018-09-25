@@ -68,43 +68,66 @@ benchmarks = [
 ]
 
 stable = 'scala-native-0.3.8'
+latest = 'scala-native-0.3.9-SNAPSHOT'
 baseline = [
     'jvm',
     stable,
 ]
 
-latest = 'scala-native-0.3.9-SNAPSHOT'
+confs_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/confs"
 
-configurations = all_configs = baseline + [latest]
+configurations = all_configs = next(os.walk(confs_path))[1]
+
+graalvm = [
+    'native-image',
+    'native-image-pgo',
+]
 
 if 'GRAALVM_HOME' in os.environ:
-    baseline += [
-        'native-image',
-        'native-image-pgo',
-    ]
+    baseline += graalvm
+else:
+    for g in graalvm:
+        all_configs.remove(g)
 
 runs = 20
 batches = 3000
 batch_size = 1
 
+
+def expand_wild_cards(arg):
+    if arg.startswith("latest"):
+        return latest + arg[len("latest"):]
+    elif arg.startswith("stable"):
+        return stable + arg[len("stable"):]
+    else:
+        return arg
+
+
+def generate_choices(direct_choices):
+    results = direct_choices
+    for dir in direct_choices:
+        if dir.startswith(latest):
+            results += ["latest" + dir[len(latest):]]
+        if dir.startswith(stable):
+            results += ["stable" + dir[len(stable):]]
+    return results
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--suffix", help="suffix added to results")
-    parser.add_argument("set", nargs='*', choices=configurations + ["baseline", "latest", "stable", "all"],
+    parser.add_argument("set", nargs='*', choices=generate_choices(configurations) + ["baseline", "all"],
                         default="all")
     args = parser.parse_args()
 
-    if args.set != all_configs:
+    if args.set != "all":
         configurations = []
         for choice in args.set:
-            if choice == "baseline":
+            expanded = expand_wild_cards(choice)
+            if expanded == "baseline":
                 configurations += baseline
-            elif choice == "latest" in args.set:
-                configurations += [latest]
-            elif choice == "stable" in args.set:
-                configurations += [stable]
             else:
-                configurations + [choice]
+                configurations += [expanded]
     else:
         configurations = all_configs
 

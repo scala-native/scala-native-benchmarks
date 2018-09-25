@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from run import benchmarks, runs, mkdir, all_configs, latest, stable
+from run import benchmarks, runs, mkdir, expand_wild_cards, generate_choices
 
 import numpy as np
 import time
@@ -181,13 +181,8 @@ def write_md_file(rootdir, md_file, configurations):
 
 
 if __name__ == '__main__':
-    dirs = next(os.walk("results"))[1]
-    results = dirs
-    for dir in dirs:
-        if dir.startswith(latest):
-            results += ["latest" + dir[len(latest):]]
-        if dir.startswith(stable):
-            results += ["stable" + dir[len(stable):]]
+    all_configs = next(os.walk("results"))[1]
+    results = generate_choices(all_configs)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
@@ -200,12 +195,7 @@ if __name__ == '__main__':
         configurations = all_configs
     else:
         for arg in args.comparisons:
-            if arg.startswith("latest"):
-                configurations += [latest + arg[len("latest"):]]
-            elif arg.startswith("stable"):
-                configurations += [stable + arg[len("stable"):]]
-            else:
-                configurations += arg
+            configurations += [expand_wild_cards(arg)]
 
     comment = "_vs_".join(configurations)
     if args.comment is not None:
