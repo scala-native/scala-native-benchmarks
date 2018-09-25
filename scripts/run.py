@@ -35,7 +35,7 @@ def run(cmd):
     return subp.check_output(cmd)
 
 def compile(bench, compilecmd):
-    cmd = [sbt, 'clean']
+    cmd = [sbt, '-J-Xmx2G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
     cmd.append(compilecmd)
     return run(cmd)
@@ -91,7 +91,7 @@ if __name__ == "__main__":
                 os.remove('build.sbt')
 
             if os.path.exists(os.path.join('confs', conf, 'plugins.sbt')):
-                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/build.sbt')
+                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/plugins.sbt')
             else:
                 os.remove('project/plugins.sbt')
 
