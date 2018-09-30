@@ -89,8 +89,9 @@ else:
     for g in graalvm:
         all_configs.remove(g)
 
-runs = 20
-batches = 3000
+default_runs = 20
+default_batches = 3000
+default_par = 1
 batch_size = 1
 
 
@@ -116,9 +117,26 @@ def generate_choices(direct_choices):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--suffix", help="suffix added to results")
+    parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
+    parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
+    parser.add_argument("--par", help="number of parallel processes per run", type=int, default=default_par)
     parser.add_argument("set", nargs='*', choices=generate_choices(configurations) + ["baseline", "all"],
                         default="all")
     args = parser.parse_args()
+
+    runs = args.runs
+    batches = args.batches
+    par = args.par
+
+    suffix = ""
+    if runs != default_runs:
+        suffix += "-r" + runs
+    if batches != default_batches:
+        suffix += "-b" + batches
+    if par != default_par:
+        suffix += "-p" + par
+    if args.suffix is not None:
+        suffix += "_" + args.suffix
 
     if args.set != "all":
         configurations = []
@@ -152,11 +170,9 @@ if __name__ == "__main__":
                 os.remove('project/plugins.sbt')
 
             compile(bench, compilecmd)
-            suffix = ""
-            if args.suffix is not None:
-                suffix =  "_" + args.suffix
 
-            resultsdir = os.path.join('results', conf  + suffix, bench)
+
+            resultsdir = os.path.join('results', conf + suffix, bench)
             mkdir(resultsdir)
 
             for n in xrange(runs):
