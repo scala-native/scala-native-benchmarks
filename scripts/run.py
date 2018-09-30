@@ -216,7 +216,7 @@ if __name__ == "__main__":
                 for tr in to_run:
                     failed += single_run(tr)
             else:
-                sum(pool.map(single_run, to_run),[])
+                failed += sum(pool.map(single_run, to_run),[])
 
     if len(failed) > 0:
         print("{} benchmarks failed ".format(len(failed)))
