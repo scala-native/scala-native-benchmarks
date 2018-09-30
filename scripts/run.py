@@ -130,11 +130,11 @@ if __name__ == "__main__":
 
     suffix = ""
     if runs != default_runs:
-        suffix += "-r" + runs
+        suffix += "-r" + str(runs)
     if batches != default_batches:
-        suffix += "-b" + batches
+        suffix += "-b" + str(batches)
     if par != default_par:
-        suffix += "-p" + par
+        suffix += "-p" + str(par)
     if args.suffix is not None:
         suffix += "_" + args.suffix
 
