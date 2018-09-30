@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from run import benchmarks, runs, mkdir, expand_wild_cards, generate_choices
+from run import benchmarks, mkdir, expand_wild_cards, generate_choices
 
 import numpy as np
 import time
@@ -11,8 +11,14 @@ import argparse
 
 
 def config_data(bench, conf):
+    files = next(os.walk("results/{}/{}".format(conf, bench)))[2]
+    runs = []
+    for file in files:
+        if not file.endswith(".fail"):
+            runs += [file]
+
     out = []
-    for run in xrange(runs):
+    for run in runs:
         try:
             points = []
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
@@ -186,7 +192,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
-    parser.add_argument("comparisons", nargs='*', choices= results + ["all"],
+    parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
     args = parser.parse_args()
 
