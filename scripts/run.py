@@ -5,6 +5,7 @@ import errno
 import subprocess as subp
 import shutil as sh
 import argparse
+import multiprocessing as mp
 
 
 def mkdir(path):
@@ -114,12 +115,35 @@ def generate_choices(direct_choices):
     return results
 
 
+def single_run(to_run):
+    n = to_run["n"]
+    runs = to_run["runs"]
+    cmd = to_run["cmd"]
+    resultsdir = to_run["resultsdir"]
+    conf = to_run["conf"]
+    bench = to_run["bench"]
+
+    print('--- run {}/{}'.format(n, runs))
+    try:
+        out = run(cmd)
+        with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
+            resultfile.write(out)
+        return []
+    except subp.CalledProcessError as err:
+        out = err.output
+        print "Failure!"
+        print out
+        with open(os.path.join(resultsdir, str(n) + ".failed"), 'w+') as failfile:
+            failfile.write(out)
+        return [dict(conf=conf, bench=bench, run=n)]
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--suffix", help="suffix added to results")
     parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
-    parser.add_argument("--par", help="number of parallel processes per run", type=int, default=default_par)
+    parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("set", nargs='*', choices=generate_choices(configurations) + ["baseline", "all"],
                         default="all")
     args = parser.parse_args()
@@ -150,6 +174,9 @@ if __name__ == "__main__":
         configurations = all_configs
 
     failed = []
+    pool = None
+    if par > 1:
+        pool = mp.Pool(par)
 
     for conf in configurations:
         for bench in benchmarks:
@@ -176,23 +203,21 @@ if __name__ == "__main__":
             resultsdir = os.path.join('results', conf + suffix, bench)
             mkdir(resultsdir)
 
-            for n in xrange(runs):
-                print('--- run {}/{}'.format(n, runs))
+            cmd = []
+            cmd.extend(runcmd)
+            cmd.extend([str(batches), str(batch_size), input, output])
 
-                cmd = []
-                cmd.extend(runcmd)
-                cmd.extend([str(batches), str(batch_size), input, output])
-                try:
-                    out = run(cmd)
-                    with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
-                        resultfile.write(out)
-                except subp.CalledProcessError as err:
-                    out = err.output
-                    print "Failure!"
-                    print out
-                    with open(os.path.join(resultsdir, str(n) + ".failed"), 'w+') as failfile:
-                        failfile.write(out)
-                    failed += [dict(conf=conf, bench=bench, run=n)]
+            to_run = []
+            for n in xrange(runs):
+                to_run += [dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n)]
+
+
+            if par == 1:
+                for tr in to_run:
+                    failed += single_run(tr)
+            else:
+                sum(pool.map(single_run, to_run),[])
+
     if len(failed) > 0:
         print("{} benchmarks failed ".format(len(failed)))
         for fail in failed:
