@@ -149,6 +149,8 @@ if __name__ == "__main__":
     else:
         configurations = all_configs
 
+    failed = []
+
     for conf in configurations:
         for bench in benchmarks:
             print('--- conf: {}, bench: {}'.format(conf, bench))
@@ -171,7 +173,6 @@ if __name__ == "__main__":
 
             compile(bench, compilecmd)
 
-
             resultsdir = os.path.join('results', conf + suffix, bench)
             mkdir(resultsdir)
 
@@ -181,6 +182,19 @@ if __name__ == "__main__":
                 cmd = []
                 cmd.extend(runcmd)
                 cmd.extend([str(batches), str(batch_size), input, output])
-                out = run(cmd)
-                with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
-                    resultfile.write(out)
+                try:
+                    out = run(cmd)
+                    with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
+                        resultfile.write(out)
+                except subp.CalledProcessError as err:
+                    out = err.output
+                    print "Failure!"
+                    print out
+                    with open(os.path.join(resultsdir, str(n) + ".failed"), 'w+') as failfile:
+                        failfile.write(out)
+                    failed += [dict(conf=conf, bench=bench, run=n)]
+    if len(failed) > 0:
+        print("{} benchmarks failed ".format(len(failed)))
+        for fail in failed:
+            print fail
+        exit(1)
