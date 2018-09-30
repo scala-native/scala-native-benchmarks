@@ -37,7 +37,7 @@ def where(cmd):
 
 def run(cmd):
     print(">>> " + str(cmd))
-    return subp.check_output(cmd)
+    return subp.check_output(cmd, stderr=subp.STDOUT)
 
 
 def compile(bench, compilecmd):
