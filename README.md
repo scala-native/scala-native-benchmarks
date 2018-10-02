@@ -35,6 +35,15 @@ Compare the lastest `stable` relesea vs `latest` snapshot
 REPORT=$(scripts/summary.py stable latest)
 ```
 
+### Specifying number of runs, batches, tests run in parallel
+```bash
+scripts/run.py --par 4 --runs 50 --batches 3000 stable
+# 50 runs (4 in parallel) each with 3000 batches for the stable release.
+```
+
+These settings will impact accuracy, this is why the names of the results folders will include the settings, in this case `scala-native-0.3.8-r50-p40-b3000`.
+Note that you can also use `stable-r50-p40-b3000` when using the `summary.py`.
+
 ### Comparing an experimental feature with latest from master
 1. build `scala-native` from latest master
 2. run the benchmark for it
