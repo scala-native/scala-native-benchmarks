@@ -11,7 +11,7 @@ import argparse
 
 
 def config_data(bench, conf):
-    files = next(os.walk("results/{}/{}".format(conf, bench)))[2]
+    files = next(os.walk("results/{}/{}".format(conf, bench)), [[],[],[]])[2]
     runs = []
     for file in files:
         if not file.endswith(".fail"):
@@ -100,9 +100,10 @@ def percentiles_chart(plt, configurations, bench, limit=99):
     plt.cla()
     for conf in configurations:
         data = config_data(bench, conf)
-        percentiles = np.arange(0, limit)
-        percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
-        plt.plot(percentiles, percvalue, label=conf)
+        if data.size > 0:
+            percentiles = np.arange(0, limit)
+            percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
+            plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
     plt.title(bench)
     plt.ylim(ymin=0)
