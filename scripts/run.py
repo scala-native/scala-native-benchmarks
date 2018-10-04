@@ -35,9 +35,9 @@ def where(cmd):
             return None
 
 
-def run(cmd):
+def run(cmd, env = None):
     print(">>> " + str(cmd))
-    return subp.check_output(cmd, stderr=subp.STDOUT)
+    return subp.check_output(cmd, stderr=subp.STDOUT, env = env)
 
 
 def compile(bench, compilecmd):
@@ -123,8 +123,10 @@ def single_run(to_run):
     bench = to_run["bench"]
 
     print('--- run {}/{}'.format(n, runs))
+    my_env = os.environ.copy()
+    my_env["SCALANATIVE_GC_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
     try:
-        out = run(cmd)
+        out = run(cmd, my_env)
         with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
             resultfile.write(out)
         return []
