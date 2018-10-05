@@ -14,7 +14,8 @@ def config_data(bench, conf):
     files = next(os.walk("results/{}/{}".format(conf, bench)), [[],[],[]])[2]
     runs = []
     for file in files:
-        if not file.endswith(".fail"):
+        if "." not in file:
+            # regular benchmark data
             runs += [file]
 
     out = []
@@ -23,12 +24,43 @@ def config_data(bench, conf):
             points = []
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
                 for line in data.readlines():
+                    #in ms
                     points.append(float(line) / 1000000)
             # take only last 1000 to account for startup
             out += points[-1000:]
         except IOError:
             pass
     return np.array(out)
+
+def gc_stats(bench, conf):
+    files = next(os.walk("results/{}/{}".format(conf, bench)), [[],[],[]])[2]
+    runs = []
+    for file in files:
+        if file.endswith(".gc.csv"):
+            # gc stats data
+            runs += [file]
+
+    timestamps = [], mark_times = [], sweep_times = [], gc_times = []
+    for run in runs:
+        try:
+            with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
+                #skip header
+                #timestamp_us,collection,mark_time_us,sweep_time_us
+                data.readline()
+                for line in data.readlines():
+                    arr = line.split(",")
+                    timestamps.append(int(arr[0]))
+                    # collection = arr[1]
+                    # in ms
+                    mark_time = float(arr[2])/ 1000
+                    mark_times.append(mark_time)
+                    sweep_time = float(arr[3])/ 1000
+                    sweep_times.append(sweep_time)
+                    gc_times.append(mark_time + sweep_time)
+        except IOError:
+            pass
+    return np.array(timestamps), np.array(mark_times), np.array(sweep_times), np.array(gc_times)
+
 
 
 def percentile(configurations, percentile):
