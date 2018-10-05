@@ -9,7 +9,7 @@ import argparse
 
 
 def config_data(bench, conf):
-    files = next(os.walk("results/{}/{}".format(conf, bench)), [[],[],[]])[2]
+    files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
     runs = []
     for file in files:
         if "." not in file:
@@ -22,7 +22,7 @@ def config_data(bench, conf):
             points = []
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
                 for line in data.readlines():
-                    #in ms
+                    # in ms
                     points.append(float(line) / 1000000)
             # take only last 1000 to account for startup
             out += points[-1000:]
@@ -32,7 +32,7 @@ def config_data(bench, conf):
 
 
 def gc_stats(bench, conf):
-    files = next(os.walk("results/{}/{}".format(conf, bench)), [[],[],[]])[2]
+    files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
     runs = []
     for file in files:
         if file.endswith(".gc.csv"):
@@ -46,17 +46,17 @@ def gc_stats(bench, conf):
     for run in runs:
         try:
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
-                #skip header
-                #timestamp_us,collection,mark_time_us,sweep_time_us
+                # skip header
+                # timestamp_us,collection,mark_time_us,sweep_time_us
                 data.readline()
                 for line in data.readlines():
                     arr = line.split(",")
                     # in ms
-                    timestamps.append(int(arr[0])/ 1000)
+                    timestamps.append(int(arr[0]) / 1000)
                     # collection = arr[1]
-                    mark_time = float(arr[2])/ 1000
+                    mark_time = float(arr[2]) / 1000
                     mark_times.append(mark_time)
-                    sweep_time = float(arr[3])/ 1000
+                    sweep_time = float(arr[3]) / 1000
                     sweep_times.append(sweep_time)
                     gc_times.append(mark_time + sweep_time)
         except IOError:
@@ -144,7 +144,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
             _, mark, _, total = gc_stats(bench, configurations[0])
             base.append(np.percentile(total, percentile))
             ref.append(1.0)
-            mark_ref.append(np.percentile(mark/total, percentile))
+            mark_ref.append(np.percentile(mark / total, percentile))
         except IndexError:
             base.append(0)
             ref.append(0.0)
@@ -222,6 +222,23 @@ def percentiles_chart(plt, configurations, bench, limit=99):
     plt.ylim(ymin=0)
     plt.xlabel("Percentile")
     plt.ylabel("Run time (ms)")
+    return plt
+
+
+def gc_pause_time_chart(plt, configurations, bench, limit=100):
+    plt.clf()
+    plt.cla()
+    for conf in configurations:
+        _, _, _, pauses = gc_stats(bench, conf)
+        if pauses.size > 0:
+            percentiles = np.arange(0, limit)
+            percvalue = np.array([np.percentile(pauses, perc) for perc in percentiles])
+            plt.plot(percentiles, percvalue, label=conf)
+    plt.legend()
+    plt.title(bench + ": Garbage Collector Pause Times")
+    plt.ylim(ymin=0)
+    plt.xlabel("Percentile")
+    plt.ylabel("GC pause time (ms)")
     return plt
 
 
@@ -314,7 +331,8 @@ def write_md_file(rootdir, md_file, configurations):
         write_md_table(md_file, configurations, percentile(configurations, p))
 
         md_file.write("## GC time (ms) at {} percentile \n".format(p))
-        chart_md(md_file, bar_chart_gc_relative(plt, configurations, p), rootdir, "relative_gc_percentile_" + str(p) + ".png")
+        chart_md(md_file, bar_chart_gc_relative(plt, configurations, p), rootdir,
+                 "relative_gc_percentile_" + str(p) + ".png")
         mark, sweep, total = percentile_gc(configurations, p)
         write_md_table_gc(md_file, configurations, mark, sweep, total)
 
@@ -325,6 +343,7 @@ def write_md_file(rootdir, md_file, configurations):
         md_file.write("\n")
 
         chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
+        chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir, "gc_pause_times_" + bench + ".png")
         chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
         chart_md(md_file, example_gc_plot(plt, configurations, bench), rootdir, "example_gc_run_3_" + bench + ".png")
 
