@@ -51,9 +51,9 @@ def gc_stats(bench, conf):
                 data.readline()
                 for line in data.readlines():
                     arr = line.split(",")
-                    timestamps.append(int(arr[0]))
-                    # collection = arr[1]
                     # in ms
+                    timestamps.append(int(arr[0])/ 1000)
+                    # collection = arr[1]
                     mark_time = float(arr[2])/ 1000
                     mark_times.append(mark_time)
                     sweep_time = float(arr[3])/ 1000
@@ -63,6 +63,29 @@ def gc_stats(bench, conf):
             pass
     return np.array(timestamps), np.array(mark_times), np.array(sweep_times), np.array(gc_times)
 
+
+def percentile_gc(configurations, percentile):
+    out_mark = []
+    out_sweep = []
+    out_total = []
+    for bench in benchmarks:
+        res_mark = []
+        res_sweep = []
+        res_total = []
+        for conf in configurations:
+            try:
+                _, mark, sweep, total = gc_stats(bench, conf)
+                res_mark.append(np.percentile(mark, percentile))
+                res_sweep.append(np.percentile(sweep, percentile))
+                res_total.append(np.percentile(total, percentile))
+            except IndexError:
+                res_mark.append(0)
+                res_sweep.append(0)
+                res_total.append(0)
+        out_mark.append(res_mark)
+        out_sweep.append(res_sweep)
+        out_total.append(res_total)
+    return out_mark, out_sweep, out_total
 
 
 def percentile(configurations, percentile):
@@ -167,6 +190,24 @@ def example_run_plot(plt, configurations, bench, run=3):
     return plt
 
 
+def example_gc_plot(plt, configurations, bench, run=3):
+    plt.clf()
+    plt.cla()
+
+    for conf in configurations:
+        timestamps, mark, sweep, total = gc_stats(conf,bench)
+        if len(timestamps) > 0:
+            ind = timestamps - timestamps[0]
+            plt.plot(ind, mark, label=conf + "-mark")
+            plt.plot(ind, sweep, label=conf + "-sweep")
+            plt.plot(ind, total, label=conf + "-total")
+    plt.title("{} run #{} garbage collections".format(bench, str(run)))
+    plt.xlabel("Time since first GC (ms)")
+    plt.ylabel("Run time (ms)")
+    plt.legend()
+    return plt
+
+
 def percentiles_chart(plt, configurations, bench, limit=99):
     plt.clf()
     plt.cla()
@@ -216,6 +257,30 @@ def write_md_table(file, configurations, data):
         file.write('|\n')
 
 
+def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
+    header = ['name', ""]
+    header.append(configurations[0])
+    for conf in configurations[1:]:
+        header.append(conf)
+        header.append("")
+    file.write('|')
+    file.write(' | '.join(header))
+    file.write('|\n')
+
+    file.write('|')
+    for _ in header:
+        file.write(' -- |')
+    file.write('\n')
+
+    for bench, mark_res0, sweep_res0, total_res0 in zip(benchmarks, mark_data, sweep_data, total_data):
+        for name, res0 in zip(["mark", "sweep", "total"], [mark_res0, sweep_res0, total_res0]):
+            base = res0[0]
+            res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
+            file.write('|')
+            file.write('|'.join([benchmark_md_link(bench)] + list([name]) + list(res)))
+            file.write('|\n')
+
+
 def cell(x, base):
     percent_diff = (float(x) / base - 1) * 100
     return [("%.4f" % x),
@@ -242,7 +307,10 @@ def write_md_file(rootdir, md_file, configurations):
         chart_md(md_file, bar_chart_relative(plt, configurations, p), rootdir, "relative_percentile_" + str(p) + ".png")
         write_md_table(md_file, configurations, percentile(configurations, p))
 
+        md_file.write("## GC time (ms) at {} percentile \n".format(p))
         chart_md(md_file, bar_chart_gc_relative(plt, configurations, p), rootdir, "relative_gc_percentile_" + str(p) + ".png")
+        mark, sweep, total = percentile_gc(configurations, p)
+        write_md_table_gc(md_file, configurations, mark, sweep, total)
 
     md_file.write("# Individual benchmarks\n")
     for bench in benchmarks:
@@ -250,16 +318,9 @@ def write_md_file(rootdir, md_file, configurations):
         md_file.write(bench)
         md_file.write("\n")
 
-        chart_name = "percentile_" + bench + ".png"
-        chart_file = rootdir + chart_name
-        percentiles_chart(plt, configurations, bench).savefig(chart_file)
-
-        md_file.write("![Chart]({})\n".format(chart_name))
-
-        chart_name = "example_run_3_" + bench + ".png"
-        chart_file = rootdir + chart_name
-        example_run_plot(plt, configurations, bench).savefig(chart_file)
-        md_file.write("![Chart]({})\n".format(chart_name))
+        chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
+        chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
+        chart_md(md_file, example_gc_plot(plt, configurations, bench), rootdir, "example_gc_run_3_" + bench + ".png")
 
 
 if __name__ == '__main__':
