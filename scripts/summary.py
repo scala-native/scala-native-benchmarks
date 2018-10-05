@@ -297,7 +297,7 @@ def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
             if name == "mark":
                 link = [benchmark_md_link(bench)]
             else:
-                link = []
+                link = [""]
 
             file.write('|')
             file.write('|'.join(link + list([name]) + list(res)))
