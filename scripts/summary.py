@@ -122,7 +122,7 @@ def example_run_plot(plt, configurations, bench, run=3):
         plt.plot(ind, points, label=conf)
     plt.title("{} run #{}".format(bench, str(run)))
     plt.xlabel("Iteration")
-    plt.ylabel("Run time (s)")
+    plt.ylabel("Run time (ms)")
     plt.legend()
     return plt
 
@@ -140,7 +140,7 @@ def percentiles_chart(plt, configurations, bench, limit=99):
     plt.title(bench)
     plt.ylim(ymin=0)
     plt.xlabel("Percentile")
-    plt.ylabel("Run time (s)")
+    plt.ylabel("Run time (ms)")
     return plt
 
 
@@ -193,7 +193,7 @@ def benchmark_short_name(bench):
 def write_md_file(rootdir, md_file, configurations):
     md_file.write("# Summary\n")
     for p in [50, 90, 99]:
-        md_file.write("## Benchmark run time (s) at {} percentile \n".format(p))
+        md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
         chart_name = "relative_percentile_" + str(p) + ".png"
         bar_chart_relative(plt, configurations, p).savefig(rootdir + chart_name)
 
