@@ -195,9 +195,9 @@ def example_gc_plot(plt, configurations, bench, run=3):
     plt.cla()
 
     for conf in configurations:
-        timestamps, mark, sweep, total = gc_stats(conf,bench)
+        timestamps, mark, sweep, total = gc_stats(bench, conf)
         if len(timestamps) > 0:
-            ind = timestamps - timestamps[0]
+            ind = np.array(map(lambda x: x - timestamps[0], timestamps))
             plt.plot(ind, mark, label=conf + "-mark")
             plt.plot(ind, sweep, label=conf + "-sweep")
             plt.plot(ind, total, label=conf + "-total")
@@ -276,8 +276,14 @@ def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
         for name, res0 in zip(["mark", "sweep", "total"], [mark_res0, sweep_res0, total_res0]):
             base = res0[0]
             res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
+
+            if name == "mark":
+                link = [benchmark_md_link(bench)]
+            else:
+                link = []
+
             file.write('|')
-            file.write('|'.join([benchmark_md_link(bench)] + list([name]) + list(res)))
+            file.write('|'.join(link + list([name]) + list(res)))
             file.write('|\n')
 
 
