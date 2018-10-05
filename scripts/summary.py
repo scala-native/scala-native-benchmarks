@@ -3,8 +3,6 @@ from run import benchmarks, mkdir, expand_wild_cards, generate_choices
 
 import numpy as np
 import time
-import sys
-import matplotlib
 import matplotlib.pyplot as plt
 import os
 import argparse
