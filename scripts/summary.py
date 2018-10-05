@@ -323,18 +323,19 @@ def chart_md(md_file, plt, rootdir, name):
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, configurations):
+def write_md_file(rootdir, md_file, configurations, gc_charts = True):
     md_file.write("# Summary\n")
     for p in [50, 90, 99]:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
         chart_md(md_file, bar_chart_relative(plt, configurations, p), rootdir, "relative_percentile_" + str(p) + ".png")
         write_md_table(md_file, configurations, percentile(configurations, p))
 
-        md_file.write("## GC time (ms) at {} percentile \n".format(p))
-        chart_md(md_file, bar_chart_gc_relative(plt, configurations, p), rootdir,
-                 "relative_gc_percentile_" + str(p) + ".png")
-        mark, sweep, total = percentile_gc(configurations, p)
-        write_md_table_gc(md_file, configurations, mark, sweep, total)
+        if gc_charts:
+            md_file.write("## GC time (ms) at {} percentile \n".format(p))
+            chart_md(md_file, bar_chart_gc_relative(plt, configurations, p), rootdir,
+                     "relative_gc_percentile_" + str(p) + ".png")
+            mark, sweep, total = percentile_gc(configurations, p)
+            write_md_table_gc(md_file, configurations, mark, sweep, total)
 
     md_file.write("# Individual benchmarks\n")
     for bench in benchmarks:
@@ -343,9 +344,11 @@ def write_md_file(rootdir, md_file, configurations):
         md_file.write("\n")
 
         chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
-        chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir, "gc_pause_times_" + bench + ".png")
+        if gc_charts:
+            chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir, "gc_pause_times_" + bench + ".png")
         chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
-        chart_md(md_file, example_gc_plot(plt, configurations, bench), rootdir, "example_gc_run_3_" + bench + ".png")
+        if gc_charts:
+            chart_md(md_file, example_gc_plot(plt, configurations, bench), rootdir, "example_gc_run_3_" + bench + ".png")
 
 
 if __name__ == '__main__':
@@ -354,6 +357,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
+    parser.add_argument("--nogc", help="disable charts about garbage collector", action="store_true")
     parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
     args = parser.parse_args()
@@ -373,6 +377,6 @@ if __name__ == '__main__':
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
-        write_md_file(report_dir, md_file, configurations)
+        write_md_file(report_dir, md_file, configurations, not args.nogc)
 
     print report_dir
