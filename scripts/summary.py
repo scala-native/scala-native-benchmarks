@@ -156,7 +156,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
         mark_res = []
         for bench, base_val in zip(benchmarks, base):
             try:
-                _, mark, _, total = gc_stats(bench, configurations[0])
+                _, mark, _, total = gc_stats(bench, conf)
                 res.append(np.percentile(total, percentile) / base_val)
                 mark_res.append(np.percentile(mark, percentile) / base_val)
             except IndexError:
@@ -195,12 +195,10 @@ def example_gc_plot(plt, configurations, bench, run=3):
     plt.cla()
 
     for conf in configurations:
-        timestamps, mark, sweep, total = gc_stats(bench, conf)
+        timestamps, _, _, total = gc_stats(bench, conf)
         if len(timestamps) > 0:
             ind = np.array(map(lambda x: x - timestamps[0], timestamps))
-            plt.plot(ind, mark, label=conf + "-mark")
-            plt.plot(ind, sweep, label=conf + "-sweep")
-            plt.plot(ind, total, label=conf + "-total")
+            plt.plot(ind, total, label=conf)
     plt.title("{} run #{} garbage collections".format(bench, str(run)))
     plt.xlabel("Time since first GC (ms)")
     plt.ylabel("Run time (ms)")
