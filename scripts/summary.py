@@ -169,6 +169,30 @@ def bar_chart_gc_relative(plt, configurations, percentile):
     return plt
 
 
+def bar_chart_gc_absolute(plt, configurations, percentile):
+    plt.clf()
+    plt.cla()
+    ind = np.arange(len(benchmarks))
+    conf_count = len(configurations) + 1
+
+    for i, conf in enumerate(configurations):
+        res = []
+        mark_res = []
+        for bench in benchmarks:
+            try:
+                _, mark, _, total = gc_stats(bench, conf)
+                res.append(np.percentile(total, percentile))
+                mark_res.append(np.percentile(mark, percentile))
+            except IndexError:
+                res.append(0)
+        plt.bar(ind * conf_count + i + 1, res, label=conf + "-sweep")  # total (look like sweep)
+        plt.bar(ind * conf_count + i + 1, mark_res, label=conf + "-mark")  # mark time
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
+    plt.title("Garbage collector pause times at " + str(percentile) + " percentile")
+    plt.legend()
+    return plt
+
+
 def example_run_plot(plt, configurations, bench, run=3):
     plt.clf()
     plt.cla()
