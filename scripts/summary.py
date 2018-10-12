@@ -148,6 +148,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
         except IndexError:
             base.append(0)
             ref.append(0.0)
+            mark_ref.append(0.0)
     plt.bar(ind * conf_count, ref, label=configurations[0] + "-sweep")  # total (look like sweep)
     plt.bar(ind * conf_count, mark_ref, label=configurations[0] + "-mark")  # mark time
 
@@ -156,11 +157,16 @@ def bar_chart_gc_relative(plt, configurations, percentile):
         mark_res = []
         for bench, base_val in zip(benchmarks, base):
             try:
-                _, mark, _, total = gc_stats(bench, conf)
-                res.append(np.percentile(total, percentile) / base_val)
-                mark_res.append(np.percentile(mark, percentile) / base_val)
+                if base_val > 0:
+                    _, mark, _, total = gc_stats(bench, conf)
+                    res.append(np.percentile(total, percentile) / base_val)
+                    mark_res.append(np.percentile(mark, percentile) / base_val)
+                else:
+                    res.append(0)
+                    mark_res.append(0)
             except IndexError:
                 res.append(0)
+                mark_res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf + "-sweep")  # total (look like sweep)
         plt.bar(ind * conf_count + i + 1, mark_res, label=conf + "-mark")  # mark time
     plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
@@ -327,9 +333,12 @@ def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
 
 
 def cell(x, base):
-    percent_diff = (float(x) / base - 1) * 100
-    return [("%.4f" % x),
-            ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")]
+    if base > 0:
+        percent_diff = (float(x) / base - 1) * 100
+        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")
+    else:
+        precent_diff_cell = "N/A"
+    return [("%.4f" % x), precent_diff_cell]
 
 
 def benchmark_md_link(bench):
