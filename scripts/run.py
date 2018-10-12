@@ -121,10 +121,12 @@ def single_run(to_run):
     resultsdir = to_run["resultsdir"]
     conf = to_run["conf"]
     bench = to_run["bench"]
+    gcstats = to_run["gcstats"]
 
     print('--- run {}/{}'.format(n, runs))
     my_env = os.environ.copy()
-    my_env["SCALANATIVE_GC_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
+    if gcstats:
+        my_env["SCALANATIVE_GC_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
     try:
         out = run(cmd, my_env)
         with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
@@ -145,6 +147,8 @@ if __name__ == "__main__":
     parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
+    parser.add_argument("--gc", help="gather gc statistics", action="store_true")
+    parser.add_argument("--append", help="do not delete old data", action="store_true")
     parser.add_argument("set", nargs='*', choices=generate_choices(configurations) + ["baseline", "all"],
                         default="all")
     args = parser.parse_args()
@@ -160,6 +164,8 @@ if __name__ == "__main__":
         suffix += "-b" + str(batches)
     if par != default_par:
         suffix += "-p" + str(par)
+    if args.gc:
+        suffix += "-gc"
     if args.suffix is not None:
         suffix += "_" + args.suffix
 
@@ -180,6 +186,9 @@ if __name__ == "__main__":
         pool = mp.Pool(par)
 
     for conf in configurations:
+        if not args.append:
+            sh.rmtree(os.path.join('results', conf + suffix), ignore_errors=True)
+
         for bench in benchmarks:
             print('--- conf: {}, bench: {}'.format(conf, bench))
 
@@ -210,7 +219,7 @@ if __name__ == "__main__":
 
             to_run = []
             for n in xrange(runs):
-                to_run += [dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n)]
+                to_run += [dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc)]
 
 
             if par == 1:

@@ -401,7 +401,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
-    parser.add_argument("--nogc", help="disable charts about garbage collector", action="store_true")
+    parser.add_argument("--gc", help="enable charts about garbage collector", action="store_true")
     parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
     args = parser.parse_args()
@@ -421,6 +421,6 @@ if __name__ == '__main__':
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
-        write_md_file(report_dir, md_file, configurations, not args.nogc)
+        write_md_file(report_dir, md_file, configurations, args.gc)
 
     print report_dir
