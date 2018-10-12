@@ -308,7 +308,7 @@ def write_md_table(file, configurations, data):
     file.write('| __Geometrical mean:__|')
     for gm in gmul:
         file.write('| |')
-        gmean = float(gm) ** (1.0 / len(configurations))
+        gmean = float(gm) ** (1.0 / len(benchmarks))
         percent_diff = (gmean - 1) * 100
         precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")
         file.write(precent_diff_cell)
