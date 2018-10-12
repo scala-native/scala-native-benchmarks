@@ -294,12 +294,25 @@ def write_md_table(file, configurations, data):
         file.write(' -- |')
     file.write('\n')
 
+    gmul = np.ones(len(configurations)-1)
     for bench, res0 in zip(benchmarks, data):
         base = res0[0]
         res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
         file.write('|')
         file.write('|'.join([benchmark_md_link(bench)] + list(res)))
         file.write('|\n')
+
+        for i, d0 in enumerate(res0[1:]):
+            gmul[i] *= (float(d0) / base)
+
+    file.write('| __Geometrical mean:__|')
+    for gm in gmul:
+        file.write('| |')
+        gmean = float(gm) ** (1.0 / len(configurations))
+        percent_diff = (gmean - 1) * 100
+        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")
+        file.write(precent_diff_cell)
+    file.write("|\n")
 
 
 def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
