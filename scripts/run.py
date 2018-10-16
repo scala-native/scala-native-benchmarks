@@ -243,16 +243,18 @@ if __name__ == "__main__":
         if not args.append:
             sh.rmtree(os.path.join('results', conf + suffix), ignore_errors=True)
 
+        root_dir = os.path.join('results', conf + suffix)
+        mkdir(root_dir)
+
         for bench in benchmarks:
             print('--- conf: {}, bench: {}'.format(conf, bench))
 
             input = slurp(os.path.join('input', bench))
             output = slurp(os.path.join('output', bench))
             compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
-            runcmd = slurp(os.path.join('confs', conf_name, 'run')).replace('$BENCH', bench).replace('$HOME',
-                                                                                                     os.environ[
-                                                                                                         'HOME']).split(
-                ' ')
+            runcmd = slurp(os.path.join('confs', conf_name, 'run')) \
+                .replace('$BENCH', bench) \
+                .replace('$HOME', os.environ['HOME']).split(' ')
 
             if os.path.exists(os.path.join('confs', conf_name, 'build.sbt')):
                 sh.copyfile(os.path.join('confs', conf_name, 'build.sbt'), 'build.sbt')
@@ -283,6 +285,10 @@ if __name__ == "__main__":
                     failed += single_run(tr)
             else:
                 failed += sum(pool.map(single_run, to_run), [])
+
+        # mark it as complete
+        open(os.path.join(root_dir, ".complete"), 'w+').close()
+
 
     if len(failed) > 0:
         print("{} benchmarks failed ".format(len(failed)))
