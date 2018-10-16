@@ -45,21 +45,17 @@ These settings will impact accuracy, this is why the names of the results folder
 Note that you can also use `stable-r50-p40-b3000` when using the `summary.py`.
 
 ### Comparing an experimental feature with latest from master
-1. build `scala-native` from latest master
-2. run the benchmark for it
-```bash
-scripts/run.py latest
-```
-3. specify a suffix to identify it
+1. specify a suffix to identify it
 ```bash
 NAME=PR9001-adding-a-kitchen-sink
 SHA1=adcd124eee
 ```
-4. run the benchmark and get the summary report
+2. run the benchmark and get the summary report
 
-It will automatically compile the project in `../scala-native` if you provide the SHA1.
+It will automatically compile the project in `../scala-native` if you provide the SHA1 or reference.
 ```bash
 SHA1=adcd124eee
+scripts/run.py latest@master
 scripts/run.py --suffix "$NAME" latest@"$SHA1" &&
 REPORT=$(scripts/summary.py --comment "$NAME" latest latest@"$SHA1"_"$NAME")
 ```

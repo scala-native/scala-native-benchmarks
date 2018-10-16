@@ -52,16 +52,29 @@ def compile_scala_native(sha1):
         pass
 
     git_checkout = ['git', 'checkout', sha1]
-    print run(git_checkout, wd = scala_native_dir)
+    try:
+        print run(git_checkout, wd = scala_native_dir)
+    except subp.CalledProcessError as err:
+        out = err.output
+        print "Cannot checkout", sha1, "!"
+        print out
+        return False
 
-    compile_cmd = [sbt, '-no-colors', '-J-Xmx2G', 'clean', 'rebuild', 'sandbox/run']
+    compile_cmd = [sbt, '-no-colors', '-J-Xmx2G', 'rebuild', 'sandbox/run']
     compile_env = os.environ.copy()
     compile_env["SCALANATIVE_GC"] = "immix"
-    local_scala_repo_dir = "../scala-2.11.11-only"
+    local_scala_repo_dir = os.path.abspath("../scala-2.11.11-only")
     if os.path.isdir(local_scala_repo_dir):
         compile_env["SCALANATIVE_SCALAREPO"] = local_scala_repo_dir
 
-    run(compile_cmd, compile_env, wd = scala_native_dir)
+    try:
+        run(compile_cmd, compile_env, wd = scala_native_dir)
+        return True
+    except subp.CalledProcessError as err:
+        out = err.output
+        print "Compilation failure!"
+        print out
+        return False
 
 
 def compile(bench, compilecmd):
@@ -183,6 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--append", help="do not delete old data", action="store_true")
     parser.add_argument("set", nargs='*', default="all")
     args = parser.parse_args()
+    print args
 
     runs = args.runs
     batches = args.batches
@@ -190,14 +204,16 @@ if __name__ == "__main__":
 
     if args.set != "all":
         configurations = []
-    for choice in args.set:
-        expanded = expand_wild_cards(choice)
-        if expanded == "baseline":
-            configurations += baseline
-        else:
-            configurations += [expanded]
+        for choice in args.set:
+            expanded = expand_wild_cards(choice)
+            if expanded == "baseline":
+                configurations += baseline
+            else:
+                configurations += [expanded]
     else:
         configurations = all_configs
+
+    print "configurations:", configurations
 
     suffix = ""
     if runs != default_runs:
@@ -220,7 +236,9 @@ if __name__ == "__main__":
         conf_name, sha1 = split_sha1(conf)
 
         if sha1 != None:
-            compile_scala_native(sha1)
+            success = compile_scala_native(sha1)
+            if not success:
+                continue
 
         if not args.append:
             sh.rmtree(os.path.join('results', conf + suffix), ignore_errors=True)
