@@ -50,12 +50,21 @@ Note that you can also use `stable-r50-p40-b3000` when using the `summary.py`.
 ```bash
 scripts/run.py latest
 ```
-3. build `scala-native` from your branch
-4. specify a suffix to identify it
+3. specify a suffix to identify it
 ```bash
 NAME=PR9001-adding-a-kitchen-sink
+SHA1=adcd124eee
 ```
-5. run the benchmark and get the summary report
+4. run the benchmark and get the summary report
+
+It will automatically compile the project in `../scala-native` if you provide the SHA1.
+```bash
+SHA1=adcd124eee
+scripts/run.py --suffix "$NAME" latest@"$SHA1" &&
+REPORT=$(scripts/summary.py --comment "$NAME" latest latest@"$SHA1"_"$NAME")
+```
+
+Alternatively you can build the scala-native project from your branch manually and run
 ```bash
 scripts/run.py --suffix "$NAME" latest &&
 REPORT=$(scripts/summary.py --comment "$NAME" latest latest_"$NAME")

@@ -35,13 +35,37 @@ def where(cmd):
             return None
 
 
-def run(cmd, env = None):
+def run(cmd, env=None, wd=None):
     print(">>> " + str(cmd))
-    return subp.check_output(cmd, stderr=subp.STDOUT, env = env)
+    if wd == None:
+        return subp.check_output(cmd, stderr=subp.STDOUT, env=env)
+    else:
+        return subp.check_output(cmd, stderr=subp.STDOUT, env=env, cwd=wd)
+
+
+def compile_scala_native(sha1):
+    scala_native_dir = "../scala-native"
+    git_fetch = ['git', '--fetch', '--all']
+    try:
+        run(git_fetch, wd = scala_native_dir)
+    except:
+        pass
+
+    git_checkout = ['git', 'checkout', sha1]
+    print run(git_checkout, wd = scala_native_dir)
+
+    compile_cmd = [sbt, '-no-colors', '-J-Xmx2G', 'clean', 'rebuild', 'sandbox/run']
+    compile_env = os.environ.copy()
+    compile_env["SCALANATIVE_GC"] = "immix"
+    local_scala_repo_dir = "../scala-2.11.11-only"
+    if os.path.isdir(local_scala_repo_dir):
+        compile_env["SCALANATIVE_SCALAREPO"] = local_scala_repo_dir
+
+    run(compile_cmd, compile_env, wd = scala_native_dir)
 
 
 def compile(bench, compilecmd):
-    cmd = [sbt, '-J-Xmx2G', 'clean']
+    cmd = [sbt, '-no-colors', '-J-Xmx2G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
     cmd.append(compilecmd)
     return run(cmd)
@@ -104,6 +128,14 @@ def expand_wild_cards(arg):
         return arg
 
 
+def split_sha1(arg):
+    parts = arg.split("@")
+    if len(parts) == 2:
+        return parts[0], parts[1]
+    else:
+        return arg, None
+
+
 def generate_choices(direct_choices):
     results = direct_choices
     for dir in direct_choices:
@@ -149,13 +181,23 @@ if __name__ == "__main__":
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
     parser.add_argument("--append", help="do not delete old data", action="store_true")
-    parser.add_argument("set", nargs='*', choices=generate_choices(configurations) + ["baseline", "all"],
-                        default="all")
+    parser.add_argument("set", nargs='*', default="all")
     args = parser.parse_args()
 
     runs = args.runs
     batches = args.batches
     par = args.par
+
+    if args.set != "all":
+        configurations = []
+    for choice in args.set:
+        expanded = expand_wild_cards(choice)
+        if expanded == "baseline":
+            configurations += baseline
+        else:
+            configurations += [expanded]
+    else:
+        configurations = all_configs
 
     suffix = ""
     if runs != default_runs:
@@ -169,23 +211,17 @@ if __name__ == "__main__":
     if args.suffix is not None:
         suffix += "_" + args.suffix
 
-    if args.set != "all":
-        configurations = []
-        for choice in args.set:
-            expanded = expand_wild_cards(choice)
-            if expanded == "baseline":
-                configurations += baseline
-            else:
-                configurations += [expanded]
-    else:
-        configurations = all_configs
-
     failed = []
     pool = None
     if par > 1:
         pool = mp.Pool(par)
 
     for conf in configurations:
+        conf_name, sha1 = split_sha1(conf)
+
+        if sha1 != None:
+            compile_scala_native(sha1)
+
         if not args.append:
             sh.rmtree(os.path.join('results', conf + suffix), ignore_errors=True)
 
@@ -194,17 +230,19 @@ if __name__ == "__main__":
 
             input = slurp(os.path.join('input', bench))
             output = slurp(os.path.join('output', bench))
-            compilecmd = slurp(os.path.join('confs', conf, 'compile'))
-            runcmd = slurp(os.path.join('confs', conf, 'run')).replace('$BENCH', bench).replace('$HOME', os.environ[
-                'HOME']).split(' ')
+            compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
+            runcmd = slurp(os.path.join('confs', conf_name, 'run')).replace('$BENCH', bench).replace('$HOME',
+                                                                                                     os.environ[
+                                                                                                         'HOME']).split(
+                ' ')
 
-            if os.path.exists(os.path.join('confs', conf, 'build.sbt')):
-                sh.copyfile(os.path.join('confs', conf, 'build.sbt'), 'build.sbt')
+            if os.path.exists(os.path.join('confs', conf_name, 'build.sbt')):
+                sh.copyfile(os.path.join('confs', conf_name, 'build.sbt'), 'build.sbt')
             else:
                 os.remove('build.sbt')
 
-            if os.path.exists(os.path.join('confs', conf, 'plugins.sbt')):
-                sh.copyfile(os.path.join('confs', conf, 'plugins.sbt'), 'project/plugins.sbt')
+            if os.path.exists(os.path.join('confs', conf_name, 'plugins.sbt')):
+                sh.copyfile(os.path.join('confs', conf_name, 'plugins.sbt'), 'project/plugins.sbt')
             else:
                 os.remove('project/plugins.sbt')
 
@@ -219,14 +257,14 @@ if __name__ == "__main__":
 
             to_run = []
             for n in xrange(runs):
-                to_run += [dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc)]
-
+                to_run += [
+                    dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc)]
 
             if par == 1:
                 for tr in to_run:
                     failed += single_run(tr)
             else:
-                failed += sum(pool.map(single_run, to_run),[])
+                failed += sum(pool.map(single_run, to_run), [])
 
     if len(failed) > 0:
         print("{} benchmarks failed ".format(len(failed)))
