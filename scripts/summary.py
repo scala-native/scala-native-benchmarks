@@ -30,6 +30,8 @@ def config_data(bench, conf):
             pass
     return np.array(out)
 
+usecond_header = "timestamp_us,collection,mark_time_us,sweep_time_us"
+nanosecond_header = "timestamp_ns,collection,mark_time_ns,sweep_time_ns"
 
 def gc_stats(bench, conf):
     files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
@@ -45,18 +47,25 @@ def gc_stats(bench, conf):
     gc_times = []
     for run in runs:
         try:
-            with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
-                # skip header
-                # timestamp_us,collection,mark_time_us,sweep_time_us
-                data.readline()
+            file = 'results/{}/{}/{}'.format(conf, bench, run)
+            with open(file) as data:
+                # header
+                header = data.readline()
+                if header == usecond_header:
+                    div_to_ms = 1000
+                elif header == nanosecond_header:
+                    div_to_ms = 1000 * 1000
+                else:
+                    print "Unknown GC header", header, "at", file
+                    continue
                 for line in data.readlines():
                     arr = line.split(",")
                     # in ms
-                    timestamps.append(int(arr[0]) / 1000)
+                    timestamps.append(int(arr[0]) / div_to_ms)
                     # collection = arr[1]
-                    mark_time = float(arr[2]) / 1000
+                    mark_time = float(arr[2]) / div_to_ms
                     mark_times.append(mark_time)
-                    sweep_time = float(arr[3]) / 1000
+                    sweep_time = float(arr[3]) / div_to_ms
                     sweep_times.append(sweep_time)
                     gc_times.append(mark_time + sweep_time)
         except IOError:
