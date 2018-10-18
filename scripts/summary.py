@@ -29,9 +29,8 @@ def config_data(bench, conf):
         except IOError:
             pass
     return np.array(out)
-
-usecond_header = "timestamp_us,collection,mark_time_us,sweep_time_us"
-nanosecond_header = "timestamp_ns,collection,mark_time_ns,sweep_time_ns"
+usecond_header = "timestamp_us,collection,mark_time_us,sweep_time_us\n"
+nanosecond_header = "timestamp_ns,collection,mark_time_ns,sweep_time_ns\n"
 
 def gc_stats(bench, conf):
     files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
