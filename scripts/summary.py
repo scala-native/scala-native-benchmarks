@@ -228,22 +228,6 @@ def example_run_plot(plt, configurations, bench, run=3):
     return plt
 
 
-def example_gc_plot(plt, configurations, bench, run=3):
-    plt.clf()
-    plt.cla()
-
-    for conf in configurations:
-        timestamps, _, _, total = gc_stats(bench, conf)
-        if len(timestamps) > 0:
-            ind = np.array(map(lambda x: x - timestamps[0], timestamps))
-            plt.plot(ind, total, label=conf)
-    plt.title("{} run #{} garbage collections".format(bench, str(run)))
-    plt.xlabel("Time since first GC (ms)")
-    plt.ylabel("Run time (ms)")
-    plt.legend()
-    return plt
-
-
 def percentiles_chart(plt, configurations, bench, limit=99):
     plt.clf()
     plt.cla()
@@ -399,8 +383,6 @@ def write_md_file(rootdir, md_file, configurations, gc_charts = True):
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir, "gc_pause_times_" + bench + ".png")
         chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
-        if gc_charts:
-            chart_md(md_file, example_gc_plot(plt, configurations, bench), rootdir, "example_gc_run_3_" + bench + ".png")
 
 
 if __name__ == '__main__':
