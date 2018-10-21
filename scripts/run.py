@@ -45,7 +45,7 @@ def run(cmd, env=None, wd=None):
 
 def compile_scala_native(sha1):
     scala_native_dir = "../scala-native"
-    git_fetch = ['git', '--fetch', '--all']
+    git_fetch = ['git', 'fetch', '--all']
     try:
         run(git_fetch, wd = scala_native_dir)
     except:
