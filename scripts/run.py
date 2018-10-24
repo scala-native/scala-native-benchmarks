@@ -222,7 +222,7 @@ if __name__ == "__main__":
     batches = args.batches
     par = args.par
 
-    if len(args.benchmark) > 0:
+    if args.benchmark != None:
         benchmarks = []
         for b in args.benchmark:
             benchmarks += filter( lambda s:  s.startswith(b), all_benchmarks)
