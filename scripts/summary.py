@@ -29,8 +29,7 @@ def config_data(bench, conf):
         except IOError:
             pass
     return np.array(out)
-usecond_header = "timestamp_us,collection,mark_time_us,sweep_time_us\n"
-nanosecond_header = "timestamp_ns,collection,mark_time_ns,sweep_time_ns\n"
+
 
 def gc_stats(bench, conf):
     files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
@@ -40,7 +39,6 @@ def gc_stats(bench, conf):
             # gc stats data
             runs += [file]
 
-    timestamps = []
     mark_times = []
     sweep_times = []
     gc_times = []
@@ -48,28 +46,48 @@ def gc_stats(bench, conf):
         try:
             file = 'results/{}/{}/{}'.format(conf, bench, run)
             with open(file) as data:
-                # header
-                header = data.readline()
-                if header == usecond_header:
-                    div_to_ms = 1000
-                elif header == nanosecond_header:
-                    div_to_ms = 1000 * 1000
-                else:
-                    print "Unknown GC header", header, "at", file
+                # analise header
+                mark_index = -1
+                sweep_index = -1
+                mark_to_ms = 0
+                sweep_to_ms = 0
+
+                unit2div = dict(ms = 1, us = 1000, ns = 1000 * 1000)
+
+                header = data.readline().strip()
+                for i, h in enumerate(header.split(',')):
+                    arr = h.rsplit('_', 1)
+                    if len(arr) != 2:
+                        continue
+                    prefix = arr[0]
+                    unit = arr[1]
+
+                    if prefix == "mark_time":
+                        mark_index = i
+                        mark_to_ms = unit2div[unit]
+                    elif prefix == "sweep_time":
+                        sweep_index = i
+                        sweep_to_ms = unit2div[unit]
+
+
+                if mark_index == -1:
+                    print "Header does not have mark_time_<unit>", header, "at", file
+                if sweep_index == -1:
+                    print "Header does not have sweep_time_<unit>", header, "at", file
+                if mark_index == -1 or sweep_index == -1:
                     continue
+
                 for line in data.readlines():
                     arr = line.split(",")
                     # in ms
-                    timestamps.append(int(arr[0]) / div_to_ms)
-                    # collection = arr[1]
-                    mark_time = float(arr[2]) / div_to_ms
+                    mark_time = float(arr[mark_index]) / mark_to_ms
                     mark_times.append(mark_time)
-                    sweep_time = float(arr[3]) / div_to_ms
+                    sweep_time = float(arr[sweep_index]) / sweep_to_ms
                     sweep_times.append(sweep_time)
                     gc_times.append(mark_time + sweep_time)
         except IOError:
             pass
-    return np.array(timestamps), np.array(mark_times), np.array(sweep_times), np.array(gc_times)
+    return np.array(mark_times), np.array(sweep_times), np.array(gc_times)
 
 
 def percentile_gc(configurations, percentile):
@@ -82,7 +100,7 @@ def percentile_gc(configurations, percentile):
         res_total = []
         for conf in configurations:
             try:
-                _, mark, sweep, total = gc_stats(bench, conf)
+                mark, sweep, total = gc_stats(bench, conf)
                 res_mark.append(np.percentile(mark, percentile))
                 res_sweep.append(np.percentile(sweep, percentile))
                 res_total.append(np.percentile(total, percentile))
@@ -149,7 +167,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
     mark_ref = []
     for bench in benchmarks:
         try:
-            _, mark, _, total = gc_stats(bench, configurations[0])
+            mark, _, total = gc_stats(bench, configurations[0])
             base.append(np.percentile(total, percentile))
             ref.append(1.0)
             mark_ref.append(np.percentile(mark / total, percentile))
@@ -166,7 +184,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
         for bench, base_val in zip(benchmarks, base):
             try:
                 if base_val > 0:
-                    _, mark, _, total = gc_stats(bench, conf)
+                    mark, _, total = gc_stats(bench, conf)
                     res.append(np.percentile(total, percentile) / base_val)
                     mark_res.append(np.percentile(mark, percentile) / base_val)
                 else:
@@ -194,7 +212,7 @@ def bar_chart_gc_absolute(plt, configurations, percentile):
         mark_res = []
         for bench in benchmarks:
             try:
-                _, mark, _, total = gc_stats(bench, conf)
+                mark, _, total = gc_stats(bench, conf)
                 res.append(np.percentile(total, percentile))
                 mark_res.append(np.percentile(mark, percentile))
             except IndexError:
@@ -228,22 +246,6 @@ def example_run_plot(plt, configurations, bench, run=3):
     return plt
 
 
-def example_gc_plot(plt, configurations, bench, run=3):
-    plt.clf()
-    plt.cla()
-
-    for conf in configurations:
-        timestamps, _, _, total = gc_stats(bench, conf)
-        if len(timestamps) > 0:
-            ind = np.array(map(lambda x: x - timestamps[0], timestamps))
-            plt.plot(ind, total, label=conf)
-    plt.title("{} run #{} garbage collections".format(bench, str(run)))
-    plt.xlabel("Time since first GC (ms)")
-    plt.ylabel("Run time (ms)")
-    plt.legend()
-    return plt
-
-
 def percentiles_chart(plt, configurations, bench, limit=99):
     plt.clf()
     plt.cla()
@@ -265,7 +267,7 @@ def gc_pause_time_chart(plt, configurations, bench, limit=100):
     plt.clf()
     plt.cla()
     for conf in configurations:
-        _, _, _, pauses = gc_stats(bench, conf)
+        _, _, pauses = gc_stats(bench, conf)
         if pauses.size > 0:
             percentiles = np.arange(0, limit)
             percvalue = np.array([np.percentile(pauses, perc) for perc in percentiles])
@@ -399,8 +401,6 @@ def write_md_file(rootdir, md_file, configurations, gc_charts = True):
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir, "gc_pause_times_" + bench + ".png")
         chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
-        if gc_charts:
-            chart_md(md_file, example_gc_plot(plt, configurations, bench), rootdir, "example_gc_run_3_" + bench + ".png")
 
 
 if __name__ == '__main__':
