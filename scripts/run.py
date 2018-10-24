@@ -54,7 +54,7 @@ def  fetch():
         pass
 
 def  get_ref(ref):
-    git_rev_parse = ['git', 'rev-parse', ref]
+    git_rev_parse = ['git', 'rev-parse', '--short' , ref]
     try:
         return run(git_rev_parse, wd = scala_native_dir).strip()
     except subp.CalledProcessError as err:
