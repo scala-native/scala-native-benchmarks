@@ -43,14 +43,28 @@ def run(cmd, env=None, wd=None):
         return subp.check_output(cmd, stderr=subp.STDOUT, env=env, cwd=wd)
 
 
-def compile_scala_native(sha1):
-    scala_native_dir = "../scala-native"
-    git_fetch = ['git', '--fetch', '--all']
+scala_native_dir = "../scala-native"
+
+
+def  fetch():
+    git_fetch = ['git', 'fetch', '--all']
     try:
         run(git_fetch, wd = scala_native_dir)
     except:
         pass
 
+def  get_ref(ref):
+    git_rev_parse = ['git', 'rev-parse', ref]
+    try:
+        return run(git_rev_parse, wd = scala_native_dir).strip()
+    except subp.CalledProcessError as err:
+        out = err.output
+        print "Cannot find", ref, "!"
+        print out
+        return None
+
+
+def compile_scala_native(sha1):
     git_checkout = ['git', 'checkout', sha1]
     try:
         print run(git_checkout, wd = scala_native_dir)
@@ -142,9 +156,11 @@ def expand_wild_cards(arg):
         return arg
 
 
-def split_sha1(arg):
+def ref_parse(arg):
     parts = arg.split("@")
-    if len(parts) == 2:
+    if len(parts) == 3:
+        return parts[0], (parts[2] + "/" + parts[1])
+    elif len(parts) == 2:
         return parts[0], parts[1]
     else:
         return arg, None
@@ -217,6 +233,15 @@ if __name__ == "__main__":
 
     print "configurations:", configurations
 
+    should_fetch = False
+    for conf in configurations:
+        if '@' in conf:
+            should_fetch = True
+            break
+
+    if should_fetch:
+        fetch()
+
     suffix = ""
     if runs != default_runs:
         suffix += "-r" + str(runs)
@@ -230,17 +255,30 @@ if __name__ == "__main__":
         suffix += "_" + args.suffix
 
     failed = []
+    result_dirs = []
     pool = None
     if par > 1:
         pool = mp.Pool(par)
 
     for conf in configurations:
-        conf_name, sha1 = split_sha1(conf)
+        conf_name, ref = ref_parse(conf)
 
-        root_dir = os.path.join('results', conf + suffix)
+        if ref == None:
+            sha1 = None
+            root_dir = os.path.join('results', conf_name + suffix)
+        else:
+            sha1 = get_ref(ref)
+            if sha1 == None:
+                continue
+            root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
+
+
+
         if args.new and os.path.isfile(os.path.join(root_dir,".complete")):
             print  root_dir, "already complete, skipping"
             continue
+
+
         if sha1 != None:
             success = compile_scala_native(sha1)
             if not success:
@@ -293,7 +331,11 @@ if __name__ == "__main__":
 
         # mark it as complete
         open(os.path.join(root_dir, ".complete"), 'w+').close()
+        result_dirs += [root_dir]
 
+    print "results:"
+    for dir in result_dirs:
+        print dir
 
     if len(failed) > 0:
         print("{} benchmarks failed ".format(len(failed)))
