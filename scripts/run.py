@@ -110,6 +110,7 @@ baseline = [
     'jvm',
     stable,
 ]
+default = baseline + [latest]
 
 confs_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/confs"
 
@@ -195,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
     parser.add_argument("--new", help="do not override old results", action="store_true")
     parser.add_argument("--append", help="do not delete old data", action="store_true")
-    parser.add_argument("set", nargs='*', default="all")
+    parser.add_argument("set", nargs='*', default="default")
     args = parser.parse_args()
     print args
 
@@ -203,16 +204,16 @@ if __name__ == "__main__":
     batches = args.batches
     par = args.par
 
-    if args.set != "all":
-        configurations = []
-        for choice in args.set:
-            expanded = expand_wild_cards(choice)
-            if expanded == "baseline":
-                configurations += baseline
-            else:
-                configurations += [expanded]
-    else:
-        configurations = all_configs
+    configurations = []
+    for choice in args.set:
+        expanded = expand_wild_cards(choice)
+        if expanded == "baseline":
+            configurations += baseline
+        elif expanded == "default":
+            configurations = default
+        else:
+            configurations += [expanded]
+
 
     print "configurations:", configurations
 
