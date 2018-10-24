@@ -193,6 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
+    parser.add_argument("--new", help="do not override old results", action="store_true")
     parser.add_argument("--append", help="do not delete old data", action="store_true")
     parser.add_argument("set", nargs='*', default="all")
     args = parser.parse_args()
@@ -235,6 +236,10 @@ if __name__ == "__main__":
     for conf in configurations:
         conf_name, sha1 = split_sha1(conf)
 
+        root_dir = os.path.join('results', conf + suffix)
+        if args.new and os.path.isfile(os.path.join(root_dir,".complete")):
+            print  root_dir, "already complete, skipping"
+            continue
         if sha1 != None:
             success = compile_scala_native(sha1)
             if not success:
@@ -243,7 +248,6 @@ if __name__ == "__main__":
         if not args.append:
             sh.rmtree(os.path.join('results', conf + suffix), ignore_errors=True)
 
-        root_dir = os.path.join('results', conf + suffix)
         mkdir(root_dir)
 
         for bench in benchmarks:
