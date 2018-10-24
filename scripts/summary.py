@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from run import benchmarks, mkdir, expand_wild_cards, generate_choices
+from run import all_benchmarks, mkdir, expand_wild_cards, generate_choices
 
 import numpy as np
 import time
@@ -94,7 +94,7 @@ def percentile_gc(configurations, percentile):
     out_mark = []
     out_sweep = []
     out_total = []
-    for bench in benchmarks:
+    for bench in all_benchmarks:
         res_mark = []
         res_sweep = []
         res_total = []
@@ -116,7 +116,7 @@ def percentile_gc(configurations, percentile):
 
 def percentile(configurations, percentile):
     out = []
-    for bench in benchmarks:
+    for bench in all_benchmarks:
         res = []
         for conf in configurations:
             try:
@@ -130,11 +130,11 @@ def percentile(configurations, percentile):
 def bar_chart_relative(plt, configurations, percentile):
     plt.clf()
     plt.cla()
-    ind = np.arange(len(benchmarks))
+    ind = np.arange(len(all_benchmarks))
     conf_count = len(configurations) + 1
     base = []
     ref = []
-    for bench in benchmarks:
+    for bench in all_benchmarks:
         try:
             base.append(np.percentile(config_data(bench, configurations[0]), percentile))
             ref.append(1.0)
@@ -145,13 +145,13 @@ def bar_chart_relative(plt, configurations, percentile):
 
     for i, conf in enumerate(configurations[1:]):
         res = []
-        for bench, base_val in zip(benchmarks, base):
+        for bench, base_val in zip(all_benchmarks, base):
             try:
                 res.append(np.percentile(config_data(bench, conf), percentile) / base_val)
             except IndexError:
                 res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf)
-    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, all_benchmarks))
     plt.title("Relative test execution times against " + configurations[0] + " at " + str(percentile) + " percentile")
     plt.legend()
     return plt
@@ -160,12 +160,12 @@ def bar_chart_relative(plt, configurations, percentile):
 def bar_chart_gc_relative(plt, configurations, percentile):
     plt.clf()
     plt.cla()
-    ind = np.arange(len(benchmarks))
+    ind = np.arange(len(all_benchmarks))
     conf_count = len(configurations) + 1
     base = []
     ref = []
     mark_ref = []
-    for bench in benchmarks:
+    for bench in all_benchmarks:
         try:
             mark, _, total = gc_stats(bench, configurations[0])
             base.append(np.percentile(total, percentile))
@@ -181,7 +181,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
     for i, conf in enumerate(configurations[1:]):
         res = []
         mark_res = []
-        for bench, base_val in zip(benchmarks, base):
+        for bench, base_val in zip(all_benchmarks, base):
             try:
                 if base_val > 0:
                     mark, _, total = gc_stats(bench, conf)
@@ -195,7 +195,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
                 mark_res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf + "-sweep")  # total (look like sweep)
         plt.bar(ind * conf_count + i + 1, mark_res, label=conf + "-mark")  # mark time
-    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, all_benchmarks))
     plt.title("Relative gc times against " + configurations[0] + " at " + str(percentile) + " percentile")
     plt.legend()
     return plt
@@ -204,13 +204,13 @@ def bar_chart_gc_relative(plt, configurations, percentile):
 def bar_chart_gc_absolute(plt, configurations, percentile):
     plt.clf()
     plt.cla()
-    ind = np.arange(len(benchmarks))
+    ind = np.arange(len(all_benchmarks))
     conf_count = len(configurations) + 1
 
     for i, conf in enumerate(configurations):
         res = []
         mark_res = []
-        for bench in benchmarks:
+        for bench in all_benchmarks:
             try:
                 mark, _, total = gc_stats(bench, conf)
                 res.append(np.percentile(total, percentile))
@@ -219,7 +219,7 @@ def bar_chart_gc_absolute(plt, configurations, percentile):
                 res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf + "-sweep")  # total (look like sweep)
         plt.bar(ind * conf_count + i + 1, mark_res, label=conf + "-mark")  # mark time
-    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, all_benchmarks))
     plt.title("Garbage collector pause times at " + str(percentile) + " percentile")
     plt.legend()
     return plt
@@ -285,7 +285,7 @@ def print_table(configurations, data):
     for conf in configurations:
         leading.append(conf)
     print ','.join(leading)
-    for bench, res in zip(benchmarks, data):
+    for bench, res in zip(all_benchmarks, data):
         print ','.join([bench] + list(map(str, res)))
 
 
@@ -305,7 +305,7 @@ def write_md_table(file, configurations, data):
     file.write('\n')
 
     gmul = np.ones(len(configurations)-1)
-    for bench, res0 in zip(benchmarks, data):
+    for bench, res0 in zip(all_benchmarks, data):
         base = res0[0]
         res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
         file.write('|')
@@ -318,7 +318,7 @@ def write_md_table(file, configurations, data):
     file.write('| __Geometrical mean:__|')
     for gm in gmul:
         file.write('| |')
-        gmean = float(gm) ** (1.0 / len(benchmarks))
+        gmean = float(gm) ** (1.0 / len(all_benchmarks))
         percent_diff = (gmean - 1) * 100
         precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")
         file.write(precent_diff_cell)
@@ -340,7 +340,7 @@ def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
         file.write(' -- |')
     file.write('\n')
 
-    for bench, mark_res0, sweep_res0, total_res0 in zip(benchmarks, mark_data, sweep_data, total_data):
+    for bench, mark_res0, sweep_res0, total_res0 in zip(all_benchmarks, mark_data, sweep_data, total_data):
         for name, res0 in zip(["mark", "sweep", "total"], [mark_res0, sweep_res0, total_res0]):
             base = res0[0]
             res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
@@ -392,7 +392,7 @@ def write_md_file(rootdir, md_file, configurations, gc_charts = True):
             write_md_table_gc(md_file, configurations, mark, sweep, total)
 
     md_file.write("# Individual benchmarks\n")
-    for bench in benchmarks:
+    for bench in all_benchmarks:
         md_file.write("## ")
         md_file.write(bench)
         md_file.write("\n")

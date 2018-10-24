@@ -46,17 +46,18 @@ def run(cmd, env=None, wd=None):
 scala_native_dir = "../scala-native"
 
 
-def  fetch():
+def fetch():
     git_fetch = ['git', 'fetch', '--all']
     try:
-        run(git_fetch, wd = scala_native_dir)
+        run(git_fetch, wd=scala_native_dir)
     except:
         pass
 
-def  get_ref(ref):
-    git_rev_parse = ['git', 'rev-parse', '--short' , ref]
+
+def get_ref(ref):
+    git_rev_parse = ['git', 'rev-parse', '--short', ref]
     try:
-        return run(git_rev_parse, wd = scala_native_dir).strip()
+        return run(git_rev_parse, wd=scala_native_dir).strip()
     except subp.CalledProcessError as err:
         out = err.output
         print "Cannot find", ref, "!"
@@ -67,7 +68,7 @@ def  get_ref(ref):
 def compile_scala_native(sha1):
     git_checkout = ['git', 'checkout', sha1]
     try:
-        print run(git_checkout, wd = scala_native_dir)
+        print run(git_checkout, wd=scala_native_dir)
     except subp.CalledProcessError as err:
         out = err.output
         print "Cannot checkout", sha1, "!"
@@ -82,7 +83,7 @@ def compile_scala_native(sha1):
         compile_env["SCALANATIVE_SCALAREPO"] = local_scala_repo_dir
 
     try:
-        run(compile_cmd, compile_env, wd = scala_native_dir)
+        run(compile_cmd, compile_env, wd=scala_native_dir)
         return True
     except subp.CalledProcessError as err:
         out = err.output
@@ -100,7 +101,7 @@ def compile(bench, compilecmd):
 
 sbt = where('sbt')
 
-benchmarks = [
+all_benchmarks = [
     'bounce.BounceBenchmark',
     'list.ListBenchmark',
     'richards.RichardsBenchmark',
@@ -208,6 +209,7 @@ if __name__ == "__main__":
     parser.add_argument("--suffix", help="suffix added to results")
     parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
+    parser.add_argument("--benchmark", help="number of batches per run", action='append')
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
     parser.add_argument("--new", help="do not override old results", action="store_true")
@@ -220,6 +222,13 @@ if __name__ == "__main__":
     batches = args.batches
     par = args.par
 
+    if len(args.benchmark) > 0:
+        benchmarks = []
+        for b in args.benchmark:
+            benchmarks += filter( lambda s:  s.startswith(b), all_benchmarks)
+    else:
+        benchmarks = all_benchmarks
+
     configurations = []
     for choice in args.set:
         expanded = expand_wild_cards(choice)
@@ -230,8 +239,8 @@ if __name__ == "__main__":
         else:
             configurations += [expanded]
 
-
     print "configurations:", configurations
+    print "benchmarks:", benchmarks
 
     should_fetch = False
     for conf in configurations:
@@ -272,12 +281,9 @@ if __name__ == "__main__":
                 continue
             root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
 
-
-
-        if args.new and os.path.isfile(os.path.join(root_dir,".complete")):
+        if args.new and os.path.isfile(os.path.join(root_dir, ".complete")):
             print  root_dir, "already complete, skipping"
             continue
-
 
         if sha1 != None:
             success = compile_scala_native(sha1)
