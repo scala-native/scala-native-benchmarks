@@ -291,7 +291,7 @@ if __name__ == "__main__":
                 continue
 
         if not args.append:
-            sh.rmtree(os.path.join('results', conf + suffix), ignore_errors=True)
+            sh.rmtree(root_dir, ignore_errors=True)
 
         mkdir(root_dir)
 
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
             compile(bench, compilecmd)
 
-            resultsdir = os.path.join('results', conf + suffix, bench)
+            resultsdir = os.path.join(root_dir, bench)
             mkdir(resultsdir)
 
             cmd = []
