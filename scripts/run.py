@@ -65,15 +65,16 @@ def get_ref(ref):
         return None
 
 
-def compile_scala_native(sha1):
-    git_checkout = ['git', 'checkout', sha1]
-    try:
-        print run(git_checkout, wd=scala_native_dir)
-    except subp.CalledProcessError as err:
-        out = err.output
-        print "Cannot checkout", sha1, "!"
-        print out
-        return False
+def compile_scala_native(ref, sha1):
+    if ref != "HEAD":
+        git_checkout = ['git', 'checkout', sha1]
+        try:
+            print run(git_checkout, wd=scala_native_dir)
+        except subp.CalledProcessError as err:
+            out = err.output
+            print "Cannot checkout", sha1, "!"
+            print out
+            return False
 
     compile_cmd = [sbt, '-no-colors', '-J-Xmx2G', 'rebuild', 'sandbox/run']
     compile_env = os.environ.copy()
@@ -286,7 +287,7 @@ if __name__ == "__main__":
             continue
 
         if sha1 != None:
-            success = compile_scala_native(sha1)
+            success = compile_scala_native(ref, sha1)
             if not success:
                 continue
 
