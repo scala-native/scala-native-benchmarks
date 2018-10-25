@@ -190,7 +190,7 @@ def single_run(to_run):
     print('--- run {}/{}'.format(n, runs))
     my_env = os.environ.copy()
     if gcstats:
-        my_env["SCALANATIVE_GC_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
+        my_env["SCALANATIVE_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
     try:
         out = run(cmd, my_env)
         with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
