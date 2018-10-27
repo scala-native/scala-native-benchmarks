@@ -255,7 +255,11 @@ if __name__ == "__main__":
     if args.size != None:
         sizes = []
         for size_str in args.size:
-            sizes += [size_parse(size_str)]
+            parsed = size_parse(size_str)
+            if parsed == ["default", "default"]:
+                sizes = [parsed] + sizes
+            else:
+                sizes += [parsed]
     else:
         sizes = [["default", "default"]]
 
@@ -279,8 +283,8 @@ if __name__ == "__main__":
             should_fetch = True
             break
 
-    if should_fetch:
-        fetch()
+    # if should_fetch:
+    #     fetch()
 
     suffix = ""
     if runs != default_runs:
@@ -298,6 +302,8 @@ if __name__ == "__main__":
     skipped = []
     compile_fail = []
     result_dirs = []
+    symlinks = []
+
     pool = None
     if par > 1:
         pool = mp.Pool(par)
@@ -305,9 +311,11 @@ if __name__ == "__main__":
     for conf in configurations:
         conf_name, ref = ref_parse(conf)
 
+
+        generalized_dir = os.path.join('results', conf + suffix)
         if ref == None:
             sha1 = None
-            root_dir = os.path.join('results', conf_name + suffix)
+            root_dir = generalized_dir
         else:
             sha1 = get_ref(ref)
             if sha1 == None:
@@ -315,11 +323,20 @@ if __name__ == "__main__":
                 continue
             root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
 
-        if sha1 != None:
-            success = compile_scala_native(ref, sha1)
-            if not success:
-                compile_fail += [conf]
-                continue
+        # if sha1 != None:
+        #     success = compile_scala_native(ref, sha1)
+        #     if not success:
+        #         compile_fail += [conf]
+        #         continue
+
+        if generalized_dir != root_dir:
+            try:
+                os.unlink(generalized_dir)
+            except:
+                pass
+            print "creating symlink", generalized_dir, "->", root_dir
+            symlinks += [[generalized_dir,root_dir]]
+            os.symlink(os.path.split(root_dir)[1], generalized_dir)
 
         for size in sizes:
 
@@ -340,7 +357,7 @@ if __name__ == "__main__":
             mkdir(sized_dir)
 
             for bench in benchmarks:
-                print('--- conf: {}, bench: {}'.format(conf, bench))
+                print('--- heap size: {} conf: {}, bench: {}'.format(size, conf, bench))
 
                 input = slurp(os.path.join('input', bench))
                 output = slurp(os.path.join('output', bench))
@@ -362,6 +379,7 @@ if __name__ == "__main__":
                 compile(bench, compilecmd)
 
                 resultsdir = os.path.join(sized_dir, bench)
+                print "results in", resultsdir
                 mkdir(resultsdir)
 
                 cmd = []
@@ -387,6 +405,12 @@ if __name__ == "__main__":
     print "results:"
     for dir in result_dirs:
         print dir
+
+    if len(symlinks) > 0:
+        print("{} symlinks ".format(len(symlinks)))
+        for symlink in symlinks:
+            print symlink[0], "->", symlink[1]
+
 
     if len(compile_fail) > 0:
         print("{} compilation failed ".format(len(failed)))
