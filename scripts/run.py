@@ -295,6 +295,8 @@ if __name__ == "__main__":
         suffix += "_" + args.suffix
 
     failed = []
+    skipped = []
+    compile_fail = []
     result_dirs = []
     pool = None
     if par > 1:
@@ -309,12 +311,14 @@ if __name__ == "__main__":
         else:
             sha1 = get_ref(ref)
             if sha1 == None:
+                compile_fail += [conf]
                 continue
             root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
 
         if sha1 != None:
             success = compile_scala_native(ref, sha1)
             if not success:
+                compile_fail += [conf]
                 continue
 
         for size in sizes:
@@ -327,6 +331,7 @@ if __name__ == "__main__":
 
             if not args.overwrite and os.path.isfile(os.path.join(sized_dir, ".complete")):
                 print  sized_dir, "already complete, skipping"
+                skipped += [sized_dir]
                 continue
 
             if not args.append:
@@ -383,8 +388,20 @@ if __name__ == "__main__":
     for dir in result_dirs:
         print dir
 
+    if len(compile_fail) > 0:
+        print("{} compilation failed ".format(len(failed)))
+        for skip in compile_fail:
+            print skip
+
+    if len(skipped) > 0:
+        print("{} benchmarks skipped ".format(len(failed)))
+        for skip in skipped:
+            print skip
+
     if len(failed) > 0:
         print("{} benchmarks failed ".format(len(failed)))
         for fail in failed:
             print fail
+
+    if len(compile_fail) > 0 or len(failed) > 0:
         exit(1)
