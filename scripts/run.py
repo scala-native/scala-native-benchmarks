@@ -168,6 +168,15 @@ def ref_parse(arg):
         return arg, None
 
 
+def size_parse(arg):
+    parts = arg.split(":")
+    if len(parts) == 1:
+        return [arg, arg]
+    else:
+        return parts
+
+
+
 def generate_choices(direct_choices):
     results = direct_choices
     for dir in direct_choices:
@@ -186,11 +195,24 @@ def single_run(to_run):
     conf = to_run["conf"]
     bench = to_run["bench"]
     gcstats = to_run["gcstats"]
+    minsize = to_run["size"][0]
+    maxsize = to_run["size"][1]
 
     print('--- run {}/{}'.format(n, runs))
     my_env = os.environ.copy()
     if gcstats:
         my_env["SCALANATIVE_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
+
+    if minsize != "default":
+        my_env["SCALANATIVE_MIN_HEAP_SIZE"] = minsize
+    elif "SCALANATIVE_MIN_HEAP_SIZE" in my_env:
+        del my_env["SCALANATIVE_MIN_HEAP_SIZE"]
+
+    if maxsize != "default":
+        my_env["SCALANATIVE_MAX_HEAP_SIZE"] = maxsize
+    elif "SCALANATIVE_MAX_HEAP_SIZE" in my_env:
+        del my_env["SCALANATIVE_MAX_HEAP_SIZE"]
+
     try:
         out = run(cmd, my_env)
         with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
@@ -210,10 +232,11 @@ if __name__ == "__main__":
     parser.add_argument("--suffix", help="suffix added to results")
     parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
-    parser.add_argument("--benchmark", help="number of batches per run", action='append')
+    parser.add_argument("--benchmark", help="benchmarks to run", action='append')
+    parser.add_argument("--size", help="different size settings to use", action='append')
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
-    parser.add_argument("--new", help="do not override old results", action="store_true")
+    parser.add_argument("--overwrite", help="overwrite old results", action="store_true")
     parser.add_argument("--append", help="do not delete old data", action="store_true")
     parser.add_argument("set", nargs='*', default="default")
     args = parser.parse_args()
@@ -230,6 +253,13 @@ if __name__ == "__main__":
     else:
         benchmarks = all_benchmarks
 
+    if args.size != None:
+        sizes = []
+        for size_str in args.size:
+            sizes += [size_parse(size_str)]
+    else:
+        sizes = [["default", "default"]]
+
     configurations = []
     for choice in args.set:
         expanded = expand_wild_cards(choice)
@@ -242,6 +272,7 @@ if __name__ == "__main__":
 
     print "configurations:", configurations
     print "benchmarks:", benchmarks
+    print "heap sizes:", sizes
 
     should_fetch = False
     for conf in configurations:
@@ -282,63 +313,73 @@ if __name__ == "__main__":
                 continue
             root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
 
-        if args.new and os.path.isfile(os.path.join(root_dir, ".complete")):
-            print  root_dir, "already complete, skipping"
-            continue
 
         if sha1 != None:
             success = compile_scala_native(ref, sha1)
             if not success:
                 continue
 
-        if not args.append:
-            sh.rmtree(root_dir, ignore_errors=True)
+        for size in sizes:
 
-        mkdir(root_dir)
-
-        for bench in benchmarks:
-            print('--- conf: {}, bench: {}'.format(conf, bench))
-
-            input = slurp(os.path.join('input', bench))
-            output = slurp(os.path.join('output', bench))
-            compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
-            runcmd = slurp(os.path.join('confs', conf_name, 'run')) \
-                .replace('$BENCH', bench) \
-                .replace('$HOME', os.environ['HOME']).split(' ')
-
-            if os.path.exists(os.path.join('confs', conf_name, 'build.sbt')):
-                sh.copyfile(os.path.join('confs', conf_name, 'build.sbt'), 'build.sbt')
+            if size == ["default","default"] :
+                sized_dir = root_dir
             else:
-                os.remove('build.sbt')
+                size_str = "size_" + size[0] + "-" + size[1]
+                sized_dir = os.path.join(root_dir, size_str)
 
-            if os.path.exists(os.path.join('confs', conf_name, 'plugins.sbt')):
-                sh.copyfile(os.path.join('confs', conf_name, 'plugins.sbt'), 'project/plugins.sbt')
-            else:
-                os.remove('project/plugins.sbt')
+            if not args.overwrite and os.path.isfile(os.path.join(sized_dir, ".complete")):
+                print  sized_dir, "already complete, skipping"
+                continue
 
-            compile(bench, compilecmd)
 
-            resultsdir = os.path.join(root_dir, bench)
-            mkdir(resultsdir)
+            if not args.append:
+                sh.rmtree(sized_dir, ignore_errors=True)
 
-            cmd = []
-            cmd.extend(runcmd)
-            cmd.extend([str(batches), str(batch_size), input, output])
+            mkdir(sized_dir)
 
-            to_run = []
-            for n in xrange(runs):
-                to_run += [
-                    dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc)]
+            for bench in benchmarks:
+                print('--- conf: {}, bench: {}'.format(conf, bench))
 
-            if par == 1:
-                for tr in to_run:
-                    failed += single_run(tr)
-            else:
-                failed += sum(pool.map(single_run, to_run), [])
+                input = slurp(os.path.join('input', bench))
+                output = slurp(os.path.join('output', bench))
+                compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
+                runcmd = slurp(os.path.join('confs', conf_name, 'run')) \
+                    .replace('$BENCH', bench) \
+                    .replace('$HOME', os.environ['HOME']).split(' ')
 
-        # mark it as complete
-        open(os.path.join(root_dir, ".complete"), 'w+').close()
-        result_dirs += [root_dir]
+                if os.path.exists(os.path.join('confs', conf_name, 'build.sbt')):
+                    sh.copyfile(os.path.join('confs', conf_name, 'build.sbt'), 'build.sbt')
+                else:
+                    os.remove('build.sbt')
+
+                if os.path.exists(os.path.join('confs', conf_name, 'plugins.sbt')):
+                    sh.copyfile(os.path.join('confs', conf_name, 'plugins.sbt'), 'project/plugins.sbt')
+                else:
+                    os.remove('project/plugins.sbt')
+
+                compile(bench, compilecmd)
+
+                resultsdir = os.path.join(sized_dir, bench)
+                mkdir(resultsdir)
+
+                cmd = []
+                cmd.extend(runcmd)
+                cmd.extend([str(batches), str(batch_size), input, output])
+
+                to_run = []
+                for n in xrange(runs):
+                    to_run += [
+                        dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc, size = size)]
+
+                if par == 1:
+                    for tr in to_run:
+                        failed += single_run(tr)
+                else:
+                    failed += sum(pool.map(single_run, to_run), [])
+
+            # mark it as complete
+            open(os.path.join(sized_dir, ".complete"), 'w+').close()
+            result_dirs += [sized_dir]
 
     print "results:"
     for dir in result_dirs:
