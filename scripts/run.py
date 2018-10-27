@@ -189,7 +189,7 @@ def generate_choices(direct_choices):
 def single_run(to_run):
     n = to_run["n"]
     runs = to_run["runs"]
-    cmd = to_run["cmd"]
+    unexpanded_cmd = to_run["cmd"]
     resultsdir = to_run["resultsdir"]
     conf = to_run["conf"]
     bench = to_run["bench"]
@@ -211,6 +211,17 @@ def single_run(to_run):
         my_env["SCALANATIVE_MAX_HEAP_SIZE"] = maxsize
     elif "SCALANATIVE_MAX_HEAP_SIZE" in my_env:
         del my_env["SCALANATIVE_MAX_HEAP_SIZE"]
+
+
+    cmd = []
+    for token in unexpanded_cmd:
+        if token == "$JAVA_SIZE_ARGS":
+            if minsize != "default":
+                cmd += ["-Xms" + minsize]
+            if maxsize != "default":
+                cmd += ["-Xmx" + maxsize]
+        else:
+            cmd += [token]
 
     try:
         out = run(cmd, my_env)

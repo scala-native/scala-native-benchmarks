@@ -1,1 +1,1 @@
-target/native-image-bench -Xmx1g -Xmx1g
+target/native-image-bench $JAVA_SIZE_ARGS
