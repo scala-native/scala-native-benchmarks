@@ -405,6 +405,14 @@ def write_md_file(rootdir, md_file, configurations, gc_charts = True):
 
 if __name__ == '__main__':
     all_configs = next(os.walk("results"))[1]
+    # added size_
+    for conf in all_configs:
+        folder = os.path.join("results", conf)
+        subfolders = next(os.walk(folder))[1]
+        for size in subfolders:
+            if size.startswith("size_"):
+                all_configs += [os.path.join(conf, size)]
+
     results = generate_choices(all_configs)
 
     parser = argparse.ArgumentParser()
