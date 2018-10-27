@@ -294,8 +294,8 @@ if __name__ == "__main__":
             should_fetch = True
             break
 
-    # if should_fetch:
-    #     fetch()
+    if should_fetch:
+        fetch()
 
     suffix = ""
     if runs != default_runs:
