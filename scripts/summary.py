@@ -52,7 +52,7 @@ def gc_stats(bench, conf):
                 mark_to_ms = 0
                 sweep_to_ms = 0
 
-                unit2div = dict(ms = 1, us = 1000, ns = 1000 * 1000)
+                unit2div = dict(ms=1, us=1000, ns=1000 * 1000)
 
                 header = data.readline().strip()
                 for i, h in enumerate(header.split(',')):
@@ -68,7 +68,6 @@ def gc_stats(bench, conf):
                     elif prefix == "sweep_time":
                         sweep_index = i
                         sweep_to_ms = unit2div[unit]
-
 
                 if mark_index == -1:
                     print "Header does not have mark_time_<unit>", header, "at", file
@@ -304,7 +303,8 @@ def write_md_table(file, configurations, data):
         file.write(' -- |')
     file.write('\n')
 
-    gmul = np.ones(len(configurations)-1)
+    gmul = np.ones(len(configurations) - 1)
+    gcount = np.zeros(len(configurations) - 1)
     for bench, res0 in zip(all_benchmarks, data):
         base = res0[0]
         res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
@@ -313,14 +313,17 @@ def write_md_table(file, configurations, data):
         file.write('|\n')
 
         for i, d0 in enumerate(res0[1:]):
-            gmul[i] *= (float(d0) / base)
+            if d0 != 0 and base != 0:
+                gmul[i] *= (float(d0) / base)
+                gcount[i] += 1
 
     file.write('| __Geometrical mean:__|')
-    for gm in gmul:
+    for gm, count in zip(gmul, gcount):
         file.write('| |')
-        gmean = float(gm) ** (1.0 / len(all_benchmarks))
+        gmean = float(gm) ** (1.0 / count)
         percent_diff = (gmean - 1) * 100
-        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")
+        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + (
+            "" if percent_diff > 0 else "__")
         file.write(precent_diff_cell)
     file.write("|\n")
 
@@ -358,7 +361,8 @@ def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
 def cell(x, base):
     if base > 0:
         percent_diff = (float(x) / base - 1) * 100
-        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + ("" if percent_diff > 0 else "__")
+        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + (
+            "" if percent_diff > 0 else "__")
     else:
         precent_diff_cell = "N/A"
     return [("%.4f" % x), precent_diff_cell]
@@ -377,7 +381,7 @@ def chart_md(md_file, plt, rootdir, name):
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, configurations, gc_charts = True):
+def write_md_file(rootdir, md_file, configurations, gc_charts=True):
     md_file.write("# Summary\n")
     for p in [50, 90, 99]:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
@@ -399,7 +403,8 @@ def write_md_file(rootdir, md_file, configurations, gc_charts = True):
 
         chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
         if gc_charts:
-            chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir, "gc_pause_times_" + bench + ".png")
+            chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
+                     "gc_pause_times_" + bench + ".png")
         chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
 
 
@@ -429,7 +434,7 @@ if __name__ == '__main__':
         for arg in args.comparisons:
             configurations += [expand_wild_cards(arg)]
 
-    comment = "_vs_".join(configurations)
+    comment = "_vs_".join(configurations).replace(os.sep, "_")
     if args.comment is not None:
         comment = args.comment
 

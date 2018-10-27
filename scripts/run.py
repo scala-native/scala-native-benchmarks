@@ -176,7 +176,6 @@ def size_parse(arg):
         return parts
 
 
-
 def generate_choices(direct_choices):
     results = direct_choices
     for dir in direct_choices:
@@ -249,7 +248,7 @@ if __name__ == "__main__":
     if args.benchmark != None:
         benchmarks = []
         for b in args.benchmark:
-            benchmarks += filter( lambda s:  s.startswith(b), all_benchmarks)
+            benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
     else:
         benchmarks = all_benchmarks
 
@@ -313,7 +312,6 @@ if __name__ == "__main__":
                 continue
             root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
 
-
         if sha1 != None:
             success = compile_scala_native(ref, sha1)
             if not success:
@@ -321,7 +319,7 @@ if __name__ == "__main__":
 
         for size in sizes:
 
-            if size == ["default","default"] :
+            if size == ["default", "default"]:
                 sized_dir = root_dir
             else:
                 size_str = "size_" + size[0] + "-" + size[1]
@@ -330,7 +328,6 @@ if __name__ == "__main__":
             if not args.overwrite and os.path.isfile(os.path.join(sized_dir, ".complete")):
                 print  sized_dir, "already complete, skipping"
                 continue
-
 
             if not args.append:
                 sh.rmtree(sized_dir, ignore_errors=True)
@@ -369,7 +366,8 @@ if __name__ == "__main__":
                 to_run = []
                 for n in xrange(runs):
                     to_run += [
-                        dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc, size = size)]
+                        dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc,
+                             size=size)]
 
                 if par == 1:
                     for tr in to_run:
