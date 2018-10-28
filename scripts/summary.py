@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-from run import all_benchmarks, mkdir, expand_wild_cards, generate_choices
+from run import mkdir, expand_wild_cards, generate_choices
 
 import numpy as np
 import time
@@ -487,6 +487,22 @@ def any_run_exists(bench, configurations, run):
     return exits
 
 
+def discover_benchmarks(configurations):
+    benchmarks = []
+    for conf in configurations:
+        parent_folders = next(os.walk(os.path.join("results", conf)))[1]
+        for pf in parent_folders:
+            if pf.startswith("size_"):
+               for child in next(os.walk(os.path.join("results", conf, pf)))[1]:
+                   if child not in benchmarks:
+                       benchmarks += [child]
+            else:
+                if pf not in benchmarks:
+                    benchmarks += [pf]
+
+    return benchmarks
+
+
 if __name__ == '__main__':
     all_configs = next(os.walk("results"))[1]
     # added size_
@@ -502,7 +518,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
     parser.add_argument("--gc", help="enable charts about garbage collector", action="store_true")
-    parser.add_argument("--benchmark", help="benchmarks use in comparision", action='append')
+    parser.add_argument("--benchmark", help="benchmarks to use in comparision", action='append')
     parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
     args = parser.parse_args()
@@ -518,13 +534,6 @@ if __name__ == '__main__':
     if args.comment is not None:
         comment = args.comment
 
-    if args.benchmark != None:
-        benchmarks = []
-        for b in args.benchmark:
-            benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
-    else:
-        benchmarks = all_benchmarks
-
     parent_configurations = []
     for conf in configurations:
         if os.sep in conf:
@@ -533,6 +542,15 @@ if __name__ == '__main__':
             parent = conf
         if parent not in parent_configurations:
             parent_configurations += [parent]
+
+    all_benchmarks = discover_benchmarks(parent_configurations)
+
+    if args.benchmark != None:
+        benchmarks = []
+        for b in args.benchmark:
+            benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
+    else:
+        benchmarks = all_benchmarks
 
     report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
