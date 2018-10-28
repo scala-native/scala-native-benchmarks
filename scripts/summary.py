@@ -397,6 +397,9 @@ def write_md_file(rootdir, md_file, configurations, gc_charts=True):
 
     md_file.write("# Individual benchmarks\n")
     for bench in all_benchmarks:
+        if not any_run_exists(bench, configurations, 0):
+            continue
+
         md_file.write("## ")
         md_file.write(bench)
         md_file.write("\n")
