@@ -446,11 +446,14 @@ def write_md_table(file, configurations, benchmarks, data):
     file.write('| __Geometrical mean:__|')
     for gm, count in zip(gmul, gcount):
         file.write('| |')
-        gmean = float(gm) ** (1.0 / count)
-        percent_diff = (gmean - 1) * 100
-        precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + (
-            "" if percent_diff > 0 else "__")
-        file.write(precent_diff_cell)
+        if count > 0:
+            gmean = float(gm) ** (1.0 / count)
+            percent_diff = (gmean - 1) * 100
+            precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + (
+                "" if percent_diff > 0 else "__")
+            file.write(precent_diff_cell)
+        else:
+            file.write(" ")
     file.write("|\n")
 
 
@@ -469,8 +472,16 @@ def write_md_table_gc(file, configurations, benchmarks, mark_data, sweep_data, t
         file.write(' -- |')
     file.write('\n')
 
+    mark_gmul = np.ones(len(configurations) - 1)
+    mark_gcount = np.zeros(len(configurations) - 1)
+    sweep_gmul = np.ones(len(configurations) - 1)
+    sweep_gcount = np.zeros(len(configurations) - 1)
+    total_gmul = np.ones(len(configurations) - 1)
+    total_gcount = np.zeros(len(configurations) - 1)
     for bench, mark_res0, sweep_res0, total_res0 in zip(benchmarks, mark_data, sweep_data, total_data):
-        for name, res0 in zip(["mark", "sweep", "total"], [mark_res0, sweep_res0, total_res0]):
+        for name, res0, gmul, gcount in zip(["mark", "sweep", "total"], [mark_res0, sweep_res0, total_res0],
+                                            [mark_gmul, sweep_gmul, total_gmul],
+                                            [mark_gcount, sweep_gcount, total_gcount]):
             base = res0[0]
             res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
 
@@ -482,6 +493,34 @@ def write_md_table_gc(file, configurations, benchmarks, mark_data, sweep_data, t
             file.write('|')
             file.write('|'.join(link + list([name]) + list(res)))
             file.write('|\n')
+
+            for i, d0 in enumerate(res0[1:]):
+                if d0 != 0 and base != 0:
+                    gmul[i] *= (float(d0) / base)
+                    gcount[i] += 1
+
+    for name, gmul, gcount in zip(["mark", "sweep", "total"],
+                                  [mark_gmul, sweep_gmul, total_gmul],
+                                  [mark_gcount, sweep_gcount, total_gcount]):
+        if name == "mark":
+            link = "__Geometrical mean:__"
+        else:
+            link = ""
+
+        file.write('|' + link + '|' + name + '|')
+        for gm, count in zip(gmul, gcount):
+            file.write('| |')
+            if count > 0:
+                gmean = float(gm) ** (1.0 / count)
+                percent_diff = (gmean - 1) * 100
+                precent_diff_cell = ("+" if percent_diff > 0 else "__") + ("%.2f" % percent_diff) + "%" + (
+                    "" if percent_diff > 0 else "__")
+                file.write(precent_diff_cell)
+            else:
+                file.write(" ")
+        file.write("|\n")
+
+
 
 
 def cell(x, base):
