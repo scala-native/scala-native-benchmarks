@@ -33,6 +33,7 @@ def config_data(bench, conf):
 
 
 def gc_stats(bench, conf):
+    print bench, conf
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
@@ -91,28 +92,54 @@ def gc_stats(bench, conf):
     return np.array(mark_times), np.array(sweep_times), np.array(gc_times)
 
 
+def gc_stats_total(bench, conf):
+    _, _, total = gc_stats(bench, conf)
+    return total
+
+
+
 def percentile_gc(configurations, benchmarks, percentile):
     out_mark = []
     out_sweep = []
     out_total = []
     for bench in benchmarks:
-        res_mark = []
-        res_sweep = []
-        res_total = []
-        for conf in configurations:
-            try:
-                mark, sweep, total = gc_stats(bench, conf)
-                res_mark.append(np.percentile(mark, percentile))
-                res_sweep.append(np.percentile(sweep, percentile))
-                res_total.append(np.percentile(total, percentile))
-            except IndexError:
-                res_mark.append(0)
-                res_sweep.append(0)
-                res_total.append(0)
-        out_mark.append(res_mark)
-        out_sweep.append(res_sweep)
-        out_total.append(res_total)
+        res_mark, res_sweep, res_total = percentile_gc_bench(configurations, bench, percentile)
+        out_mark += [res_mark]
+        out_sweep += [res_sweep]
+        out_total += [res_total]
     return out_mark, out_sweep, out_total
+
+
+def percentile_gc_bench(configurations, bench, p):
+    res_mark = []
+    res_sweep = []
+    res_total = []
+    for conf in configurations:
+        try:
+            mark, sweep, total = gc_stats(bench, conf)
+            res_mark += [np.percentile(mark, p)]
+            res_sweep += [np.percentile(sweep, p)]
+            res_total += [np.percentile(total, p)]
+        except IndexError:
+            res_mark += [0]
+            res_sweep += [0]
+            res_total += [0]
+    return res_mark, res_sweep, res_total
+
+
+def percentile_gc_bench_mark(configurations, bench, p):
+    mark, _, _ = percentile_gc_bench(configurations, bench, p)
+    return mark
+
+
+def percentile_gc_bench_sweep(configurations, bench, p):
+    _, sweep, _ = percentile_gc_bench(configurations, bench, p)
+    return sweep
+
+
+def percentile_gc_bench_total(configurations, bench, p):
+    _, _, total = percentile_gc_bench(configurations, bench, p)
+    return total
 
 
 def percentile(configurations, benchmarks, p):
@@ -278,7 +305,7 @@ def sizes_per_conf(parent_configuration):
     return min_sizes, max_sizes, child_confs
 
 
-def size_compare_chart(plt, parent_configurations, bench, p):
+def size_compare_chart_generic(plt, parent_configurations, bench, get_percentile, p):
     plt.clf()
     plt.cla()
     for parent_conf in parent_configurations:
@@ -290,49 +317,69 @@ def size_compare_chart(plt, parent_configurations, bench, p):
                 equal_sizes += [min_size]
                 equal_confs += [child_conf]
 
-        percentiles = percentile_bench(equal_confs, bench, p)
+        percentiles = get_percentile(equal_confs, bench, p)
         plt.plot(np.array(equal_sizes), percentiles, label=parent_conf)
     plt.legend()
-    plt.title("{} at {} percentile".format(bench, p))
+    plt.xlim(xmin=0)
     plt.ylim(ymin=0)
     plt.xlabel("Heap Size (GB)")
-    plt.ylabel("Run time (ms)")
+
     return plt
 
 
-def percentiles_chart(plt, configurations, bench, limit=99):
+def size_compare_chart(plt, parent_configurations, bench, p):
+    plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_bench, p)
+    plt.title("{} at {} percentile".format(bench, p))
+    plt.ylabel("Run time (ms)")
+    return  plt
+
+
+def size_compare_chart_gc(plt, parent_configurations, bench, p):
+    plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_gc_bench_total, p)
+    plt.title("{}: GC pause time at {} percentile".format(bench, p))
+    plt.ylabel("GC pause time (ms)")
+    return plt
+
+
+def size_compare_chart_gc_mark(plt, parent_configurations, bench, p):
+    plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_gc_bench_mark, p)
+    plt.title("{}: GC mark time at {} percentile".format(bench, p))
+    plt.ylabel("GC mark time (ms)")
+    return plt
+
+def size_compare_chart_gc_sweep(plt, parent_configurations, bench, p):
+    plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_gc_bench_sweep, p)
+    plt.title("{}: GC sweep time at {} percentile".format(bench, p))
+    plt.ylabel("GC sweep time (ms)")
+    return plt
+
+
+def percentiles_chart_generic(plt, configurations, bench, get_data, limit):
     plt.clf()
     plt.cla()
     for conf in configurations:
-        data = config_data(bench, conf)
+        data = get_data(bench, conf)
         if data.size > 0:
             percentiles = np.arange(0, limit)
             percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
             plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
-    plt.title(bench)
     plt.ylim(ymin=0)
     plt.xlabel("Percentile")
+    return plt
+
+
+def percentiles_chart(plt, configurations, bench, limit=99):
+    plt = percentiles_chart_generic(plt, configurations, bench, config_data, limit)
+    plt.title(bench)
     plt.ylabel("Run time (ms)")
     return plt
 
-
 def gc_pause_time_chart(plt, configurations, bench, limit=100):
-    plt.clf()
-    plt.cla()
-    for conf in configurations:
-        _, _, pauses = gc_stats(bench, conf)
-        if pauses.size > 0:
-            percentiles = np.arange(0, limit)
-            percvalue = np.array([np.percentile(pauses, perc) for perc in percentiles])
-            plt.plot(percentiles, percvalue, label=conf)
-    plt.legend()
+    plt = percentiles_chart_generic(plt, configurations, bench, gc_stats_total, limit)
     plt.title(bench + ": Garbage Collector Pause Times")
-    plt.ylim(ymin=0)
-    plt.xlabel("Percentile")
     plt.ylabel("GC pause time (ms)")
     return plt
-
 
 def print_table(configurations, benchmarks, data):
     leading = ['name']
@@ -437,8 +484,9 @@ def chart_md(md_file, plt, rootdir, name):
 
 
 def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=True):
+    interesting_percentiles = [50, 90, 99]
     md_file.write("# Summary\n")
-    for p in [50, 90, 99]:
+    for p in interesting_percentiles:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
         chart_md(md_file, bar_chart_relative(plt, configurations, benchmarks, p), rootdir, "relative_percentile_" + str(p) + ".png")
         write_md_table(md_file, configurations, benchmarks, percentile(configurations, benchmarks, p))
@@ -463,8 +511,15 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
+            for p in interesting_percentiles:
+                chart_md(md_file, size_compare_chart_gc(plt, parent_configurations, bench, p), rootdir,
+                         "gc_size_chart" + bench + "percentile_" + str(p) + ".png")
+                chart_md(md_file, size_compare_chart_gc_mark(plt, parent_configurations, bench, p), rootdir,
+                         "gc_size_chart_mark" + bench + "percentile_" + str(p) + ".png")
+                chart_md(md_file, size_compare_chart_gc_sweep(plt, parent_configurations, bench, p), rootdir,
+                         "gc_size_chart_sweep" + bench + "percentile_" + str(p) + ".png")
 
-        for p in [50, 90, 99]:
+        for p in interesting_percentiles:
             chart_md(md_file, size_compare_chart(plt, parent_configurations, bench, p), rootdir,
                      "size_chart_" + bench + "percentile_" + str(p) + ".png")
 
