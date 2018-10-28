@@ -405,7 +405,24 @@ def write_md_file(rootdir, md_file, configurations, gc_charts=True):
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
-        chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir, "example_run_3_" + bench + ".png")
+
+        run = 3
+        while run >= 0 and not any_run_exists(bench, configurations, run):
+            run -= 1
+
+        if run >= 0:
+            chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir,
+                     "example_run_" + str(run) + "_" + bench + ".png")
+
+
+def any_run_exists(bench, configurations, run):
+    exits = False
+    for conf in configurations:
+        file = 'results/{}/{}/{}'.format(conf, bench, run)
+        if os.path.exists(file):
+            exits = True
+            break
+    return exits
 
 
 if __name__ == '__main__':
