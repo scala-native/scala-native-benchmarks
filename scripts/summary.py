@@ -9,7 +9,8 @@ import argparse
 
 
 def config_data(bench, conf):
-    files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
+    benchmark_dir = os.path.join("results", conf, bench)
+    files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
     for file in files:
         if "." not in file:
@@ -20,7 +21,7 @@ def config_data(bench, conf):
     for run in runs:
         try:
             points = []
-            with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
+            with open(os.path.join("results", conf, bench, run)) as data:
                 for line in data.readlines():
                     # in ms
                     points.append(float(line) / 1000000)
@@ -32,7 +33,8 @@ def config_data(bench, conf):
 
 
 def gc_stats(bench, conf):
-    files = next(os.walk("results/{}/{}".format(conf, bench)), [[], [], []])[2]
+    benchmark_dir = os.path.join("results", conf, bench)
+    files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
     for file in files:
         if file.endswith(".gc.csv"):
@@ -44,7 +46,7 @@ def gc_stats(bench, conf):
     gc_times = []
     for run in runs:
         try:
-            file = 'results/{}/{}/{}'.format(conf, bench, run)
+            file = os.path.join("results", conf, bench, run)
             with open(file) as data:
                 # analise header
                 mark_index = -1
@@ -113,17 +115,21 @@ def percentile_gc(configurations, percentile):
     return out_mark, out_sweep, out_total
 
 
-def percentile(configurations, percentile):
+def percentile(configurations, p):
     out = []
     for bench in all_benchmarks:
-        res = []
-        for conf in configurations:
-            try:
-                res.append(np.percentile(config_data(bench, conf), percentile))
-            except IndexError:
-                res.append(0)
-        out.append(res)
+        out += [percentile_bench(configurations, bench, p)]
     return out
+
+
+def percentile_bench(configurations, bench, p):
+    res = []
+    for conf in configurations:
+        try:
+            res += [np.percentile(config_data(bench, conf), p)]
+        except IndexError:
+            res += [0]
+    return res
 
 
 def bar_chart_relative(plt, configurations, percentile):
@@ -242,6 +248,55 @@ def example_run_plot(plt, configurations, bench, run=3):
     plt.xlabel("Iteration")
     plt.ylabel("Run time (ms)")
     plt.legend()
+    return plt
+
+
+def to_gb(size_str):
+    if size_str[-1] == "k" or size_str[-1] == "K":
+        return float(size_str[:-1]) / 1024 / 1024
+    elif size_str[-1] == "m" or size_str[-1] == "M":
+        return float(size_str[:-1]) / 1024
+    elif size_str[-1] == "g" or size_str[-1] == "G":
+        return float(size_str[:-1])
+    else:
+        # bytes
+        return float(size_str) / 1024 / 1024 / 1024
+
+
+def sizes_per_conf(parent_configuration):
+    parent_folder = os.path.join("results", parent_configuration)
+    min_sizes = []
+    max_sizes = []
+    child_confs = []
+    folders = next(os.walk(parent_folder))[1]
+    for f in folders:
+        if f.startswith("size_"):
+            parts = f[len("size_"):].split("-")
+            min_sizes += [to_gb(parts[0])]
+            max_sizes += [to_gb(parts[1])]
+            child_confs += [os.path.join(parent_configuration,f)]
+    return min_sizes, max_sizes, child_confs
+
+
+def size_compare_chart(plt, parent_configurations, bench, p):
+    plt.clf()
+    plt.cla()
+    for parent_conf in parent_configurations:
+        min_sizes, max_sizes, child_confs = sizes_per_conf(parent_conf)
+        equal_sizes = []
+        equal_confs = []
+        for min_size, max_size, child_conf in zip(min_sizes, max_sizes, child_confs):
+            if min_size == max_size:
+                equal_sizes += [min_size]
+                equal_confs += [child_conf]
+
+        percentiles = percentile_bench(equal_confs, bench, p)
+        plt.plot(np.array(equal_sizes), percentiles, label=parent_conf)
+    plt.legend()
+    plt.title("{} at {} percentile".format(bench, p))
+    plt.ylim(ymin=0)
+    plt.xlabel("Heap Size (GB)")
+    plt.ylabel("Run time (ms)")
     return plt
 
 
@@ -381,7 +436,7 @@ def chart_md(md_file, plt, rootdir, name):
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, configurations, gc_charts=True):
+def write_md_file(rootdir, md_file, parent_configurations, configurations, gc_charts=True):
     md_file.write("# Summary\n")
     for p in [50, 90, 99]:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
@@ -408,6 +463,10 @@ def write_md_file(rootdir, md_file, configurations, gc_charts=True):
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
+
+        for p in [50, 90, 99]:
+            chart_md(md_file, size_compare_chart(plt, parent_configurations, bench, p), rootdir,
+                     "size_chart_" + bench + "percentile_" + str(p) + ".png")
 
         run = 3
         while run >= 0 and not any_run_exists(bench, configurations, run):
@@ -458,10 +517,20 @@ if __name__ == '__main__':
     if args.comment is not None:
         comment = args.comment
 
+
+    parent_configurations = []
+    for conf in configurations:
+        if os.sep in conf:
+            parent = os.path.split(conf)[0]
+        else:
+            parent = conf
+        if parent not in parent_configurations:
+            parent_configurations += [parent]
+
     report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
-        write_md_file(report_dir, md_file, configurations, args.gc)
+        write_md_file(report_dir, md_file, parent_configurations, configurations, args.gc)
 
     print report_dir
