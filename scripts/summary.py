@@ -546,7 +546,7 @@ def chart_md(md_file, plt, rootdir, name):
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=True):
+def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=False, size_charts = False):
     interesting_percentiles = [50, 90, 99]
     md_file.write("# Summary\n")
     for p in interesting_percentiles:
@@ -574,13 +574,15 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
-            for p in interesting_percentiles:
-                chart_md(md_file, size_compare_chart_gc_combined(plt, parent_configurations, bench, p), rootdir,
-                         "gc_size_chart" + bench + "percentile_" + str(p) + ".png")
+            if size_charts:
+                for p in interesting_percentiles:
+                    chart_md(md_file, size_compare_chart_gc_combined(plt, parent_configurations, bench, p), rootdir,
+                             "gc_size_chart" + bench + "percentile_" + str(p) + ".png")
 
-        for p in interesting_percentiles:
-            chart_md(md_file, size_compare_chart(plt, parent_configurations, bench, p), rootdir,
-                     "size_chart_" + bench + "percentile_" + str(p) + ".png")
+        if size_charts:
+            for p in interesting_percentiles:
+                chart_md(md_file, size_compare_chart(plt, parent_configurations, bench, p), rootdir,
+                         "size_chart_" + bench + "percentile_" + str(p) + ".png")
 
         run = 3
         while run >= 0 and not any_run_exists(bench, configurations, run):
@@ -632,6 +634,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
     parser.add_argument("--gc", help="enable charts about garbage collector", action="store_true")
+    parser.add_argument("--vssize", help="enable charts against heap size", action="store_true")
     parser.add_argument("--benchmark", help="benchmarks to use in comparision", action='append')
     parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
@@ -670,6 +673,6 @@ if __name__ == '__main__':
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
-        write_md_file(report_dir, md_file, parent_configurations, configurations, benchmarks, args.gc)
+        write_md_file(report_dir, md_file, parent_configurations, configurations, benchmarks, args.gc, args.vssize)
 
     print report_dir
