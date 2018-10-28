@@ -91,11 +91,11 @@ def gc_stats(bench, conf):
     return np.array(mark_times), np.array(sweep_times), np.array(gc_times)
 
 
-def percentile_gc(configurations, percentile):
+def percentile_gc(configurations, benchmarks, percentile):
     out_mark = []
     out_sweep = []
     out_total = []
-    for bench in all_benchmarks:
+    for bench in benchmarks:
         res_mark = []
         res_sweep = []
         res_total = []
@@ -115,9 +115,9 @@ def percentile_gc(configurations, percentile):
     return out_mark, out_sweep, out_total
 
 
-def percentile(configurations, p):
+def percentile(configurations, benchmarks, p):
     out = []
-    for bench in all_benchmarks:
+    for bench in benchmarks:
         out += [percentile_bench(configurations, bench, p)]
     return out
 
@@ -132,14 +132,14 @@ def percentile_bench(configurations, bench, p):
     return res
 
 
-def bar_chart_relative(plt, configurations, percentile):
+def bar_chart_relative(plt, configurations, benchmarks, percentile):
     plt.clf()
     plt.cla()
-    ind = np.arange(len(all_benchmarks))
+    ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
     base = []
     ref = []
-    for bench in all_benchmarks:
+    for bench in benchmarks:
         try:
             base.append(np.percentile(config_data(bench, configurations[0]), percentile))
             ref.append(1.0)
@@ -150,27 +150,27 @@ def bar_chart_relative(plt, configurations, percentile):
 
     for i, conf in enumerate(configurations[1:]):
         res = []
-        for bench, base_val in zip(all_benchmarks, base):
+        for bench, base_val in zip(benchmarks, base):
             try:
                 res.append(np.percentile(config_data(bench, conf), percentile) / base_val)
             except IndexError:
                 res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf)
-    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, all_benchmarks))
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
     plt.title("Relative test execution times against " + configurations[0] + " at " + str(percentile) + " percentile")
     plt.legend()
     return plt
 
 
-def bar_chart_gc_relative(plt, configurations, percentile):
+def bar_chart_gc_relative(plt, configurations, benchmarks, percentile):
     plt.clf()
     plt.cla()
-    ind = np.arange(len(all_benchmarks))
+    ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
     base = []
     ref = []
     mark_ref = []
-    for bench in all_benchmarks:
+    for bench in benchmarks:
         try:
             mark, _, total = gc_stats(bench, configurations[0])
             base.append(np.percentile(total, percentile))
@@ -186,7 +186,7 @@ def bar_chart_gc_relative(plt, configurations, percentile):
     for i, conf in enumerate(configurations[1:]):
         res = []
         mark_res = []
-        for bench, base_val in zip(all_benchmarks, base):
+        for bench, base_val in zip(benchmarks, base):
             try:
                 if base_val > 0:
                     mark, _, total = gc_stats(bench, conf)
@@ -200,22 +200,22 @@ def bar_chart_gc_relative(plt, configurations, percentile):
                 mark_res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf + "-sweep")  # total (look like sweep)
         plt.bar(ind * conf_count + i + 1, mark_res, label=conf + "-mark")  # mark time
-    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, all_benchmarks))
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
     plt.title("Relative gc times against " + configurations[0] + " at " + str(percentile) + " percentile")
     plt.legend()
     return plt
 
 
-def bar_chart_gc_absolute(plt, configurations, percentile):
+def bar_chart_gc_absolute(plt, configurations, benchmarks, percentile):
     plt.clf()
     plt.cla()
-    ind = np.arange(len(all_benchmarks))
+    ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
 
     for i, conf in enumerate(configurations):
         res = []
         mark_res = []
-        for bench in all_benchmarks:
+        for bench in benchmarks:
             try:
                 mark, _, total = gc_stats(bench, conf)
                 res.append(np.percentile(total, percentile))
@@ -224,7 +224,7 @@ def bar_chart_gc_absolute(plt, configurations, percentile):
                 res.append(0)
         plt.bar(ind * conf_count + i + 1, res, label=conf + "-sweep")  # total (look like sweep)
         plt.bar(ind * conf_count + i + 1, mark_res, label=conf + "-mark")  # mark time
-    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, all_benchmarks))
+    plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
     plt.title("Garbage collector pause times at " + str(percentile) + " percentile")
     plt.legend()
     return plt
@@ -334,16 +334,16 @@ def gc_pause_time_chart(plt, configurations, bench, limit=100):
     return plt
 
 
-def print_table(configurations, data):
+def print_table(configurations, benchmarks, data):
     leading = ['name']
     for conf in configurations:
         leading.append(conf)
     print ','.join(leading)
-    for bench, res in zip(all_benchmarks, data):
+    for bench, res in zip(benchmarks, data):
         print ','.join([bench] + list(map(str, res)))
 
 
-def write_md_table(file, configurations, data):
+def write_md_table(file, configurations, benchmarks, data):
     header = ['name']
     header.append(configurations[0])
     for conf in configurations[1:]:
@@ -360,7 +360,7 @@ def write_md_table(file, configurations, data):
 
     gmul = np.ones(len(configurations) - 1)
     gcount = np.zeros(len(configurations) - 1)
-    for bench, res0 in zip(all_benchmarks, data):
+    for bench, res0 in zip(benchmarks, data):
         base = res0[0]
         res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
         file.write('|')
@@ -383,7 +383,7 @@ def write_md_table(file, configurations, data):
     file.write("|\n")
 
 
-def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
+def write_md_table_gc(file, configurations, benchmarks, mark_data, sweep_data, total_data):
     header = ['name', ""]
     header.append(configurations[0])
     for conf in configurations[1:]:
@@ -398,7 +398,7 @@ def write_md_table_gc(file, configurations, mark_data, sweep_data, total_data):
         file.write(' -- |')
     file.write('\n')
 
-    for bench, mark_res0, sweep_res0, total_res0 in zip(all_benchmarks, mark_data, sweep_data, total_data):
+    for bench, mark_res0, sweep_res0, total_res0 in zip(benchmarks, mark_data, sweep_data, total_data):
         for name, res0 in zip(["mark", "sweep", "total"], [mark_res0, sweep_res0, total_res0]):
             base = res0[0]
             res = [("%.4f" % base)] + sum(map(lambda x: cell(x, base), res0[1:]), [])
@@ -436,22 +436,22 @@ def chart_md(md_file, plt, rootdir, name):
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, parent_configurations, configurations, gc_charts=True):
+def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=True):
     md_file.write("# Summary\n")
     for p in [50, 90, 99]:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
-        chart_md(md_file, bar_chart_relative(plt, configurations, p), rootdir, "relative_percentile_" + str(p) + ".png")
-        write_md_table(md_file, configurations, percentile(configurations, p))
+        chart_md(md_file, bar_chart_relative(plt, configurations, benchmarks, p), rootdir, "relative_percentile_" + str(p) + ".png")
+        write_md_table(md_file, configurations, benchmarks, percentile(configurations, benchmarks, p))
 
         if gc_charts:
             md_file.write("## GC time (ms) at {} percentile \n".format(p))
-            chart_md(md_file, bar_chart_gc_relative(plt, configurations, p), rootdir,
+            chart_md(md_file, bar_chart_gc_relative(plt, configurations, benchmarks, p), rootdir,
                      "relative_gc_percentile_" + str(p) + ".png")
-            mark, sweep, total = percentile_gc(configurations, p)
-            write_md_table_gc(md_file, configurations, mark, sweep, total)
+            mark, sweep, total = percentile_gc(configurations, benchmarks, p)
+            write_md_table_gc(md_file, configurations, benchmarks, mark, sweep, total)
 
     md_file.write("# Individual benchmarks\n")
-    for bench in all_benchmarks:
+    for bench in benchmarks:
         if not any_run_exists(bench, configurations, 0):
             continue
 
@@ -502,6 +502,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--comment", help="comment at the suffix of the report name")
     parser.add_argument("--gc", help="enable charts about garbage collector", action="store_true")
+    parser.add_argument("--benchmark", help="benchmarks use in comparision", action='append')
     parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
     args = parser.parse_args()
@@ -517,6 +518,12 @@ if __name__ == '__main__':
     if args.comment is not None:
         comment = args.comment
 
+    if args.benchmark != None:
+        benchmarks = []
+        for b in args.benchmark:
+            benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
+    else:
+        benchmarks = all_benchmarks
 
     parent_configurations = []
     for conf in configurations:
@@ -531,6 +538,6 @@ if __name__ == '__main__':
     plt.rcParams["figure.figsize"] = [16.0, 12.0]
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
-        write_md_file(report_dir, md_file, parent_configurations, configurations, args.gc)
+        write_md_file(report_dir, md_file, parent_configurations, configurations, benchmarks, args.gc)
 
     print report_dir
