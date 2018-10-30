@@ -316,6 +316,8 @@ def size_compare_chart_generic(plt, parent_configurations, bench, get_percentile
                 equal_sizes += [min_size]
                 equal_confs += [child_conf]
 
+        # sorts all by size in GB
+        equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
         percentiles = get_percentile(equal_confs, bench, p)
         plt.plot(np.array(equal_sizes), percentiles, label=parent_conf)
     plt.legend()
@@ -337,6 +339,9 @@ def size_compare_chart_gc_combined(plt, parent_configurations, bench, p):
             if min_size == max_size:
                 equal_sizes += [min_size]
                 equal_confs += [child_conf]
+
+        # sorts all by size in GB
+        equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
 
         mark, _, total = percentile_gc_bench(equal_confs, bench, p)
         plt.plot(np.array(equal_sizes), total, label=parent_conf + "-sweep") # total (look like sweep)
