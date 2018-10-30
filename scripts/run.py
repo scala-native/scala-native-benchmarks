@@ -334,6 +334,8 @@ if __name__ == "__main__":
                 continue
             root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
 
+        mkdir(root_dir)
+
         if sha1 != None:
             success = compile_scala_native(ref, sha1)
             if not success:
