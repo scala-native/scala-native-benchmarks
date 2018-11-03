@@ -373,7 +373,7 @@ def size_compare_chart_generic(plt, parent_configurations, bench, get_percentile
     return plt
 
 
-def size_compare_chart_gc_combined(plt, parent_configurations, bench, p):
+def size_compare_chart_gc_combined(plt, parent_configurations, bench):
     plt.clf()
     plt.cla()
     for parent_conf in parent_configurations:
@@ -388,14 +388,14 @@ def size_compare_chart_gc_combined(plt, parent_configurations, bench, p):
         # sorts all by size in GB
         equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
 
-        mark, _, total = percentile_gc_bench(equal_confs, bench, p)
+        mark, _, total = total_gc_bench(equal_confs, bench)
         plt.plot(np.array(equal_sizes), total, label=parent_conf + "-sweep") # total (look like sweep)
         plt.plot(np.array(equal_sizes), mark, label=parent_conf + "-mark") # mark time
     plt.legend()
     plt.xlim(xmin=0)
     plt.ylim(ymin=0)
     plt.xlabel("Heap Size (GB)")
-    plt.title("{}: GC times at {} percentile".format(bench, p))
+    plt.title("{}: GC total time".format(bench))
     plt.ylabel("Time (ms)")
 
     return plt
@@ -417,13 +417,13 @@ def size_compare_chart_gc(plt, parent_configurations, bench, p):
 
 def size_compare_chart_gc_mark(plt, parent_configurations, bench, p):
     plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_gc_bench_mark, p)
-    plt.title("{}: GC mark time at {} percentile".format(bench, p))
+    plt.title("{}: GC mark pause time at {} percentile".format(bench, p))
     plt.ylabel("GC mark time (ms)")
     return plt
 
 def size_compare_chart_gc_sweep(plt, parent_configurations, bench, p):
     plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_gc_bench_sweep, p)
-    plt.title("{}: GC sweep time at {} percentile".format(bench, p))
+    plt.title("{}: GC sweep pause time at {} percentile".format(bench, p))
     plt.ylabel("GC sweep time (ms)")
     return plt
 
@@ -635,8 +635,16 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
                      "gc_pause_times_" + bench + ".png")
             if size_charts:
                 for p in interesting_percentiles:
-                    chart_md(md_file, size_compare_chart_gc_combined(plt, parent_configurations, bench, p), rootdir,
-                             "gc_size_chart" + bench + "percentile_" + str(p) + ".png")
+                    chart_md(md_file, size_compare_chart_gc_mark(plt, parent_configurations, bench, p), rootdir,
+                             "gc_size_chart" + bench + "percentile_" + str(p) + "_mark.png")
+                for p in interesting_percentiles:
+                    chart_md(md_file, size_compare_chart_gc_sweep(plt, parent_configurations, bench, p), rootdir,
+                             "gc_size_chart" + bench + "percentile_" + str(p) + "_sweep.png")
+                for p in interesting_percentiles:
+                    chart_md(md_file, size_compare_chart_gc_sweep(plt, parent_configurations, bench, p), rootdir,
+                             "gc_size_chart" + bench + "percentile_" + str(p) + "_total.png")
+                chart_md(md_file, size_compare_chart_gc_combined(plt, parent_configurations, bench), rootdir,
+                         "gc_size_chart_total" + bench + ".png")
 
         if size_charts:
             for p in interesting_percentiles:
