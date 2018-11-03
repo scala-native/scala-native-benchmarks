@@ -226,15 +226,15 @@ def bar_chart_relative(plt, configurations, benchmarks, data):
     return plt
 
 
-def relative_execution_times(plt, configurations, benchmarks, data):
+def relative_execution_times(plt, configurations, benchmarks, data, p):
     plt = bar_chart_relative(plt, configurations, benchmarks, data)
-    plt.title("Relative test execution times against " + configurations[0] + " at " + str(percentile) + " percentile")
+    plt.title("Relative test execution times against " + configurations[0] + " at " + str(p) + " percentile")
     return plt
 
 
-def relative_gc_pauses(plt, configurations, benchmarks, data):
+def relative_gc_pauses(plt, configurations, benchmarks, data, p):
     plt = bar_chart_relative(plt, configurations, benchmarks, data)
-    plt.title("Relative GC pauses against " + configurations[0] + " at " + str(percentile) + " percentile")
+    plt.title("Relative GC pauses against " + configurations[0] + " at " + str(p) + " percentile")
     return plt
 
 
@@ -607,7 +607,7 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
     for p in interesting_percentiles:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
         data = percentile(configurations, benchmarks, p)
-        chart_md(md_file, relative_execution_times(plt, configurations, benchmarks, data), rootdir,
+        chart_md(md_file, relative_execution_times(plt, configurations, benchmarks, data, p), rootdir,
                  "relative_percentile_" + str(p) + ".png")
         write_md_table(md_file, configurations, benchmarks, data)
 
@@ -621,7 +621,7 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         for p in interesting_percentiles:
             md_file.write("## GC pause time (ms) at {} percentile \n".format(p))
             _, _, total = percentile_gc(configurations, benchmarks, p)
-            chart_md(md_file, relative_gc_pauses(plt, configurations, benchmarks, total), rootdir,
+            chart_md(md_file, relative_gc_pauses(plt, configurations, benchmarks, total, p), rootdir,
                      "relative_gc_percentile_" + str(p) + ".png")
             write_md_table(md_file, configurations, benchmarks, total)
 
