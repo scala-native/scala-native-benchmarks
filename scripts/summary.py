@@ -197,10 +197,15 @@ def bar_chart_relative(plt, configurations, benchmarks, data):
     ref = []
     for bench_idx, bench in enumerate(benchmarks):
         try:
-            base.append(data[bench_idx][0])
-            ref.append(1.0)
+            base_val = data[bench_idx][0]
+            if base_val > 0:
+                base.append(base_val)
+                ref.append(1.0)
+            else:
+                base.append(0.0)
+                ref.append(0.0)
         except IndexError:
-            base.append(0)
+            base.append(0.0)
             ref.append(0.0)
     plt.bar(ind * conf_count, ref, label=configurations[0])
 
@@ -209,7 +214,7 @@ def bar_chart_relative(plt, configurations, benchmarks, data):
         res = []
         for bench_idx, (bench, base_val) in enumerate(zip(benchmarks, base)):
             try:
-                if(base_val > 0):
+                if base_val > 0:
                     res.append(data[bench_idx][conf_idx] / base_val)
                 else:
                     res.append(0.0)
