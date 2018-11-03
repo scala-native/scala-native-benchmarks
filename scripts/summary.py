@@ -106,7 +106,20 @@ def percentile_gc(configurations, benchmarks, percentile):
         out_mark += [res_mark]
         out_sweep += [res_sweep]
         out_total += [res_total]
+
     return out_mark, out_sweep, out_total
+
+def total_gc(configurations, benchmarks):
+    out_mark = []
+    out_sweep = []
+    out_total = []
+    for bench in benchmarks:
+        res_mark, res_sweep, res_total = total_gc_bench(configurations, bench)
+        out_mark += [res_mark]
+        out_sweep += [res_sweep]
+        out_total += [res_total]
+    return out_mark, out_sweep, out_total
+
 
 
 def percentile_gc_bench(configurations, bench, p):
@@ -119,6 +132,23 @@ def percentile_gc_bench(configurations, bench, p):
             res_mark += [np.percentile(mark, p)]
             res_sweep += [np.percentile(sweep, p)]
             res_total += [np.percentile(total, p)]
+        except IndexError:
+            res_mark += [0]
+            res_sweep += [0]
+            res_total += [0]
+    return res_mark, res_sweep, res_total
+
+
+def total_gc_bench(configurations, bench):
+    res_mark = []
+    res_sweep = []
+    res_total = []
+    for conf in configurations:
+        try:
+            mark, sweep, total = gc_stats(bench, conf)
+            res_mark += [np.sum(mark)]
+            res_sweep += [np.sum(sweep)]
+            res_total += [np.sum(total)]
         except IndexError:
             res_mark += [0]
             res_sweep += [0]
@@ -158,16 +188,16 @@ def percentile_bench(configurations, bench, p):
     return res
 
 
-def bar_chart_relative(plt, configurations, benchmarks, percentile):
+def bar_chart_relative(plt, configurations, benchmarks, percentile, data):
     plt.clf()
     plt.cla()
     ind = np.arange(len(benchmarks))
     conf_count = len(configurations) + 1
     base = []
     ref = []
-    for bench in benchmarks:
+    for bench_data in data:
         try:
-            base.append(np.percentile(config_data(bench, configurations[0]), percentile))
+            base.append(bench_data[0])
             ref.append(1.0)
         except IndexError:
             base.append(0)
@@ -175,13 +205,14 @@ def bar_chart_relative(plt, configurations, benchmarks, percentile):
     plt.bar(ind * conf_count, ref, label=configurations[0])
 
     for i, conf in enumerate(configurations[1:]):
+        conf_idx = i + 1
         res = []
-        for bench, base_val in zip(benchmarks, base):
+        for bench_idx, (bench, base_val) in enumerate(zip(benchmarks, base)):
             try:
-                res.append(np.percentile(config_data(bench, conf), percentile) / base_val)
+                res.append(data[bench_idx][conf_idx] / base_val)
             except IndexError:
                 res.append(0)
-        plt.bar(ind * conf_count + i + 1, res, label=conf)
+        plt.bar(ind * conf_count + conf_idx, res, label=conf)
     plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
     plt.title("Relative test execution times against " + configurations[0] + " at " + str(percentile) + " percentile")
     plt.legend()
@@ -556,11 +587,17 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
     md_file.write("# Summary\n")
     for p in interesting_percentiles:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
-        chart_md(md_file, bar_chart_relative(plt, configurations, benchmarks, p), rootdir, "relative_percentile_" + str(p) + ".png")
-        write_md_table(md_file, configurations, benchmarks, percentile(configurations, benchmarks, p))
+        data = percentile(configurations, benchmarks, p)
+        chart_md(md_file, bar_chart_relative(plt, configurations, benchmarks, p, data), rootdir, "relative_percentile_" + str(p) + ".png")
+        write_md_table(md_file, configurations, benchmarks, data)
 
-        if gc_charts:
-            md_file.write("## GC time (ms) at {} percentile \n".format(p))
+    if gc_charts:
+        md_file.write("## Total GC time (ms) \n")
+        mark, sweep, total = total_gc(configurations, benchmarks)
+        write_md_table_gc(md_file, configurations, benchmarks, mark, sweep, total)
+
+        for p in interesting_percentiles:
+            md_file.write("## GC pause time (ms) at {} percentile \n".format(p))
             chart_md(md_file, bar_chart_gc_relative(plt, configurations, benchmarks, p), rootdir,
                      "relative_gc_percentile_" + str(p) + ".png")
             mark, sweep, total = percentile_gc(configurations, benchmarks, p)
