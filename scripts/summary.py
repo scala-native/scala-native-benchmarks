@@ -48,47 +48,88 @@ def gc_stats(bench, conf):
         try:
             file = os.path.join("results", conf, bench, run)
             with open(file) as data:
-                # analise header
-                mark_index = -1
-                sweep_index = -1
-                mark_to_ms = 0
-                sweep_to_ms = 0
-
-                unit2div = dict(ms=1, us=1000, ns=1000 * 1000)
-
-                header = data.readline().strip()
-                for i, h in enumerate(header.split(',')):
-                    arr = h.rsplit('_', 1)
-                    if len(arr) != 2:
-                        continue
-                    prefix = arr[0]
-                    unit = arr[1]
-
-                    if prefix == "mark_time":
-                        mark_index = i
-                        mark_to_ms = unit2div[unit]
-                    elif prefix == "sweep_time":
-                        sweep_index = i
-                        sweep_to_ms = unit2div[unit]
-
-                if mark_index == -1:
-                    print "Header does not have mark_time_<unit>", header, "at", file
-                if sweep_index == -1:
-                    print "Header does not have sweep_time_<unit>", header, "at", file
-                if mark_index == -1 or sweep_index == -1:
-                    continue
-
-                for line in data.readlines():
-                    arr = line.split(",")
-                    # in ms
-                    mark_time = float(arr[mark_index]) / mark_to_ms
-                    mark_times.append(mark_time)
-                    sweep_time = float(arr[sweep_index]) / sweep_to_ms
-                    sweep_times.append(sweep_time)
-                    gc_times.append(mark_time + sweep_time)
+                mark, sweep, total = gc_parse_file(data, file)
+                mark_times += mark
+                sweep_times += sweep
+            gc_times += total
         except IOError:
             pass
     return np.array(mark_times), np.array(sweep_times), np.array(gc_times)
+
+
+def gc_parse_file(data, file):
+    header = data.readline().strip()
+    if header.startswith("event_type,"):
+        return parse_gc_events(data, file, header)
+    else:
+        return parse_gc_tabular(data, file, header)
+
+
+def parse_gc_events(data, file, header):
+    mark_times = []
+    sweep_times = []
+    gc_times = []
+    event_type_index = 0
+    time_ns_index = -1
+    ns_to_ms_div = 1000 * 1000
+    for i, h in enumerate(header.split(',')):
+        if h == "time_ns":
+            time_ns_index = i
+    if time_ns_index == -1:
+        print "Header does not have time_ns", header, "at", file
+        return mark_times, sweep_times, gc_times
+
+    for line in data.readlines():
+        arr = line.split(",")
+        event = arr[event_type_index]
+        time = float(arr[time_ns_index]) / ns_to_ms_div
+        if event == "mark":
+            mark_times += [time]
+        elif event == "sweep":
+            sweep_times += [time]
+        gc_times += [time]
+
+    return mark_times, sweep_times, gc_times
+
+
+def parse_gc_tabular(data, file, header):
+    mark_times = []
+    sweep_times = []
+    gc_times = []
+    # analise header
+    mark_index = -1
+    sweep_index = -1
+    mark_to_ms = 0
+    sweep_to_ms = 0
+    unit2div = dict(ms=1, us=1000, ns=1000 * 1000)
+    for i, h in enumerate(header.split(',')):
+        arr = h.rsplit('_', 1)
+        if len(arr) != 2:
+            continue
+        prefix = arr[0]
+        unit = arr[1]
+
+        if prefix == "mark_time":
+            mark_index = i
+            mark_to_ms = unit2div[unit]
+        elif prefix == "sweep_time":
+            sweep_index = i
+            sweep_to_ms = unit2div[unit]
+    if mark_index == -1:
+        print "Header does not have mark_time_<unit>", header, "at", file
+    if sweep_index == -1:
+        print "Header does not have sweep_time_<unit>", header, "at", file
+    if mark_index == -1 or sweep_index == -1:
+        return mark_times, sweep_times, gc_times
+    for line in data.readlines():
+        arr = line.split(",")
+        # in ms
+        mark_time = float(arr[mark_index]) / mark_to_ms
+        mark_times.append(mark_time)
+        sweep_time = float(arr[sweep_index]) / sweep_to_ms
+        sweep_times.append(sweep_time)
+        gc_times.append(mark_time + sweep_time)
+    return mark_times, sweep_times, gc_times
 
 
 def gc_stats_total(bench, conf):
