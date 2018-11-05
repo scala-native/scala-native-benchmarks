@@ -15,7 +15,7 @@ def config_data(bench, conf):
     for file in files:
         if "." not in file:
             # regular benchmark data
-            runs += [file]
+            runs.append(file)
 
     out = []
     for run in runs:
@@ -39,7 +39,7 @@ def gc_stats(bench, conf):
     for file in files:
         if file.endswith(".gc.csv"):
             # gc stats data
-            runs += [file]
+            runs.append(file)
 
     mark_times = []
     sweep_times = []
@@ -84,10 +84,10 @@ def parse_gc_events(data, file, header):
         event = arr[event_type_index]
         time = float(arr[time_ns_index]) / ns_to_ms_div
         if event == "mark":
-            mark_times += [time]
+            mark_times.append(time)
         elif event == "sweep":
-            sweep_times += [time]
-        gc_times += [time]
+            sweep_times.append(time)
+        gc_times.append(time)
 
     return mark_times, sweep_times, gc_times
 
@@ -144,9 +144,9 @@ def percentile_gc(configurations, benchmarks, percentile):
     out_total = []
     for bench in benchmarks:
         res_mark, res_sweep, res_total = percentile_gc_bench(configurations, bench, percentile)
-        out_mark += [res_mark]
-        out_sweep += [res_sweep]
-        out_total += [res_total]
+        out_mark.append(res_mark)
+        out_sweep.append(res_sweep)
+        out_total.append(res_total)
 
     return out_mark, out_sweep, out_total
 
@@ -156,9 +156,9 @@ def total_gc(configurations, benchmarks):
     out_total = []
     for bench in benchmarks:
         res_mark, res_sweep, res_total = total_gc_bench(configurations, bench)
-        out_mark += [res_mark]
-        out_sweep += [res_sweep]
-        out_total += [res_total]
+        out_mark.append(res_mark)
+        out_sweep.append(res_sweep)
+        out_total.append(res_total)
     return out_mark, out_sweep, out_total
 
 
@@ -170,13 +170,13 @@ def percentile_gc_bench(configurations, bench, p):
     for conf in configurations:
         try:
             mark, sweep, total = gc_stats(bench, conf)
-            res_mark += [np.percentile(mark, p)]
-            res_sweep += [np.percentile(sweep, p)]
-            res_total += [np.percentile(total, p)]
+            res_mark.append(np.percentile(mark, p))
+            res_sweep.append(np.percentile(sweep, p))
+            res_total.append(np.percentile(total, p))
         except IndexError:
-            res_mark += [0]
-            res_sweep += [0]
-            res_total += [0]
+            res_mark.append(0)
+            res_sweep.append(0)
+            res_total.append(0)
     return res_mark, res_sweep, res_total
 
 
@@ -187,13 +187,13 @@ def total_gc_bench(configurations, bench):
     for conf in configurations:
         try:
             mark, sweep, total = gc_stats(bench, conf)
-            res_mark += [np.sum(mark)]
-            res_sweep += [np.sum(sweep)]
-            res_total += [np.sum(total)]
+            res_mark.append(np.sum(mark))
+            res_sweep.append(np.sum(sweep))
+            res_total.append(np.sum(total))
         except IndexError:
-            res_mark += [0]
-            res_sweep += [0]
-            res_total += [0]
+            res_mark.append(0)
+            res_sweep.append(0)
+            res_total.append(0)
     return res_mark, res_sweep, res_total
 
 
@@ -215,7 +215,7 @@ def percentile_gc_bench_total(configurations, bench, p):
 def percentile(configurations, benchmarks, p):
     out = []
     for bench in benchmarks:
-        out += [percentile_bench(configurations, bench, p)]
+        out.append(percentile_bench(configurations, bench, p))
     return out
 
 
@@ -223,9 +223,9 @@ def percentile_bench(configurations, bench, p):
     res = []
     for conf in configurations:
         try:
-            res += [np.percentile(config_data(bench, conf), p)]
+            res.append(np.percentile(config_data(bench, conf), p))
         except IndexError:
-            res += [0]
+            res.append(0)
     return res
 
 
@@ -389,9 +389,9 @@ def sizes_per_conf(parent_configuration):
     for f in folders:
         if f.startswith("size_"):
             parts = f[len("size_"):].split("-")
-            min_sizes += [to_gb(parts[0])]
-            max_sizes += [to_gb(parts[1])]
-            child_confs += [os.path.join(parent_configuration,f)]
+            min_sizes.append(to_gb(parts[0]))
+            max_sizes.append(to_gb(parts[1]))
+            child_confs.append(os.path.join(parent_configuration,f))
     return min_sizes, max_sizes, child_confs
 
 
@@ -404,8 +404,8 @@ def size_compare_chart_generic(plt, parent_configurations, bench, get_percentile
         equal_confs = []
         for min_size, max_size, child_conf in zip(min_sizes, max_sizes, child_confs):
             if min_size == max_size:
-                equal_sizes += [min_size]
-                equal_confs += [child_conf]
+                equal_sizes.append(min_size)
+                equal_confs.append(child_conf)
 
         # sorts all by size in GB
         equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
@@ -428,8 +428,8 @@ def size_compare_chart_gc_combined(plt, parent_configurations, bench):
         equal_confs = []
         for min_size, max_size, child_conf in zip(min_sizes, max_sizes, child_confs):
             if min_size == max_size:
-                equal_sizes += [min_size]
-                equal_confs += [child_conf]
+                equal_sizes.append(min_size)
+                equal_confs.append(child_conf)
 
         # sorts all by size in GB
         equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
@@ -724,10 +724,10 @@ def discover_benchmarks(configurations):
             if pf.startswith("size_"):
                for child in next(os.walk(os.path.join("results", conf, pf)))[1]:
                    if child not in benchmarks:
-                       benchmarks += [child]
+                       benchmarks.append(child)
             else:
                 if pf not in benchmarks:
-                    benchmarks += [pf]
+                    benchmarks.append(pf)
 
     return benchmarks
 
@@ -740,7 +740,7 @@ if __name__ == '__main__':
         subfolders = next(os.walk(folder))[1]
         for size in subfolders:
             if size.startswith("size_"):
-                all_configs += [os.path.join(conf, size)]
+                all_configs.append(os.path.join(conf, size))
 
     results = generate_choices(all_configs)
 
@@ -758,7 +758,7 @@ if __name__ == '__main__':
         configurations = all_configs
     else:
         for arg in args.comparisons:
-            configurations += [expand_wild_cards(arg)]
+            configurations.append(expand_wild_cards(arg))
 
     comment = "_vs_".join(configurations).replace(os.sep, "_")
     if args.comment is not None:
@@ -771,7 +771,7 @@ if __name__ == '__main__':
         else:
             parent = conf
         if parent not in parent_configurations:
-            parent_configurations += [parent]
+            parent_configurations.append(parent)
 
     all_benchmarks = discover_benchmarks(parent_configurations)
 
