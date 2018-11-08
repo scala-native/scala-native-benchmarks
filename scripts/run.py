@@ -215,7 +215,7 @@ def single_run(to_run):
 
     cmd = []
     for token in unexpanded_cmd:
-        if token == "$JAVA_SIZE_ARGS":
+        if token == "$JAVA_ARGS":
             if minsize != "default":
                 cmd += ["-Xms" + minsize]
             if maxsize != "default":
