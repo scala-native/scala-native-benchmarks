@@ -220,6 +220,8 @@ def single_run(to_run):
                 cmd += ["-Xms" + minsize]
             if maxsize != "default":
                 cmd += ["-Xmx" + maxsize]
+            if gcstats:
+                cmd += ["-XX:+PrintGCApplicationStoppedTime", "-Xloggc:" + os.path.join(resultsdir, str(n) + ".gc.txt")]
         else:
             cmd += [token]
 
