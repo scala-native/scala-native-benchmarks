@@ -93,9 +93,14 @@ def compile_scala_native(ref, sha1):
         return False
 
 
-def compile(bench, compilecmd):
+def compile(conf, bench, compilecmd, debug, trace):
     cmd = [sbt, '-no-colors', '-J-Xmx2G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
+    if conf.startswith("scala-native"):
+        if debug or trace:
+            cmd.append('set nativeCompileOptions ++= Seq("-g", "-DDEBUG_ASSERT")')
+        if trace:
+            cmd.append('set nativeCompileOptions +="-DDEBUG_PRINT"')
     cmd.append(compilecmd)
     return run(cmd)
 
@@ -250,6 +255,8 @@ if __name__ == "__main__":
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
     parser.add_argument("--overwrite", help="overwrite old results", action="store_true")
     parser.add_argument("--append", help="do not delete old data", action="store_true")
+    parser.add_argument("--gcdebug", help="enable debug for GCs", action="store_true")
+    parser.add_argument("--gctrace", help="verbose logging for GCs to stdout", action="store_true")
     parser.add_argument("set", nargs='*', default="default")
     args = parser.parse_args()
     print args
@@ -308,6 +315,10 @@ if __name__ == "__main__":
         suffix += "-p" + str(par)
     if args.gc:
         suffix += "-gc"
+    if args.gcdebug:
+        suffix += "-gcdebug"
+    if args.gctrace:
+        suffix += "-gctrace"
     if args.suffix is not None:
         suffix += "_" + args.suffix
 
@@ -391,7 +402,7 @@ if __name__ == "__main__":
                 else:
                     os.remove('project/plugins.sbt')
 
-                compile(bench, compilecmd)
+                compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
 
                 resultsdir = os.path.join(sized_dir, bench)
                 print "results in", resultsdir
