@@ -783,7 +783,8 @@ if __name__ == '__main__':
         benchmarks = all_benchmarks
 
     report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"
-    plt.rcParams["figure.figsize"] = [16.0, 12.0]
+    plt.rcParams["figure.figsize"] = [32.0, 24.0]
+    plt.rcParams["font.size"] = 20.0
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
         write_md_file(report_dir, md_file, parent_configurations, configurations, benchmarks, args.gc, args.vssize)
