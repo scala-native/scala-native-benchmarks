@@ -734,13 +734,13 @@ def discover_benchmarks(configurations):
 
 if __name__ == '__main__':
     all_configs = next(os.walk("results"))[1]
-    # added size_
+    # added subconfigurations
     for conf in all_configs:
         folder = os.path.join("results", conf)
         subfolders = next(os.walk(folder))[1]
-        for size in subfolders:
-            if size.startswith("size_"):
-                all_configs.append(os.path.join(conf, size))
+        for subconf in subfolders:
+            if subconf.startswith("size_") or subconf.startswith("gcthreads_"):
+                all_configs.append(os.path.join(conf, subconf))
 
     results = generate_choices(all_configs)
 

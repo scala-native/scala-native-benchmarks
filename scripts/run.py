@@ -5,6 +5,8 @@ import subprocess as subp
 import shutil as sh
 import argparse
 import multiprocessing as mp
+import itertools
+
 
 
 def mkdir(path):
@@ -201,6 +203,7 @@ def single_run(to_run):
     gcstats = to_run["gcstats"]
     minsize = to_run["size"][0]
     maxsize = to_run["size"][1]
+    gcThreads = to_run["gcThreads"]
 
     print('--- run {}/{}'.format(n, runs))
     my_env = os.environ.copy()
@@ -217,6 +220,10 @@ def single_run(to_run):
     elif "SCALANATIVE_MAX_HEAP_SIZE" in my_env:
         del my_env["SCALANATIVE_MAX_HEAP_SIZE"]
 
+    if gcThreads != "default":
+        my_env["SCALANATIVE_GC_THREADS"] = gcThreads
+    elif "SCALANATIVE_GC_THREADS" in my_env:
+        del my_env["SCALANATIVE_GC_THREADS"]
 
     cmd = []
     for token in unexpanded_cmd:
@@ -251,6 +258,7 @@ if __name__ == "__main__":
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
     parser.add_argument("--benchmark", help="benchmarks to run", action='append')
     parser.add_argument("--size", help="different size settings to use", action='append')
+    parser.add_argument("--gcthreads", help="different number of garbage collection threads to use", action='append')
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
     parser.add_argument("--overwrite", help="overwrite old results", action="store_true")
@@ -274,14 +282,19 @@ if __name__ == "__main__":
 
     if args.size != None:
         sizes = []
-        for size_str in args.size:
-            parsed = size_parse(size_str)
+        for subconf_str in args.size:
+            parsed = size_parse(subconf_str)
             if parsed == ["default", "default"]:
                 sizes = [parsed] + sizes
             else:
                 sizes += [parsed]
     else:
         sizes = [["default", "default"]]
+
+    if args.gcthreads != None:
+        gcThreadCounts = args.gcthreads
+    else:
+        gcThreadCounts = ["default"]
 
     configurations = []
     for choice in args.set:
@@ -296,6 +309,7 @@ if __name__ == "__main__":
     print "configurations:", configurations
     print "benchmarks:", benchmarks
     print "heap sizes:", sizes
+    print "GC thread counts:", gcThreadCounts
 
     should_fetch = False
     for conf in configurations:
@@ -364,26 +378,31 @@ if __name__ == "__main__":
             symlinks += [[generalized_dir,root_dir]]
             os.symlink(os.path.split(root_dir)[1], generalized_dir)
 
-        for size in sizes:
+        # subconfigurations
+        for (size, gcThreads) in itertools.product(sizes, gcThreadCounts):
 
-            if size == ["default", "default"]:
-                sized_dir = root_dir
+            if size == ["default", "default"] and gcThreads == "default":
+                subconfig_dir = root_dir
             else:
-                size_str = "size_" + size[0] + "-" + size[1]
-                sized_dir = os.path.join(root_dir, size_str)
+                subconf_str = ""
+                if size != ["default", "default"] :
+                    subconf_str += "size_" + size[0] + "-" + size[1]
+                if gcThreads != "default":
+                    subconf_str += "gcthreads_" + gcThreads
+                subconfig_dir = os.path.join(root_dir, subconf_str)
 
-            if not args.overwrite and os.path.isfile(os.path.join(sized_dir, ".complete")):
-                print  sized_dir, "already complete, skipping"
-                skipped += [sized_dir]
+            if not args.overwrite and os.path.isfile(os.path.join(subconfig_dir, ".complete")):
+                print  subconfig_dir, "already complete, skipping"
+                skipped += [subconfig_dir]
                 continue
 
             if not args.append:
-                sh.rmtree(sized_dir, ignore_errors=True)
+                sh.rmtree(subconfig_dir, ignore_errors=True)
 
-            mkdir(sized_dir)
+            mkdir(subconfig_dir)
 
             for bench in benchmarks:
-                print('--- heap size: {} conf: {}, bench: {}'.format(size, conf, bench))
+                print('--- heap size: {} GC threads: {} conf: {}, bench: {}'.format(size, gcThreads, conf, bench))
 
                 input = slurp(os.path.join('input', bench))
                 output = slurp(os.path.join('output', bench))
@@ -404,7 +423,7 @@ if __name__ == "__main__":
 
                 compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
 
-                resultsdir = os.path.join(sized_dir, bench)
+                resultsdir = os.path.join(subconfig_dir, bench)
                 print "results in", resultsdir
                 mkdir(resultsdir)
 
@@ -416,7 +435,7 @@ if __name__ == "__main__":
                 for n in xrange(runs):
                     to_run += [
                         dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc,
-                             size=size)]
+                             size=size, gcThreads=gcThreads)]
 
                 if par == 1:
                     for tr in to_run:
@@ -425,8 +444,8 @@ if __name__ == "__main__":
                     failed += sum(pool.map(single_run, to_run), [])
 
             # mark it as complete
-            open(os.path.join(sized_dir, ".complete"), 'w+').close()
-            result_dirs += [sized_dir]
+            open(os.path.join(subconfig_dir, ".complete"), 'w+').close()
+            result_dirs += [subconfig_dir]
 
     print "results:"
     for dir in result_dirs:
