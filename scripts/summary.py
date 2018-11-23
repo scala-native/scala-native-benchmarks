@@ -229,6 +229,23 @@ def percentile_bench(configurations, bench, p):
     return res
 
 
+def totals(configurations, benchmarks):
+    out = []
+    for bench in benchmarks:
+        out.append(totals_bench(configurations, bench))
+    return out
+
+
+def totals_bench(configurations, bench):
+    res = []
+    for conf in configurations:
+        try:
+            res.append(np.sum(config_data(bench, conf)))
+        except IndexError:
+            res.append(0)
+    return res
+
+
 def bar_chart_relative(plt, configurations, benchmarks, data):
     plt.clf()
     plt.cla()
@@ -264,6 +281,12 @@ def bar_chart_relative(plt, configurations, benchmarks, data):
         plt.bar(ind * conf_count + conf_idx, res, label=conf)
     plt.xticks((ind * conf_count + (conf_count - 1) / 2.0), map(benchmark_short_name, benchmarks))
     plt.legend()
+    return plt
+
+
+def total_execution_times(plt, configurations, benchmarks, data):
+    plt = bar_chart_relative(plt, configurations, benchmarks, data)
+    plt.title("Total test execution times against " + configurations[0])
     return plt
 
 
@@ -652,8 +675,14 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
                  "relative_percentile_" + str(p) + ".png")
         write_md_table(md_file, configurations, benchmarks, data)
 
+    md_file.write("## Benchmark total run time (ms) \n")
+    data = totals(configurations, benchmarks)
+    chart_md(md_file, total_execution_times(plt, configurations, benchmarks, data), rootdir,
+             "relative_total.png")
+    write_md_table(md_file, configurations, benchmarks, data)
+
     if gc_charts:
-        md_file.write("## Total GC time (ms) \n")
+        md_file.write("## Total GC time on Application thread (ms) \n")
         mark, sweep, total = total_gc(configurations, benchmarks)
         chart_md(md_file, bar_chart_gc_relative(plt, configurations, benchmarks, mark, total), rootdir,
                  "relative_gc_total.png")
