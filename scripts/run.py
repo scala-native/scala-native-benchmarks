@@ -37,6 +37,15 @@ def where(cmd):
             return None
 
 
+def try_run(cmd, env=None, wd=None):
+    try:
+        print run(cmd, env, wd)
+        return True
+    except subp.CalledProcessError as err:
+        print err.output
+        return False
+
+
 def run(cmd, env=None, wd=None):
     print(">>> " + str(cmd))
     if wd == None:
@@ -45,15 +54,31 @@ def run(cmd, env=None, wd=None):
         return subp.check_output(cmd, stderr=subp.STDOUT, env=env, cwd=wd)
 
 
-scala_native_dir = "../scala-native"
+scala_native_dir = os.path.join("..", "scala-native")
+upload_dir = os.path.abspath(os.path.join("..", "scala-native-benchmark-results"))
+local_scala_repo_dir = os.path.abspath(os.path.join("..", "scala-2.11.11-only"))
 
 
-def fetch():
-    git_fetch = ['git', 'fetch', '--all']
-    try:
-        run(git_fetch, wd=scala_native_dir)
-    except:
-        pass
+def git_add(dir, *items):
+    return try_run(["git", "add"] + list(items), wd=dir)
+
+
+def git_commit(dir, msg):
+    return try_run(["git", "commit", "-m", msg], wd=dir)
+
+
+def git_pull(dir):
+    my_env = os.environ.copy()
+    my_env["GIT_MERGE_AUTOEDIT"] = "no"
+    return try_run(["git", "pull"], env=my_env, wd=dir)
+
+
+def git_push(dir):
+    return try_run(['git', 'push'], wd=dir)
+
+
+def git_fetch(dir):
+    return try_run(['git', 'fetch', '--all'], wd=dir)
 
 
 def get_ref(ref):
@@ -81,7 +106,6 @@ def compile_scala_native(ref, sha1):
     compile_cmd = [sbt, '-no-colors', '-J-Xmx2G', 'rebuild', 'sandbox/run']
     compile_env = os.environ.copy()
     compile_env["SCALANATIVE_GC"] = "immix"
-    local_scala_repo_dir = os.path.abspath("../scala-2.11.11-only")
     if os.path.isdir(local_scala_repo_dir):
         compile_env["SCALANATIVE_SCALAREPO"] = local_scala_repo_dir
 
@@ -251,6 +275,37 @@ def single_run(to_run):
         return [dict(conf=conf, bench=bench, run=n)]
 
 
+def upload(subconfig_dir, symlink, use_git, overwrite):
+    if os.path.isdir(upload_dir):
+        target = os.path.join(upload_dir, subconfig_dir)
+        targetComplete = os.path.isfile(os.path.join(target, ".complete"))
+        targetExisted = os.path.isdir(target)
+        if (targetComplete and overwrite) or targetExisted:
+            mkdir(os.path.join("..", target))
+            sh.rmtree(target, ignore_errors=True)
+        if not targetExisted or overwrite:
+            sh.copytree(subconfig_dir, target, symlinks=True)
+            if use_git:
+                if symlink != None:
+                    git_add(upload_dir, symlink)
+                if git_add(upload_dir, target) \
+                        and git_commit(upload_dir, "automated commit " + subconfig_dir) \
+                        and git_pull(upload_dir) \
+                        and git_push(upload_dir):
+                    pass
+    else:
+        print "WARN", upload_dir, "does not exist!"
+
+
+def create_symlink(generalized_dir, root_dir):
+    try:
+        os.unlink(generalized_dir)
+    except:
+        pass
+    print "creating symlink", generalized_dir, "->", root_dir
+    os.symlink(os.path.split(root_dir)[1], generalized_dir)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--suffix", help="suffix added to results")
@@ -261,6 +316,8 @@ if __name__ == "__main__":
     parser.add_argument("--gcthreads", help="different number of garbage collection threads to use", action='append')
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
+    parser.add_argument("--upload", help="copy the results to ../scala-native-benchmark-results", action="store_true")
+    parser.add_argument("--gitupload", help="copy the results to ../scala-native-benchmark-results and commit and push to git", action="store_true")
     parser.add_argument("--overwrite", help="overwrite old results", action="store_true")
     parser.add_argument("--append", help="do not delete old data", action="store_true")
     parser.add_argument("--gcdebug", help="enable debug for GCs", action="store_true")
@@ -318,7 +375,7 @@ if __name__ == "__main__":
             break
 
     if should_fetch:
-        fetch()
+        git_fetch(scala_native_dir)
 
     suffix = ""
     if runs != default_runs:
@@ -369,14 +426,13 @@ if __name__ == "__main__":
                 compile_fail += [conf]
                 continue
 
+        symlink = None
         if generalized_dir != root_dir:
-            try:
-                os.unlink(generalized_dir)
-            except:
-                pass
-            print "creating symlink", generalized_dir, "->", root_dir
-            symlinks += [[generalized_dir,root_dir]]
-            os.symlink(os.path.split(root_dir)[1], generalized_dir)
+            create_symlink(generalized_dir, root_dir)
+            symlinks += [[generalized_dir, root_dir]]
+            symlink = generalized_dir
+            if args.upload or args.gitupload:
+                create_symlink(os.path.join(upload_dir, generalized_dir), root_dir)
 
         # subconfigurations
         for (size, gcThreads) in itertools.product(sizes, gcThreadCounts):
@@ -384,13 +440,13 @@ if __name__ == "__main__":
             if size == ["default", "default"] and gcThreads == "default":
                 subconfig_dir = root_dir
             else:
-                size_str = ""
+                size_str = []
                 if size != ["default", "default"] :
-                    size_str = "size_" + size[0] + "-" + size[1]
-                gcThreads_str = ""
+                    size_str = ["size_" + size[0] + "-" + size[1]]
+                gcThreads_str = []
                 if gcThreads != "default":
-                    gcThreads_str += "gcthreads_" + gcThreads
-                subconf_str = "_".join(size_str, gcThreads_str)
+                    gcThreads_str = ["gcthreads_" + gcThreads]
+                subconf_str = "_".join(size_str + gcThreads_str)
                 subconfig_dir = os.path.join(root_dir, subconf_str)
 
             if not args.overwrite and os.path.isfile(os.path.join(subconfig_dir, ".complete")):
@@ -448,6 +504,9 @@ if __name__ == "__main__":
             # mark it as complete
             open(os.path.join(subconfig_dir, ".complete"), 'w+').close()
             result_dirs += [subconfig_dir]
+
+            if args.upload or args.gitupload:
+                upload(subconfig_dir, symlink, args.gitupload, args.overwrite)
 
     print "results:"
     for dir in result_dirs:
