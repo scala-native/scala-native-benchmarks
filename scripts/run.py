@@ -384,11 +384,13 @@ if __name__ == "__main__":
             if size == ["default", "default"] and gcThreads == "default":
                 subconfig_dir = root_dir
             else:
-                subconf_str = ""
+                size_str = ""
                 if size != ["default", "default"] :
-                    subconf_str += "size_" + size[0] + "-" + size[1]
+                    size_str = "size_" + size[0] + "-" + size[1]
+                gcThreads_str = ""
                 if gcThreads != "default":
-                    subconf_str += "gcthreads_" + gcThreads
+                    gcThreads_str += "gcthreads_" + gcThreads
+                subconf_str = "_".join(size_str, gcThreads_str)
                 subconfig_dir = os.path.join(root_dir, subconf_str)
 
             if not args.overwrite and os.path.isfile(os.path.join(subconfig_dir, ".complete")):
