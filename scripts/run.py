@@ -299,7 +299,7 @@ if __name__ == "__main__":
 
     should_fetch = False
     for conf in configurations:
-        if '@' in conf:
+        if '@' in conf and not conf.endswith("@HEAD"):
             should_fetch = True
             break
 
