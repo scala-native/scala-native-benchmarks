@@ -750,7 +750,7 @@ def discover_benchmarks(configurations):
     for conf in configurations:
         parent_folders = next(os.walk(os.path.join("results", conf)))[1]
         for pf in parent_folders:
-            if pf.startswith("size_"):
+            if is_subconfig(pf):
                for child in next(os.walk(os.path.join("results", conf, pf)))[1]:
                    if child not in benchmarks:
                        benchmarks.append(child)
@@ -761,6 +761,10 @@ def discover_benchmarks(configurations):
     return benchmarks
 
 
+def is_subconfig(subconf):
+    return subconf.startswith("size_") or subconf.startswith("gcthreads_")
+
+
 if __name__ == '__main__':
     all_configs = next(os.walk("results"))[1]
     # added subconfigurations
@@ -768,7 +772,7 @@ if __name__ == '__main__':
         folder = os.path.join("results", conf)
         subfolders = next(os.walk(folder))[1]
         for subconf in subfolders:
-            if subconf.startswith("size_") or subconf.startswith("gcthreads_"):
+            if is_subconfig(subconf):
                 all_configs.append(os.path.join(conf, subconf))
 
     results = generate_choices(all_configs)
