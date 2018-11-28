@@ -87,7 +87,8 @@ def parse_gc_events(data, file, header):
             mark_times.append(time)
         elif event == "sweep":
             sweep_times.append(time)
-        gc_times.append(time)
+        if event == "mark" or event == "sweep":
+            gc_times.append(time)
 
     return mark_times, sweep_times, gc_times
 
