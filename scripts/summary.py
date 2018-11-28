@@ -731,7 +731,7 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
             run -= 1
 
         if run >= 0:
-            chart_md(md_file, example_run_plot(plt, configurations, bench), rootdir,
+            chart_md(md_file, example_run_plot(plt, configurations, bench, run), rootdir,
                      "example_run_" + str(run) + "_" + bench + ".png")
 
 
