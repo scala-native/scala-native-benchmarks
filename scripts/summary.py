@@ -262,6 +262,7 @@ def percentile_gc(configurations, benchmarks, percentile):
 
     return out_mark, out_sweep, out_total
 
+
 def total_gc(configurations, benchmarks):
     out_mark = []
     out_sweep = []
@@ -272,7 +273,6 @@ def total_gc(configurations, benchmarks):
         out_sweep.append(res_sweep)
         out_total.append(res_total)
     return out_mark, out_sweep, out_total
-
 
 
 def percentile_gc_bench(configurations, bench, p):
@@ -526,7 +526,7 @@ def sizes_per_conf(parent_configuration):
             parts = f[len("size_"):].split("-")
             min_sizes.append(to_gb(parts[0]))
             max_sizes.append(to_gb(parts[1]))
-            child_confs.append(os.path.join(parent_configuration,f))
+            child_confs.append(os.path.join(parent_configuration, f))
     return min_sizes, max_sizes, child_confs
 
 
@@ -543,7 +543,7 @@ def size_compare_chart_generic(plt, parent_configurations, bench, get_percentile
                 equal_confs.append(child_conf)
 
         # sorts all by size in GB
-        equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
+        equal_sizes, equal_confs = zip(*[(x, y) for x, y in sorted(zip(equal_sizes, equal_confs))])
         percentiles = get_percentile(equal_confs, bench, p)
         plt.plot(np.array(equal_sizes), percentiles, label=parent_conf)
     plt.legend()
@@ -567,11 +567,11 @@ def size_compare_chart_gc_combined(plt, parent_configurations, bench):
                 equal_confs.append(child_conf)
 
         # sorts all by size in GB
-        equal_sizes, equal_confs  = zip(*[(x,y) for x,y in sorted(zip(equal_sizes,equal_confs))])
+        equal_sizes, equal_confs = zip(*[(x, y) for x, y in sorted(zip(equal_sizes, equal_confs))])
 
         mark, _, total = total_gc_bench(equal_confs, bench)
-        plt.plot(np.array(equal_sizes), total, label=parent_conf + "-sweep") # total (look like sweep)
-        plt.plot(np.array(equal_sizes), mark, label=parent_conf + "-mark") # mark time
+        plt.plot(np.array(equal_sizes), total, label=parent_conf + "-sweep")  # total (look like sweep)
+        plt.plot(np.array(equal_sizes), mark, label=parent_conf + "-mark")  # mark time
     plt.legend()
     plt.xlim(xmin=0)
     plt.ylim(ymin=0)
@@ -586,7 +586,7 @@ def size_compare_chart(plt, parent_configurations, bench, p):
     plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_bench, p)
     plt.title("{} at {} percentile".format(bench, p))
     plt.ylabel("Run time (ms)")
-    return  plt
+    return plt
 
 
 def size_compare_chart_gc(plt, parent_configurations, bench, p):
@@ -601,6 +601,7 @@ def size_compare_chart_gc_mark(plt, parent_configurations, bench, p):
     plt.title("{}: GC mark pause time at {} percentile".format(bench, p))
     plt.ylabel("GC mark time (ms)")
     return plt
+
 
 def size_compare_chart_gc_sweep(plt, parent_configurations, bench, p):
     plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_gc_bench_sweep, p)
@@ -630,11 +631,13 @@ def percentiles_chart(plt, configurations, bench, limit=99):
     plt.ylabel("Run time (ms)")
     return plt
 
+
 def gc_pause_time_chart(plt, configurations, bench, limit=100):
     plt = percentiles_chart_generic(plt, configurations, bench, gc_stats_total, limit)
     plt.title(bench + ": Garbage Collector Pause Times")
     plt.ylabel("GC pause time (ms)")
     return plt
+
 
 def print_table(configurations, benchmarks, data):
     leading = ['name']
@@ -648,7 +651,7 @@ def print_table(configurations, benchmarks, data):
 def gc_gantt_chart(plt, conf, bench, data):
     plt.clf()
     plt.cla()
-
+    plt.figure(figsize=(100, 24))
     labels = ["Collections"]
     collection_events, phase_events_by_thread, batch_events_by_thread = data
 
@@ -656,9 +659,10 @@ def gc_gantt_chart(plt, conf, bench, data):
     for e in collection_events:
         # [event, start, time] => (start, time)
         values.append((e[1], e[2]))
-    plt.broken_barh(values, (0, 1), color="black", label = "collection")
+    plt.broken_barh(values, (0, 1), color="black", label="collection")
     event_type_to_color = {
-        "mark": ("red", "darkred"), "sweep": ("blue", "darkblue"), "concmark": ("red", "darkred"), "concsweep": ("blue", "darkblue"),
+        "mark": ("red", "darkred"), "sweep": ("blue", "darkblue"), "concmark": ("red", "darkred"),
+        "concsweep": ("blue", "darkblue"),
         "mark_batch": ("red", "darkred"), "sweep_batch": ("blue", "darkblue"), "coalesce_batch": ("green", "darkgreen")
     }
 
@@ -674,7 +678,7 @@ def gc_gantt_chart(plt, conf, bench, data):
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (end, 1), facecolors = event_type_to_color[et], label = et)
+            plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et], label=et)
 
     for thread in sorted(batch_events_by_thread.keys()):
         end = len(labels)
@@ -688,7 +692,7 @@ def gc_gantt_chart(plt, conf, bench, data):
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et], label = et)
+            plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et], label=et)
 
     plt.yticks(np.arange(len(labels)), labels)
     plt.xlabel("Time since start (ms)")
@@ -699,7 +703,6 @@ def gc_gantt_chart(plt, conf, bench, data):
                         (mpatches.Patch(color='green', label='coalesce'))])
 
     return plt
-
 
 
 def write_md_table(file, configurations, benchmarks, data):
@@ -809,8 +812,6 @@ def write_md_table_gc(file, configurations, benchmarks, mark_data, sweep_data, t
         file.write("|\n")
 
 
-
-
 def cell(x, base):
     if base > 0:
         percent_diff = (float(x) / base - 1) * 100
@@ -830,11 +831,13 @@ def benchmark_short_name(bench):
 
 
 def chart_md(md_file, plt, rootdir, name):
-    plt.savefig(rootdir + name)
+    plt.savefig(rootdir + name, pad_inches=0, bbox_inches='tight')
+    plt.figure(figsize=(32, 24))
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=False, size_charts=False):
+def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=False,
+                  size_charts=False):
     interesting_percentiles = [50, 90, 99]
     md_file.write("# Summary\n")
     for p in interesting_percentiles:
@@ -904,8 +907,11 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
                      "example_run_" + str(run) + "_" + bench + ".png")
             if gc_charts:
                 for conf in configurations:
-                    chart_md(md_file, gc_gantt_chart(plt, conf, bench, gc_events_for_last_n_collections(bench, conf, run)), rootdir,
-                             "example_gc_last_" + "_conf" + str(configurations.index(conf)) +"_" + str(run) + "_" + bench + ".png")
+                    chart_md(md_file,
+                             gc_gantt_chart(plt, conf, bench, gc_events_for_last_n_collections(bench, conf, run)),
+                             rootdir,
+                             "example_gc_last_" + "_conf" + str(configurations.index(conf)) + "_" + str(
+                                 run) + "_" + bench + ".png")
 
 
 def any_run_exists(bench, configurations, run):
@@ -924,9 +930,9 @@ def discover_benchmarks(configurations):
         parent_folders = next(os.walk(os.path.join("results", conf)))[1]
         for pf in parent_folders:
             if is_subconfig(pf):
-               for child in next(os.walk(os.path.join("results", conf, pf)))[1]:
-                   if child not in benchmarks:
-                       benchmarks.append(child)
+                for child in next(os.walk(os.path.join("results", conf, pf)))[1]:
+                    if child not in benchmarks:
+                        benchmarks.append(child)
             else:
                 if pf not in benchmarks:
                     benchmarks.append(pf)
@@ -989,7 +995,7 @@ if __name__ == '__main__':
         benchmarks = all_benchmarks
 
     report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"
-    plt.rcParams["figure.figsize"] = [32.0, 24.0]
+    plt.figure(figsize=(32, 24))
     plt.rcParams["font.size"] = 20.0
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
