@@ -160,11 +160,11 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=2):
         print "run does not exist", main_file
         return [], [], []
 
-    last_events = collection_events[-n:]
-    if len(last_events) == 0:
+    collection_events = collection_events[-n:]
+    if len(collection_events) == 0:
         return [], [], []
 
-    min_time = last_events[0][1]
+    min_time = collection_events[0][1]
     time_filter = (lambda t: t < min_time)
 
     phase_events_by_thread = dict()
