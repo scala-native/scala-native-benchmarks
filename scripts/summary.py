@@ -165,7 +165,7 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=2):
         return [], [], []
 
     min_time = collection_events[0][1]
-    time_filter = (lambda t: t < min_time)
+    time_filter = (lambda t: t > min_time)
 
     phase_events_by_thread = dict()
     batch_events_by_thread = dict()
@@ -648,26 +648,48 @@ def gc_gantt_chart(plt, conf, bench, data):
     plt.clf()
     plt.cla()
 
-    labels = [conf + "-Collections"]
+    labels = ["Collections"]
     collection_events, phase_events_by_thread, batch_events_by_thread = data
 
     values = []
     for e in collection_events:
-        # [event, start, time] => (start, times)
+        # [event, start, time] => (start, time)
         values.append((e[1], e[2]))
-    plt.broken_barh(values, (0, 1))
+    plt.broken_barh(values, (0, 1), color="black")
+    event_type_to_color = {
+        "mark": "red", "sweep": "blue", "concmark": "red", "concsweep": "blue",
+        "mark_batch": "red", "sweep_batch": "blue", "coalesce_batch": "green"
+    }
 
-    # threads = phase_events_by_thread.keys()
-    # for thread in threads:
-    #     labels.append(conf + "-thread_" + str(thread) + "-Phases")
-    #     for e_t in phase_event_types:
-    #         plt.broken_barh()
-    # for thread in threads:
-    #     labels.append(conf + "-thread_" + str(thread) + "-Batches")
-    #     for e_t in batch_events_types:
+    for thread in sorted(phase_events_by_thread.keys()):
+        labels.append("Phases" + str(thread))
+        raw_values = phase_events_by_thread[thread]
+        for et in phase_event_types:
+            values = []
+            for e in raw_values:
+                event = e[0]
+                start = e[1]
+                time = e[2]
+                if event == et:
+                    values.append((start, time))
+            plt.broken_barh(values, (int(thread) + 2, 1), color = event_type_to_color[et])
 
+    tlen = len(labels)
+    for thread in sorted(batch_events_by_thread.keys()):
+        labels.append("Batches" + str(thread))
+        raw_values = batch_events_by_thread[thread]
+        for et in batch_events_types:
+            values = []
+            for e in raw_values:
+                event = e[0]
+                start = e[1]
+                time = e[2]
+                if event == et:
+                    values.append((start, time))
+            plt.broken_barh(values, (int(thread) + 1 + tlen, 1), color = event_type_to_color[et])
 
-
+    plt.yticks(np.arange(len(labels)), labels)
+    plt.legend()
     return plt
 
 
@@ -806,33 +828,33 @@ def chart_md(md_file, plt, rootdir, name):
 
 def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=False, size_charts=False):
     interesting_percentiles = [50, 90, 99]
-    md_file.write("# Summary\n")
-    for p in interesting_percentiles:
-        md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
-        data = percentile(configurations, benchmarks, p)
-        chart_md(md_file, relative_execution_times(plt, configurations, benchmarks, data, p), rootdir,
-                 "relative_percentile_" + str(p) + ".png")
-        write_md_table(md_file, configurations, benchmarks, data)
-
-    md_file.write("## Benchmark total run time (ms) \n")
-    data = totals(configurations, benchmarks)
-    chart_md(md_file, total_execution_times(plt, configurations, benchmarks, data), rootdir,
-             "relative_total.png")
-    write_md_table(md_file, configurations, benchmarks, data)
-
-    if gc_charts:
-        md_file.write("## Total GC time on Application thread (ms) \n")
-        mark, sweep, total = total_gc(configurations, benchmarks)
-        chart_md(md_file, bar_chart_gc_relative(plt, configurations, benchmarks, mark, total), rootdir,
-                 "relative_gc_total.png")
-        write_md_table_gc(md_file, configurations, benchmarks, mark, sweep, total)
-
-        for p in interesting_percentiles:
-            md_file.write("## GC pause time (ms) at {} percentile \n".format(p))
-            _, _, total = percentile_gc(configurations, benchmarks, p)
-            chart_md(md_file, relative_gc_pauses(plt, configurations, benchmarks, total, p), rootdir,
-                     "relative_gc_percentile_" + str(p) + ".png")
-            write_md_table(md_file, configurations, benchmarks, total)
+    # md_file.write("# Summary\n")
+    # for p in interesting_percentiles:
+    #     md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
+    #     data = percentile(configurations, benchmarks, p)
+    #     chart_md(md_file, relative_execution_times(plt, configurations, benchmarks, data, p), rootdir,
+    #              "relative_percentile_" + str(p) + ".png")
+    #     write_md_table(md_file, configurations, benchmarks, data)
+    #
+    # md_file.write("## Benchmark total run time (ms) \n")
+    # data = totals(configurations, benchmarks)
+    # chart_md(md_file, total_execution_times(plt, configurations, benchmarks, data), rootdir,
+    #          "relative_total.png")
+    # write_md_table(md_file, configurations, benchmarks, data)
+    #
+    # if gc_charts:
+    #     md_file.write("## Total GC time on Application thread (ms) \n")
+    #     mark, sweep, total = total_gc(configurations, benchmarks)
+    #     chart_md(md_file, bar_chart_gc_relative(plt, configurations, benchmarks, mark, total), rootdir,
+    #              "relative_gc_total.png")
+    #     write_md_table_gc(md_file, configurations, benchmarks, mark, sweep, total)
+    #
+    #     for p in interesting_percentiles:
+    #         md_file.write("## GC pause time (ms) at {} percentile \n".format(p))
+    #         _, _, total = percentile_gc(configurations, benchmarks, p)
+    #         chart_md(md_file, relative_gc_pauses(plt, configurations, benchmarks, total, p), rootdir,
+    #                  "relative_gc_percentile_" + str(p) + ".png")
+    #         write_md_table(md_file, configurations, benchmarks, total)
 
     md_file.write("# Individual benchmarks\n")
     for bench in benchmarks:
