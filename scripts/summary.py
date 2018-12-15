@@ -32,7 +32,7 @@ def config_data(bench, conf):
     return np.array(out)
 
 
-def gc_stats(bench, conf):
+def gc_pauses_main_thread(bench, conf):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
@@ -60,12 +60,12 @@ def gc_stats(bench, conf):
 def gc_parse_file(data, file):
     header = data.readline().strip()
     if header.startswith("event_type,"):
-        return parse_gc_events(data, file, header)
+        return parse_gc_pause_events(data, file, header)
     else:
         return parse_gc_tabular(data, file, header)
 
 
-def parse_gc_events(data, file, header):
+def parse_gc_pause_events(data, file, header):
     mark_times = []
     sweep_times = []
     gc_times = []
@@ -133,10 +133,66 @@ def parse_gc_tabular(data, file, header):
     return mark_times, sweep_times, gc_times
 
 
-def gc_stats_total(bench, conf):
-    _, _, total = gc_stats(bench, conf)
-    return total
+def append_or_create(dict, key, value):
+    if dict.has_key(key):
+        dict[key].append(value)
+    else:
+        dict[key] = [value]
 
+
+# event =  [type, start, end]
+def parse_events(data, file, header, timeFilter = (lambda t: True)):
+    collection_types = ["collection"]
+    phase_types = ["mark", "sweep", "concmark", "concsweep"]
+    batch_types = ["mark_batch", "sweep_batch", "coalesce_batch"]
+
+    collection_events = []
+    phase_events_by_thread = dict()
+    batch_events_by_thread = dict()
+
+    event_type_index = 0
+    start_ns_index = -1
+    time_ns_index = -1
+    thread_index = -1
+    ns_to_ms_div = 1000 * 1000
+    for i, h in enumerate(header.split(',')):
+        if h == "start_ns":
+            start_ns_index = i
+        if h == "time_ns":
+            time_ns_index = i
+        if h == "gc_thread":
+            thread_index = i
+
+    if start_ns_index == -1:
+        print "Header does not have start_ns", header, "at", file
+    if time_ns_index == -1:
+        print "Header does not have time_ns", header, "at", file
+    if thread_index == -1:
+        print "Header does not have gc_thread", header, "at", file
+    if start_ns_index == -1 or time_ns_index == -1 or thread_index == -1:
+        return collection_events, phase_events_by_thread, batch_events_by_thread
+
+    for line in data.readlines():
+        arr = line.split(",")
+        event = arr[event_type_index]
+        start = float(arr[start_ns_index]) / ns_to_ms_div
+        if not timeFilter(start):
+            continue
+        time = float(arr[time_ns_index]) / ns_to_ms_div
+        thread = arr[thread_index]
+        if event in collection_types:
+            collection_events.append([event, start, time])
+        elif event in phase_types:
+            append_or_create(phase_events_by_thread, thread, [event, start, time])
+        elif event in batch_types:
+            append_or_create(batch_events_by_thread, thread, [event, start, time])
+
+    return collection_events, phase_events_by_thread, batch_events_by_thread
+
+
+def gc_stats_total(bench, conf):
+    _, _, total = gc_pauses_main_thread(bench, conf)
+    return total
 
 
 def percentile_gc(configurations, benchmarks, percentile):
@@ -170,7 +226,7 @@ def percentile_gc_bench(configurations, bench, p):
     res_total = []
     for conf in configurations:
         try:
-            mark, sweep, total = gc_stats(bench, conf)
+            mark, sweep, total = gc_pauses_main_thread(bench, conf)
             res_mark.append(np.percentile(mark, p))
             res_sweep.append(np.percentile(sweep, p))
             res_total.append(np.percentile(total, p))
@@ -187,7 +243,7 @@ def total_gc_bench(configurations, bench):
     res_total = []
     for conf in configurations:
         try:
-            mark, sweep, total = gc_stats(bench, conf)
+            mark, sweep, total = gc_pauses_main_thread(bench, conf)
             res_mark.append(np.sum(mark))
             res_sweep.append(np.sum(sweep))
             res_total.append(np.sum(total))
@@ -331,7 +387,7 @@ def bar_chart_gc_relative(plt, configurations, benchmarks, mark_data, total_data
         mark_res = []
         for bench_idx, (bench, base_val) in enumerate(zip(benchmarks, base)):
             if base_val > 0:
-                mark, _, total = gc_stats(bench, conf)
+                mark, _, total = gc_pauses_main_thread(bench, conf)
                 mark = mark_data[bench_idx][conf_idx]
                 total = total_data[bench_idx][conf_idx]
                 res.append(np.array(total) / base_val)
@@ -358,7 +414,7 @@ def bar_chart_gc_absolute(plt, configurations, benchmarks, percentile):
         mark_res = []
         for bench in benchmarks:
             try:
-                mark, _, total = gc_stats(bench, conf)
+                mark, _, total = gc_pauses_main_thread(bench, conf)
                 res.append(np.percentile(total, percentile))
                 mark_res.append(np.percentile(mark, percentile))
             except IndexError:
