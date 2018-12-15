@@ -142,7 +142,7 @@ def merge_or_create(dict1, dict2):
             dict1[key2] = dict2[key2]
 
 
-def gc_events_for_last_n_collections(bench, conf, run=3, n=2):
+def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     main_file_name = str(run) + ".gc.csv"
