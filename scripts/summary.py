@@ -158,11 +158,11 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
             collection_events, _, _ = parse_events(data, main_file, header)
     except IOError:
         print "run does not exist", main_file
-        return [], [], []
+        return [], dict(), dict()
 
     collection_events = collection_events[-n:]
     if len(collection_events) == 0:
-        return [], [], []
+        return [], dict(), dict()
 
     min_time = collection_events[0][1]
     time_filter = (lambda t: t > min_time)
@@ -657,11 +657,12 @@ def gc_gantt_chart(plt, conf, bench, data):
         values.append((e[1], e[2]))
     plt.broken_barh(values, (0, 1), color="black")
     event_type_to_color = {
-        "mark": "red", "sweep": "blue", "concmark": "red", "concsweep": "blue",
-        "mark_batch": "red", "sweep_batch": "blue", "coalesce_batch": "green"
+        "mark": ("red", "darkred"), "sweep": ("blue", "darkblue"), "concmark": ("red", "darkred"), "concsweep": ("blue", "darkblue"),
+        "mark_batch": ("red", "darkred"), "sweep_batch": ("blue", "darkblue"), "coalesce_batch": ("green", "darkgreen")
     }
 
     for thread in sorted(phase_events_by_thread.keys()):
+        end = len(labels)
         labels.append("Phases" + str(thread))
         raw_values = phase_events_by_thread[thread]
         for et in phase_event_types:
@@ -672,10 +673,10 @@ def gc_gantt_chart(plt, conf, bench, data):
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (int(thread) + 2, 1), color = event_type_to_color[et])
+            plt.broken_barh(values, (end, 1), color = event_type_to_color[et])
 
-    tlen = len(labels)
     for thread in sorted(batch_events_by_thread.keys()):
+        end = len(labels)
         labels.append("Batches" + str(thread))
         raw_values = batch_events_by_thread[thread]
         for et in batch_events_types:
@@ -686,9 +687,11 @@ def gc_gantt_chart(plt, conf, bench, data):
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (int(thread) + 1 + tlen, 1), color = event_type_to_color[et])
+            plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et])
 
     plt.yticks(np.arange(len(labels)), labels)
+    plt.xlabel("Time since start (ms)")
+    plt.title(conf + " last garbage collection")
     plt.legend()
     return plt
 
