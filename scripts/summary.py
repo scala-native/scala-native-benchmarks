@@ -900,7 +900,7 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
             if gc_charts:
                 for conf in configurations:
                     chart_md(md_file, gc_gantt_chart(plt, conf, bench, gc_events_for_last_n_collections(bench, conf, run)), rootdir,
-                             "example_gc_last_2_" + str(run) + "_" + bench + ".png")
+                             "example_gc_last_" + "_conf" + str(configurations.index(conf)) +"_" + str(run) + "_" + bench + ".png")
 
 
 def any_run_exists(bench, configurations, run):
