@@ -133,6 +133,58 @@ def parse_gc_tabular(data, file, header):
     return mark_times, sweep_times, gc_times
 
 
+def merge_or_create(dict1, dict2):
+    for key1 in dict1.keys():
+        if dict2.has_key(key1):
+            dict1[key1].append(dict2[key1])
+    for key2 in dict2.keys():
+        if not dict1.has_key(key2):
+            dict1[key2] = dict2[key2]
+
+
+def gc_events_for_last_n_collections(bench, conf, run=3, n=2):
+    benchmark_dir = os.path.join("results", conf, bench)
+    files = next(os.walk(benchmark_dir), [[], [], []])[2]
+    main_file_name = str(run) + ".gc.csv"
+    main_file = os.path.join("results", conf, bench, main_file_name)
+    parts = []
+    for file in files:
+        if file.startswith(main_file_name):
+            parts.append(file)
+
+    try:
+        with open(main_file) as data:
+            header = data.readline().strip()
+            collection_events, _, _ = parse_events(data, main_file, header)
+    except IOError:
+        print "run does not exist", main_file
+        return [], [], []
+
+    last_events = collection_events[-n:]
+    if len(last_events) == 0:
+        return [], [], []
+
+    min_time = last_events[0][1]
+    time_filter = (lambda t: t < min_time)
+
+    phase_events_by_thread = dict()
+    batch_events_by_thread = dict()
+
+    for part in parts:
+        try:
+            file = os.path.join("results", conf, bench, part)
+            with open(file) as data:
+                header = data.readline().strip()
+                # no collection events on other threads
+                _, phase_events_by_thread0, batch_events_by_thread0 = parse_events(data, file, header, time_filter)
+                merge_or_create(phase_events_by_thread,phase_events_by_thread0)
+                merge_or_create(batch_events_by_thread,batch_events_by_thread0)
+        except IOError:
+            pass
+
+    return collection_events, phase_events_by_thread, batch_events_by_thread
+
+
 def append_or_create(dict, key, value):
     if dict.has_key(key):
         dict[key].append(value)
@@ -141,7 +193,7 @@ def append_or_create(dict, key, value):
 
 
 # event =  [type, start, end]
-def parse_events(data, file, header, timeFilter = (lambda t: True)):
+def parse_events(data, file, header, timeFilter=(lambda t: True)):
     collection_types = ["collection"]
     phase_types = ["mark", "sweep", "concmark", "concsweep"]
     batch_types = ["mark_batch", "sweep_batch", "coalesce_batch"]
