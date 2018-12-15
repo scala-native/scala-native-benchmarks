@@ -177,8 +177,8 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=2):
                 header = data.readline().strip()
                 # no collection events on other threads
                 _, phase_events_by_thread0, batch_events_by_thread0 = parse_events(data, file, header, time_filter)
-                merge_or_create(phase_events_by_thread,phase_events_by_thread0)
-                merge_or_create(batch_events_by_thread,batch_events_by_thread0)
+                merge_or_create(phase_events_by_thread, phase_events_by_thread0)
+                merge_or_create(batch_events_by_thread, batch_events_by_thread0)
         except IOError:
             pass
 
@@ -192,11 +192,13 @@ def append_or_create(dict, key, value):
         dict[key] = [value]
 
 
+phase_event_types = ["mark", "sweep", "concmark", "concsweep"]
+batch_events_types = ["mark_batch", "sweep_batch", "coalesce_batch"]
+
+
 # event =  [type, start, end]
 def parse_events(data, file, header, timeFilter=(lambda t: True)):
     collection_types = ["collection"]
-    phase_types = ["mark", "sweep", "concmark", "concsweep"]
-    batch_types = ["mark_batch", "sweep_batch", "coalesce_batch"]
 
     collection_events = []
     phase_events_by_thread = dict()
@@ -234,9 +236,9 @@ def parse_events(data, file, header, timeFilter=(lambda t: True)):
         thread = arr[thread_index]
         if event in collection_types:
             collection_events.append([event, start, time])
-        elif event in phase_types:
+        elif event in phase_event_types:
             append_or_create(phase_events_by_thread, thread, [event, start, time])
-        elif event in batch_types:
+        elif event in batch_events_types:
             append_or_create(batch_events_by_thread, thread, [event, start, time])
 
     return collection_events, phase_events_by_thread, batch_events_by_thread
@@ -642,6 +644,34 @@ def print_table(configurations, benchmarks, data):
         print ','.join([bench] + list(map(str, res)))
 
 
+def gc_gantt_chart(plt, conf, bench, data):
+    plt.clf()
+    plt.cla()
+
+    labels = [conf + "-Collections"]
+    collection_events, phase_events_by_thread, batch_events_by_thread = data
+
+    values = []
+    for e in collection_events:
+        # [event, start, time] => (start, times)
+        values.append((e[1], e[2]))
+    plt.broken_barh(values, (0, 1))
+
+    # threads = phase_events_by_thread.keys()
+    # for thread in threads:
+    #     labels.append(conf + "-thread_" + str(thread) + "-Phases")
+    #     for e_t in phase_event_types:
+    #         plt.broken_barh()
+    # for thread in threads:
+    #     labels.append(conf + "-thread_" + str(thread) + "-Batches")
+    #     for e_t in batch_events_types:
+
+
+
+    return plt
+
+
+
 def write_md_table(file, configurations, benchmarks, data):
     header = ['name']
     header.append(configurations[0])
@@ -842,6 +872,10 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         if run >= 0:
             chart_md(md_file, example_run_plot(plt, configurations, bench, run), rootdir,
                      "example_run_" + str(run) + "_" + bench + ".png")
+            if gc_charts:
+                for conf in configurations:
+                    chart_md(md_file, gc_gantt_chart(plt, conf, bench, gc_events_for_last_n_collections(bench, conf, run)), rootdir,
+                             "example_gc_last_2_" + str(run) + "_" + bench + ".png")
 
 
 def any_run_exists(bench, configurations, run):
