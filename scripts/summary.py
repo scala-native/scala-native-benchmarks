@@ -832,6 +832,7 @@ def benchmark_short_name(bench):
 
 def chart_md(md_file, plt, rootdir, name):
     plt.savefig(rootdir + name, pad_inches=0, bbox_inches='tight')
+    plt.close("all")
     plt.figure(figsize=(32, 24))
     md_file.write("![Chart]({})\n\n".format(name))
 
