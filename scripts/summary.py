@@ -993,7 +993,8 @@ if __name__ == '__main__':
         for b in args.benchmark:
             benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
     else:
-        benchmarks = all_benchmarks
+        excluded_benchmarks = ['list.ListBenchmark']
+        benchmarks = [x for x in all_benchmarks if x not in excluded_benchmarks]
 
     report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"
     plt.figure(figsize=(32, 24))
