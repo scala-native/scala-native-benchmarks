@@ -46,6 +46,15 @@ def try_run(cmd, env=None, wd=None):
         return False
 
 
+def try_run_silent(cmd, env=None, wd=None):
+    try:
+        run(cmd, env, wd)
+        return True
+    except subp.CalledProcessError as err:
+        print err.output
+        return False
+
+
 def run(cmd, env=None, wd=None):
     print(">>> " + str(cmd))
     if wd == None:
@@ -128,7 +137,7 @@ def compile(conf, bench, compilecmd, debug, trace):
         if trace:
             cmd.append('set nativeCompileOptions +="-DDEBUG_PRINT"')
     cmd.append(compilecmd)
-    return try_run(cmd)
+    return try_run_silent(cmd)
 
 
 sbt = where('sbt')
