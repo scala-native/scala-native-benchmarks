@@ -128,7 +128,7 @@ def compile(conf, bench, compilecmd, debug, trace):
         if trace:
             cmd.append('set nativeCompileOptions +="-DDEBUG_PRINT"')
     cmd.append(compilecmd)
-    return run(cmd)
+    return try_run(cmd)
 
 
 sbt = where('sbt')
@@ -406,7 +406,6 @@ if __name__ == "__main__":
     for conf in configurations:
         conf_name, ref = ref_parse(conf)
 
-
         generalized_dir = os.path.join('results', conf + suffix)
         if ref == None:
             sha1 = None
@@ -479,7 +478,10 @@ if __name__ == "__main__":
                 else:
                     os.remove('project/plugins.sbt')
 
-                compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
+                compile_success = compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
+                if not compile_success:
+                    compile_fail += [conf]
+                    break
 
                 resultsdir = os.path.join(subconfig_dir, bench)
                 print "results in", resultsdir
