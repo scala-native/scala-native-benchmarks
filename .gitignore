@@ -6,3 +6,4 @@ reports/
 .idea
 *.pid
 jobs.sh
+logs/
