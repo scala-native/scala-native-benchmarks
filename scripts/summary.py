@@ -648,12 +648,27 @@ def print_table(configurations, benchmarks, data):
         print ','.join([bench] + list(map(str, res)))
 
 
-def gc_gantt_chart(plt, conf, bench, data):
+def thread_id_tostring(n):
+    if int(n) < 0:
+        return "mutator" + n
+    else:
+        return n
+
+
+def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
     plt.clf()
     plt.cla()
     plt.figure(figsize=(100, 24))
-    labels = ["Collections"]
-    collection_events, phase_events_by_thread, batch_events_by_thread = data
+    if only_batches:
+        labels = []
+    else:
+        labels = ["Collections"]
+    if only_batches:
+        _, _, batch_events_by_thread = data
+        collection_events = dict()
+        phase_events_by_thread = dict()
+    else:
+        collection_events, phase_events_by_thread, batch_events_by_thread = data
 
     values = []
     for e in collection_events:
@@ -668,7 +683,7 @@ def gc_gantt_chart(plt, conf, bench, data):
 
     for thread in sorted(phase_events_by_thread.keys()):
         end = len(labels)
-        labels.append("Phases" + str(thread))
+        labels.append("Phases " + thread_id_tostring(thread))
         raw_values = phase_events_by_thread[thread]
         for et in phase_event_types:
             values = []
@@ -682,7 +697,7 @@ def gc_gantt_chart(plt, conf, bench, data):
 
     for thread in sorted(batch_events_by_thread.keys()):
         end = len(labels)
-        labels.append("Batches" + str(thread))
+        labels.append("Batches " + thread_id_tostring(thread))
         raw_values = batch_events_by_thread[thread]
         for et in batch_events_types:
             values = []
@@ -908,10 +923,16 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
                      "example_run_" + str(run) + "_" + bench + ".png")
             if gc_charts:
                 for conf in configurations:
+                    gc_data = gc_events_for_last_n_collections(bench, conf, run)
                     chart_md(md_file,
-                             gc_gantt_chart(plt, conf, bench, gc_events_for_last_n_collections(bench, conf, run)),
+                             gc_gantt_chart(plt, conf, bench, gc_data),
                              rootdir,
                              "example_gc_last_" + "_conf" + str(configurations.index(conf)) + "_" + str(
+                                 run) + "_" + bench + ".png")
+                    chart_md(md_file,
+                             gc_gantt_chart(plt, conf, bench, gc_data, only_batches=True),
+                             rootdir,
+                             "example_gc_last_batches" + "_conf" + str(configurations.index(conf)) + "_" + str(
                                  run) + "_" + bench + ".png")
 
 
