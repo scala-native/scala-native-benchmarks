@@ -128,7 +128,7 @@ def compile_scala_native(ref, sha1):
         return False
 
 
-def compile(conf, bench, compilecmd, debug, trace):
+def compile(conf, bench, compilecmd, debug, trace, extra_args):
     cmd = [sbt, '-no-colors', '-J-Xmx2G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
     if conf.startswith("scala-native"):
@@ -136,6 +136,11 @@ def compile(conf, bench, compilecmd, debug, trace):
             cmd.append('set nativeCompileOptions ++= Seq("-g", "-DDEBUG_ASSERT")')
         if trace:
             cmd.append('set nativeCompileOptions +="-DDEBUG_PRINT"')
+        for k,v in extra_args.iteritems():
+            if k.endswith("?"):
+                cmd.append('set nativeCompileOptions +="-D{}"'.format(k[:-1]))
+            else:
+                cmd.append('set nativeCompileOptions +="-D{}={}"'.format(k,v))
     cmd.append(compilecmd)
     return try_run_silent(cmd)
 
@@ -385,7 +390,22 @@ if __name__ == "__main__":
             should_fetch = True
             break
 
-    derived_configs = [("", dict())]
+    if args.argnames != None and args.argv != None:
+        derived_configs = []
+        argnames = args.argnames.split(",")
+        for valset in args.argv :
+            values = valset.split(",")
+            suffix = "-".join(values)
+            extra_args = dict()
+            for (name, value) in zip(argnames, values):
+                if name.endswith("?"):
+                    if value in ["1", "true", "TRUE", "True"]:
+                        extra_args[name[:-1]] = True
+                else:
+                    extra_args[name] = value
+            derived_configs.append((suffix, extra_args))
+    else:
+        derived_configs = [("", dict())]
 
     if should_fetch:
         git_fetch(scala_native_dir)
@@ -495,7 +515,7 @@ if __name__ == "__main__":
                     else:
                         os.remove('project/plugins.sbt')
 
-                    compile_success = compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
+                    compile_success = compile(conf, bench, compilecmd, args.gcdebug, args.gctrace, extra_args)
                     if not compile_success:
                         compile_fail += [conf]
                         break
