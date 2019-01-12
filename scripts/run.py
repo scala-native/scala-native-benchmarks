@@ -395,7 +395,7 @@ if __name__ == "__main__":
         argnames = args.argnames.split(",")
         for valset in args.argv :
             values = valset.split(",")
-            suffix = "-".join(values)
+            suffix = "-a" + ("-".join(values))
             extra_args = dict()
             for (name, value) in zip(argnames, values):
                 if name.endswith("?"):
