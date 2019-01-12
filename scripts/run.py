@@ -321,6 +321,8 @@ if __name__ == "__main__":
     parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
     parser.add_argument("--benchmark", help="benchmarks to run", action='append')
+    parser.add_argument("--argnames", help="compile arguments to set, mark flags with a '?' at the end, split with ','", type=str)
+    parser.add_argument("--argv", help="argument values, split with ',', booleans as true or false", action='append')
     parser.add_argument("--size", help="different size settings to use", action='append')
     parser.add_argument("--gcthreads", help="different number of garbage collection threads to use", action='append')
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
@@ -415,18 +417,13 @@ if __name__ == "__main__":
     for conf in configurations:
         conf_name, ref = ref_parse(conf)
 
-        generalized_dir = os.path.join('results', conf + suffix)
         if ref == None:
             sha1 = None
-            root_dir = generalized_dir
         else:
             sha1 = get_ref(ref)
             if sha1 == None:
                 compile_fail += [conf]
                 continue
-            root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
-
-        mkdir(root_dir)
 
         if sha1 != None:
             success = compile_scala_native(ref, sha1)
@@ -434,6 +431,15 @@ if __name__ == "__main__":
                 compile_fail += [conf]
                 continue
 
+
+        # derived configurations
+        generalized_dir = os.path.join('results', conf + suffix)
+        if sha1 == None:
+            root_dir = generalized_dir
+        else:
+            root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
+
+        mkdir(root_dir)
         symlink = None
         if generalized_dir != root_dir:
             create_symlink(generalized_dir, root_dir)
