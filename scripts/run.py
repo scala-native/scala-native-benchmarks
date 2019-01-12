@@ -385,6 +385,8 @@ if __name__ == "__main__":
             should_fetch = True
             break
 
+    derived_configs = [("", dict())]
+
     if should_fetch:
         git_fetch(scala_native_dir)
 
@@ -431,99 +433,99 @@ if __name__ == "__main__":
                 compile_fail += [conf]
                 continue
 
-
         # derived configurations
-        generalized_dir = os.path.join('results', conf + suffix)
-        if sha1 == None:
-            root_dir = generalized_dir
-        else:
-            root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix)
-
-        mkdir(root_dir)
-        symlink = None
-        if generalized_dir != root_dir:
-            create_symlink(generalized_dir, root_dir)
-            symlinks += [[generalized_dir, root_dir]]
-            symlink = generalized_dir
-            if args.upload or args.gitupload:
-                create_symlink(os.path.join(upload_dir, generalized_dir), root_dir)
-
-        # subconfigurations
-        for (size, gcThreads) in itertools.product(sizes, gcThreadCounts):
-
-            if size == ["default", "default"] and gcThreads == "default":
-                subconfig_dir = root_dir
+        for (der_suffix, extra_args) in derived_configs:
+            generalized_dir = os.path.join('results', conf + suffix + der_suffix)
+            if sha1 == None:
+                root_dir = generalized_dir + der_suffix
             else:
-                size_str = []
-                if size != ["default", "default"] :
-                    size_str = ["size_" + size[0] + "-" + size[1]]
-                gcThreads_str = []
-                if gcThreads != "default":
-                    gcThreads_str = ["gcthreads_" + gcThreads]
-                subconf_str = "_".join(size_str + gcThreads_str)
-                subconfig_dir = os.path.join(root_dir, subconf_str)
+                root_dir = os.path.join('results', conf + "." + sha1 + "." + suffix + der_suffix)
 
-            if not args.overwrite and os.path.isfile(os.path.join(subconfig_dir, ".complete")):
-                print  subconfig_dir, "already complete, skipping"
-                skipped += [subconfig_dir]
-                continue
+            mkdir(root_dir)
+            symlink = None
+            if generalized_dir != root_dir:
+                create_symlink(generalized_dir, root_dir)
+                symlinks += [[generalized_dir, root_dir]]
+                symlink = generalized_dir
+                if args.upload or args.gitupload:
+                    create_symlink(os.path.join(upload_dir, generalized_dir), root_dir)
 
-            if not args.append:
-                sh.rmtree(subconfig_dir, ignore_errors=True)
+            # subconfigurations
+            for (size, gcThreads) in itertools.product(sizes, gcThreadCounts):
 
-            mkdir(subconfig_dir)
-
-            for bench in benchmarks:
-                print('--- heap size: {} GC threads: {} conf: {}, bench: {}'.format(size, gcThreads, conf, bench))
-
-                input = slurp(os.path.join('input', bench))
-                output = slurp(os.path.join('output', bench))
-                compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
-                runcmd = slurp(os.path.join('confs', conf_name, 'run')) \
-                    .replace('$BENCH', bench) \
-                    .replace('$HOME', os.environ['HOME']).split(' ')
-
-                if os.path.exists(os.path.join('confs', conf_name, 'build.sbt')):
-                    sh.copyfile(os.path.join('confs', conf_name, 'build.sbt'), 'build.sbt')
+                if size == ["default", "default"] and gcThreads == "default":
+                    subconfig_dir = root_dir
                 else:
-                    os.remove('build.sbt')
+                    size_str = []
+                    if size != ["default", "default"] :
+                        size_str = ["size_" + size[0] + "-" + size[1]]
+                    gcThreads_str = []
+                    if gcThreads != "default":
+                        gcThreads_str = ["gcthreads_" + gcThreads]
+                    subconf_str = "_".join(size_str + gcThreads_str)
+                    subconfig_dir = os.path.join(root_dir, subconf_str)
 
-                if os.path.exists(os.path.join('confs', conf_name, 'plugins.sbt')):
-                    sh.copyfile(os.path.join('confs', conf_name, 'plugins.sbt'), 'project/plugins.sbt')
-                else:
-                    os.remove('project/plugins.sbt')
+                if not args.overwrite and os.path.isfile(os.path.join(subconfig_dir, ".complete")):
+                    print  subconfig_dir, "already complete, skipping"
+                    skipped += [subconfig_dir]
+                    continue
 
-                compile_success = compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
-                if not compile_success:
-                    compile_fail += [conf]
-                    break
+                if not args.append:
+                    sh.rmtree(subconfig_dir, ignore_errors=True)
 
-                resultsdir = os.path.join(subconfig_dir, bench)
-                print "results in", resultsdir
-                mkdir(resultsdir)
+                mkdir(subconfig_dir)
 
-                cmd = []
-                cmd.extend(runcmd)
-                cmd.extend([str(batches), str(batch_size), input, output])
+                for bench in benchmarks:
+                    print('--- heap size: {} GC threads: {} conf: {}, bench: {}'.format(size, gcThreads, conf, bench))
 
-                to_run = []
-                for n in xrange(runs):
-                    to_run += [
-                        dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc,
-                             size=size, gcThreads=gcThreads)]
+                    input = slurp(os.path.join('input', bench))
+                    output = slurp(os.path.join('output', bench))
+                    compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
+                    runcmd = slurp(os.path.join('confs', conf_name, 'run')) \
+                        .replace('$BENCH', bench) \
+                        .replace('$HOME', os.environ['HOME']).split(' ')
 
-                if par == 1:
-                    for tr in to_run:
-                        failed += single_run(tr)
-                else:
-                    failed += sum(pool.map(single_run, to_run), [])
+                    if os.path.exists(os.path.join('confs', conf_name, 'build.sbt')):
+                        sh.copyfile(os.path.join('confs', conf_name, 'build.sbt'), 'build.sbt')
+                    else:
+                        os.remove('build.sbt')
 
-            # mark it as complete
-            open(os.path.join(subconfig_dir, ".complete"), 'w+').close()
-            result_dirs += [subconfig_dir]
+                    if os.path.exists(os.path.join('confs', conf_name, 'plugins.sbt')):
+                        sh.copyfile(os.path.join('confs', conf_name, 'plugins.sbt'), 'project/plugins.sbt')
+                    else:
+                        os.remove('project/plugins.sbt')
 
-            if args.upload or args.gitupload:
-                upload(subconfig_dir, symlink, args.gitupload, args.overwrite)
+                    compile_success = compile(conf, bench, compilecmd, args.gcdebug, args.gctrace)
+                    if not compile_success:
+                        compile_fail += [conf]
+                        break
+
+                    resultsdir = os.path.join(subconfig_dir, bench)
+                    print "results in", resultsdir
+                    mkdir(resultsdir)
+
+                    cmd = []
+                    cmd.extend(runcmd)
+                    cmd.extend([str(batches), str(batch_size), input, output])
+
+                    to_run = []
+                    for n in xrange(runs):
+                        to_run += [
+                            dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc,
+                                 size=size, gcThreads=gcThreads)]
+
+                    if par == 1:
+                        for tr in to_run:
+                            failed += single_run(tr)
+                    else:
+                        failed += sum(pool.map(single_run, to_run), [])
+
+                # mark it as complete
+                open(os.path.join(subconfig_dir, ".complete"), 'w+').close()
+                result_dirs += [subconfig_dir]
+
+                if args.upload or args.gitupload:
+                    upload(subconfig_dir, symlink, args.gitupload, args.overwrite)
 
     print "results:"
     for dir in result_dirs:
