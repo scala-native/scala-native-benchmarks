@@ -163,6 +163,7 @@ all_benchmarks = [
     'mandelbrot.MandelbrotBenchmark',
     'nbody.NbodyBenchmark',
     'sudoku.SudokuBenchmark',
+    'histogram.Histogram',
 ]
 
 stable = 'scala-native-0.3.8'
