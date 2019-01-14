@@ -203,6 +203,14 @@ def expand_wild_cards(arg):
         return arg
 
 
+def benchmark_parse(arg):
+    parts = arg.split("@")
+    if len(parts) == 2:
+        return parts[0], parts[1]
+    else:
+        return arg, None
+
+
 def ref_parse(arg):
     parts = arg.split("@")
     if len(parts) == 3:
@@ -349,7 +357,15 @@ if __name__ == "__main__":
     if args.benchmark != None:
         benchmarks = []
         for b in args.benchmark:
-            benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
+            if b == "default":
+                benchmarks += all_benchmarks
+            else:
+                bname, bargs = benchmark_parse(b)
+                matching = filter(lambda s: s.startswith(bname), all_benchmarks)
+                if bargs != None:
+                    benchmarks += map(lambda x: (x, bargs), matching)
+                else:
+                    benchmarks += matching
     else:
         benchmarks = all_benchmarks
 
@@ -495,10 +511,16 @@ if __name__ == "__main__":
 
                 mkdir(subconfig_dir)
 
-                for bench in benchmarks:
-                    print('--- heap size: {} GC threads: {} conf: {}, bench: {}'.format(size, gcThreads, conf, bench))
+                for bconf in benchmarks:
+                    if type(bconf) is tuple:
+                        bench, input = bconf
+                        bfullname = bench + "@" + input
+                    else:
+                        bench = bconf
+                        input = slurp(os.path.join('input', bench))
+                        bfullname = bench
+                    print('--- heap size: {} GC threads: {} conf: {}, bench: {}'.format(size, gcThreads, conf, bfullname))
 
-                    input = slurp(os.path.join('input', bench))
                     output = slurp(os.path.join('output', bench))
                     compilecmd = slurp(os.path.join('confs', conf_name, 'compile'))
                     runcmd = slurp(os.path.join('confs', conf_name, 'run')) \
@@ -520,7 +542,7 @@ if __name__ == "__main__":
                         compile_fail += [conf]
                         break
 
-                    resultsdir = os.path.join(subconfig_dir, bench)
+                    resultsdir = os.path.join(subconfig_dir, bfullname)
                     print "results in", resultsdir
                     mkdir(resultsdir)
 
