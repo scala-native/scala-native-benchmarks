@@ -147,7 +147,7 @@ def compile(conf, bench, compilecmd, debug, trace, extra_args):
 
 sbt = where('sbt')
 
-all_benchmarks = [
+default_benchmarks = [
     'bounce.BounceBenchmark',
     'list.ListBenchmark',
     'richards.RichardsBenchmark',
@@ -163,6 +163,9 @@ all_benchmarks = [
     'mandelbrot.MandelbrotBenchmark',
     'nbody.NbodyBenchmark',
     'sudoku.SudokuBenchmark',
+]
+
+all_benchmarks = default_benchmarks + [
     'histogram.Histogram',
 ]
 
@@ -359,7 +362,7 @@ if __name__ == "__main__":
         benchmarks = []
         for b in args.benchmark:
             if b == "default":
-                benchmarks += all_benchmarks
+                benchmarks += default_benchmarks
             else:
                 bname, bargs = benchmark_parse(b)
                 matching = filter(lambda s: s.startswith(bname), all_benchmarks)
@@ -368,7 +371,7 @@ if __name__ == "__main__":
                 else:
                     benchmarks += matching
     else:
-        benchmarks = all_benchmarks
+        benchmarks = default_benchmarks
 
     if args.size != None:
         sizes = []
