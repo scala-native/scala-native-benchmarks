@@ -625,7 +625,7 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, limit):
     return plt
 
 
-def percentiles_chart(plt, configurations, bench, limit=99):
+def percentiles_chart(plt, configurations, bench, limit=100):
     plt = percentiles_chart_generic(plt, configurations, bench, config_data, limit)
     plt.title(bench)
     plt.ylabel("Run time (ms)")
