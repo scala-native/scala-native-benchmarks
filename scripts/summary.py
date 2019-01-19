@@ -666,12 +666,7 @@ def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
     plt.cla()
     plt.figure(figsize=(100, 24))
     labels = []
-    if only_batches:
-        _, _,  batch_events_by_thread, internal_events_by_thread = data
-        collection_events = dict()
-        phase_events_by_thread = dict()
-    else:
-        collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread = data
+    collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread = data
 
     values = []
     event_type_to_color = {
@@ -681,51 +676,54 @@ def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
         "mark_waiting": ("grey", "dimgrey"), "sync": ("yellow", "gold"),
     }
 
-    for thread in sorted(phase_events_by_thread.keys()):
+    all_keys = phase_events_by_thread.keys() + batch_events_by_thread.keys() + internal_events_by_thread.keys()
+    all_threads = sorted(list(set(all_keys)))
+
+    for thread in all_threads:
         end = len(labels)
-        labels.append("Phases " + thread_id_tostring(thread))
-        raw_values = phase_events_by_thread[thread]
-        for et in phase_event_types:
+        labels.append(thread_id_tostring(thread))
+        phase_values = phase_events_by_thread.get(thread, [])
+        batch_values = batch_events_by_thread.get(thread, [])
+        internal_values = internal_events_by_thread.get(thread, [])
+        if not only_batches:
             values = []
-            for e in raw_values:
-                event = e[0]
-                start = e[1]
-                time = e[2]
-                if event == et:
-                    values.append((start, time))
-            plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et], label=et)
-
-    for e in collection_events:
-        # [event, start, time] => (start, time)
-        values.append((e[1], e[2]))
-    plt.broken_barh(values, (len(labels), 1), color="black", label="collection")
-    if not only_batches:
-        labels += ["Collections"]
-
-    for thread in sorted(batch_events_by_thread.keys()):
-        end = len(labels)
-        labels.append("Batches " + thread_id_tostring(thread))
-        raw_values = batch_events_by_thread[thread]
-        raw_internal_values = internal_events_by_thread[thread]
+            for e in collection_events:
+                # [event, start, time] => (start, time)
+                values.append((e[1], e[2]))
+            plt.broken_barh(values, (end, 0.25), color="black", label="collection")
+            for et in phase_event_types:
+                values = []
+                for e in phase_values:
+                    event = e[0]
+                    start = e[1]
+                    time = e[2]
+                    if event == et:
+                        values.append((start, time))
+                plt.broken_barh(values, (end + 0.25, 0.25), facecolors=event_type_to_color[et], label=et)
         for et in batch_events_types:
             values = []
-            for e in raw_values:
+            for e in batch_values:
                 event = e[0]
                 start = e[1]
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (end, 0.5), facecolors=event_type_to_color[et], label=et)
+            if only_batches:
+                plt.broken_barh(values, (end, 0.5), facecolors=event_type_to_color[et], label=et)
+            else:
+                plt.broken_barh(values, (end + 0.50, 0.25), facecolors=event_type_to_color[et], label=et)
         for et in internal_events_types:
             values = []
-            for e in raw_internal_values:
+            for e in internal_values:
                 event = e[0]
                 start = e[1]
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (end + 0.5, 0.5), facecolors=event_type_to_color[et], label=et)
-
+            if only_batches:
+                plt.broken_barh(values, (end + 0.5, 0.5), facecolors=event_type_to_color[et], label=et)
+            else:
+                plt.broken_barh(values, (end + 0.75, 0.25), facecolors=event_type_to_color[et], label=et)
 
     plt.yticks(np.arange(len(labels)), labels)
     plt.xlabel("Time since start (ms)")
