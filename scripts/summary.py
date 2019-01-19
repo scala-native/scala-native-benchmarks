@@ -156,7 +156,7 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
     try:
         with open(main_file) as data:
             header = data.readline().strip()
-            collection_events, _, _ = parse_events(data, main_file, header)
+            collection_events, _, _, _ = parse_events(data, main_file, header)
     except IOError:
         print "run does not exist", main_file
         return [], dict(), dict()
@@ -170,6 +170,7 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
 
     phase_events_by_thread = dict()
     batch_events_by_thread = dict()
+    internal_events_by_thread = dict()
 
     for part in parts:
         try:
@@ -177,13 +178,14 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
             with open(file) as data:
                 header = data.readline().strip()
                 # no collection events on other threads
-                _, phase_events_by_thread0, batch_events_by_thread0 = parse_events(data, file, header, time_filter)
+                _, phase_events_by_thread0, batch_events_by_thread0, internal_events_by_thread0 = parse_events(data, file, header, time_filter)
                 merge_or_create(phase_events_by_thread, phase_events_by_thread0)
                 merge_or_create(batch_events_by_thread, batch_events_by_thread0)
+                merge_or_create(internal_events_by_thread, internal_events_by_thread0)
         except IOError:
             pass
 
-    return collection_events, phase_events_by_thread, batch_events_by_thread
+    return collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread
 
 
 def append_or_create(dict, key, value):
@@ -195,6 +197,7 @@ def append_or_create(dict, key, value):
 
 phase_event_types = ["mark", "sweep", "concmark", "concsweep"]
 batch_events_types = ["mark_batch", "sweep_batch", "coalesce_batch"]
+internal_events_types = ["mark_waiting", "sync"]
 
 
 # event =  [type, start, end]
@@ -204,6 +207,7 @@ def parse_events(data, file, header, timeFilter=(lambda t: True)):
     collection_events = []
     phase_events_by_thread = dict()
     batch_events_by_thread = dict()
+    internal_events_by_thread = dict()
 
     event_type_index = 0
     start_ns_index = -1
@@ -241,8 +245,10 @@ def parse_events(data, file, header, timeFilter=(lambda t: True)):
             append_or_create(phase_events_by_thread, thread, [event, start, time])
         elif event in batch_events_types:
             append_or_create(batch_events_by_thread, thread, [event, start, time])
+        elif event in internal_events_types:
+            append_or_create(internal_events_by_thread, thread, [event, start, time])
 
-    return collection_events, phase_events_by_thread, batch_events_by_thread
+    return collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread
 
 
 def gc_stats_total(bench, conf):
@@ -659,26 +665,20 @@ def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
     plt.clf()
     plt.cla()
     plt.figure(figsize=(100, 24))
+    labels = []
     if only_batches:
-        labels = []
-    else:
-        labels = ["Collections"]
-    if only_batches:
-        _, _, batch_events_by_thread = data
+        _, _,  batch_events_by_thread, internal_events_by_thread = data
         collection_events = dict()
         phase_events_by_thread = dict()
     else:
-        collection_events, phase_events_by_thread, batch_events_by_thread = data
+        collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread = data
 
     values = []
-    for e in collection_events:
-        # [event, start, time] => (start, time)
-        values.append((e[1], e[2]))
-    plt.broken_barh(values, (0, 1), color="black", label="collection")
     event_type_to_color = {
         "mark": ("red", "darkred"), "sweep": ("blue", "darkblue"), "concmark": ("red", "darkred"),
         "concsweep": ("blue", "darkblue"),
-        "mark_batch": ("red", "darkred"), "sweep_batch": ("blue", "darkblue"), "coalesce_batch": ("green", "darkgreen")
+        "mark_batch": ("red", "darkred"), "sweep_batch": ("blue", "darkblue"), "coalesce_batch": ("green", "darkgreen"),
+        "mark_waiting": ("grey", "dimgrey"), "sync": ("yellow", "gold"),
     }
 
     for thread in sorted(phase_events_by_thread.keys()):
@@ -695,10 +695,18 @@ def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
                     values.append((start, time))
             plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et], label=et)
 
+    for e in collection_events:
+        # [event, start, time] => (start, time)
+        values.append((e[1], e[2]))
+    plt.broken_barh(values, (len(labels), 1), color="black", label="collection")
+    if not only_batches:
+        labels += ["Collections"]
+
     for thread in sorted(batch_events_by_thread.keys()):
         end = len(labels)
         labels.append("Batches " + thread_id_tostring(thread))
         raw_values = batch_events_by_thread[thread]
+        raw_internal_values = internal_events_by_thread[thread]
         for et in batch_events_types:
             values = []
             for e in raw_values:
@@ -707,7 +715,17 @@ def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
                 time = e[2]
                 if event == et:
                     values.append((start, time))
-            plt.broken_barh(values, (end, 1), facecolors=event_type_to_color[et], label=et)
+            plt.broken_barh(values, (end, 0.5), facecolors=event_type_to_color[et], label=et)
+        for et in internal_events_types:
+            values = []
+            for e in raw_internal_values:
+                event = e[0]
+                start = e[1]
+                time = e[2]
+                if event == et:
+                    values.append((start, time))
+            plt.broken_barh(values, (end + 0.5, 0.5), facecolors=event_type_to_color[et], label=et)
+
 
     plt.yticks(np.arange(len(labels)), labels)
     plt.xlabel("Time since start (ms)")
@@ -715,7 +733,10 @@ def gc_gantt_chart(plt, conf, bench, data, only_batches = False):
     plt.legend(handles=[(mpatches.Patch(color='black', label='collection')),
                         (mpatches.Patch(color='red', label='mark')),
                         (mpatches.Patch(color='blue', label='sweep')),
-                        (mpatches.Patch(color='green', label='coalesce'))])
+                        (mpatches.Patch(color='green', label='coalesce')),
+                        (mpatches.Patch(color='grey', label='mark waiting')),
+                        (mpatches.Patch(color='yellow', label='sync')),
+                        ])
 
     return plt
 
