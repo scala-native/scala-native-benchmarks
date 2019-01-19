@@ -196,8 +196,8 @@ def append_or_create(dict, key, value):
 
 
 phase_event_types = ["mark", "sweep", "concmark", "concsweep"]
-batch_events_types = ["mark_batch", "sweep_batch", "coalesce_batch"]
-internal_events_types = ["mark_waiting", "sync"]
+batch_events_types = ["mark_batch", "sweep_batch", "coalesce_batch", "mark_waiting"]
+internal_events_types = ["sync"]
 
 
 # event =  [type, start, end]
