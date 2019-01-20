@@ -159,11 +159,11 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
             collection_events, _, _, _ = parse_events(data, main_file, header)
     except IOError:
         print "run does not exist", main_file
-        return [], dict(), dict()
+        return [], dict(), dict(), dict()
 
     collection_events = collection_events[-n:]
     if len(collection_events) == 0:
-        return [], dict(), dict()
+        return [], dict(), dict(), dict()
 
     min_time = collection_events[0][1]
     time_filter = (lambda t: t > min_time)
