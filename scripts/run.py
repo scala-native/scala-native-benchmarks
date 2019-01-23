@@ -128,7 +128,7 @@ def compile_scala_native(ref, sha1):
         return False
 
 
-def compile(conf, bench, compilecmd, debug, trace, extra_args):
+def compile(conf, bench, compilecmd, gcstats, debug, trace, extra_args):
     cmd = [sbt, '-no-colors', '-J-Xmx2G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
     if conf.startswith("scala-native"):
@@ -136,6 +136,8 @@ def compile(conf, bench, compilecmd, debug, trace, extra_args):
             cmd.append('set nativeCompileOptions ++= Seq("-g", "-DDEBUG_ASSERT")')
         if trace:
             cmd.append('set nativeCompileOptions +="-DDEBUG_PRINT"')
+        if gcstats != None:
+            cmd.append('set nativeCompileOptions +="-DENABLE_GC_STATS{}"'.format(gcstats))
         for k,v in extra_args.iteritems():
             if k.endswith("?"):
                 cmd.append('set nativeCompileOptions +="-D{}"'.format(k[:-1]))
@@ -257,7 +259,7 @@ def single_run(to_run):
 
     print('--- run {}/{}'.format(n, runs))
     my_env = os.environ.copy()
-    if gcstats:
+    if gcstats != None:
         my_env["SCALANATIVE_STATS_FILE"] = os.path.join(resultsdir, str(n) + ".gc.csv")
 
     if minsize != "default":
@@ -344,6 +346,8 @@ if __name__ == "__main__":
     parser.add_argument("--gcthreads", help="different number of garbage collection threads to use", action='append')
     parser.add_argument("--par", help="number of parallel processes", type=int, default=default_par)
     parser.add_argument("--gc", help="gather gc statistics", action="store_true")
+    parser.add_argument("--gcv", help="gather gc statistics verbose - batches", action="store_true")
+    parser.add_argument("--gcvv", help="gather gc statistics very verbose - sync events", action="store_true")
     parser.add_argument("--upload", help="copy the results to ../scala-native-benchmark-results", action="store_true")
     parser.add_argument("--gitupload", help="copy the results to ../scala-native-benchmark-results and commit and push to git", action="store_true")
     parser.add_argument("--overwrite", help="overwrite old results", action="store_true")
@@ -437,8 +441,20 @@ if __name__ == "__main__":
         suffix += "-b" + str(batches)
     if par != default_par:
         suffix += "-p" + str(par)
-    if args.gc:
+
+
+    if args.gcvv:
+        suffix += "-gcvv"
+        gcstats = "_SYNC"
+    elif args.gcv:
+        suffix += "-gcv"
+        gcstats = "_BATCHES"
+    elif args.gc:
         suffix += "-gc"
+        gcstats = ""
+    else:
+        gcstats = None
+
     if args.gcdebug:
         suffix += "-gcdebug"
     if args.gctrace:
@@ -541,7 +557,7 @@ if __name__ == "__main__":
                     else:
                         os.remove('project/plugins.sbt')
 
-                    compile_success = compile(conf, bench, compilecmd, args.gcdebug, args.gctrace, extra_args)
+                    compile_success = compile(conf, bench, compilecmd, gcstats, args.gcdebug, args.gctrace, extra_args)
                     if not compile_success:
                         compile_fail += [conf]
                         break
@@ -557,7 +573,7 @@ if __name__ == "__main__":
                     to_run = []
                     for n in xrange(runs):
                         to_run += [
-                            dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=args.gc,
+                            dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=gcstats,
                                  size=size, gcThreads=gcThreads)]
 
                     if par == 1:
