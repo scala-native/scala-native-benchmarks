@@ -256,6 +256,7 @@ def single_run(to_run):
     minsize = to_run["size"][0]
     maxsize = to_run["size"][1]
     gcThreads = to_run["gcThreads"]
+    perf = to_run["perf"]
 
     print('--- run {}/{}'.format(n, runs))
     my_env = os.environ.copy()
@@ -277,7 +278,13 @@ def single_run(to_run):
     elif "SCALANATIVE_GC_THREADS" in my_env:
         del my_env["SCALANATIVE_GC_THREADS"]
 
-    cmd = []
+    if perf == "sudo":
+        myuser = os.environ.get('USER')
+        cmd = ["sudo","perf", "record", "-o", os.path.join(resultsdir, str(n) + ".perf"), "-g", "-F", "25000", "--", "sudo" , "-u", str(myuser)]
+    elif perf == "normal":
+        cmd = ["perf", "record", "-o", os.path.join(resultsdir, str(n) + ".perf"), "-g", "-F", "25000", "--"]
+    else:
+        cmd = []
     for token in unexpanded_cmd:
         if token == "$JAVA_ARGS":
             if minsize != "default":
@@ -337,6 +344,8 @@ def create_symlink(generalized_dir, root_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--suffix", help="suffix added to results")
+    parser.add_argument("--perf", help="records perf data", action="store_true")
+    parser.add_argument("--sperf", help="records perf data using sudo rights", action="store_true")
     parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
     parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
     parser.add_argument("--benchmark", help="benchmarks to run", action='append')
@@ -442,6 +451,12 @@ if __name__ == "__main__":
     if par != default_par:
         suffix += "-p" + str(par)
 
+    if args.sperf:
+        perf = "sudo"
+        suffix +="-Perf"
+    elif args.perf:
+        perf = "normal"
+        suffix +="-Perf"
 
     if args.gcvv:
         suffix += "-gcvv"
@@ -574,7 +589,7 @@ if __name__ == "__main__":
                     for n in xrange(runs):
                         to_run += [
                             dict(runs=runs, cmd=cmd, resultsdir=resultsdir, conf=conf, bench=bench, n=n, gcstats=gcstats,
-                                 size=size, gcThreads=gcThreads)]
+                                 size=size, gcThreads=gcThreads, perf = perf)]
 
                     if par == 1:
                         for tr in to_run:
