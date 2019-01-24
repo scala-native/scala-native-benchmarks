@@ -457,6 +457,8 @@ if __name__ == "__main__":
     elif args.perf:
         perf = "normal"
         suffix +="-Perf"
+    else:
+        perf = None
 
     if args.gcvv:
         suffix += "-gcvv"
