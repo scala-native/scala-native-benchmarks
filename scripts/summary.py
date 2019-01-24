@@ -24,8 +24,11 @@ def config_data(bench, conf):
             points = []
             with open(os.path.join("results", conf, bench, run)) as data:
                 for line in data.readlines():
-                    # in ms
-                    points.append(float(line) / 1000000)
+                    try:
+                        # in ms
+                        points.append(float(line) / 1000000)
+                    except Exception as e:
+                        print e
             # take only last 1000 to account for startup
             out += points[-1000:]
         except IOError:
@@ -83,13 +86,16 @@ def parse_gc_pause_events(data, file, header):
     for line in data.readlines():
         arr = line.split(",")
         event = arr[event_type_index]
-        time = float(arr[time_ns_index]) / ns_to_ms_div
-        if event == "mark":
-            mark_times.append(time)
-        elif event == "sweep":
-            sweep_times.append(time)
-        if event == "mark" or event == "sweep":
-            gc_times.append(time)
+        try:
+            time = float(arr[time_ns_index]) / ns_to_ms_div
+            if event == "mark":
+                mark_times.append(time)
+            elif event == "sweep":
+                sweep_times.append(time)
+            if event == "mark" or event == "sweep":
+                gc_times.append(time)
+        except Exception as e:
+            print e
 
     return mark_times, sweep_times, gc_times
 
@@ -497,7 +503,10 @@ def example_run_plot(plt, configurations, bench, run=3):
         try:
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
                 for line in data.readlines():
-                    points.append(float(line) / 1000000)
+                    try:
+                        points.append(float(line) / 1000000)
+                    except Exception as e:
+                        print e
         except IOError:
             pass
         ind = np.arange(len(points))
