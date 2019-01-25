@@ -583,6 +583,13 @@ if __name__ == "__main__":
                     print "results in", resultsdir
                     mkdir(resultsdir)
 
+                    if conf.startswith("scala-native") and perf in ["sudo", "normal"]:
+                        # perf needs the original binary for the reports to make any sense
+                        runnable = runcmd[0]
+                        saved_binary = os.path.join(resultsdir, "binary")
+                        sh.copyfile(runnable, saved_binary)
+                        runcmd = [saved_binary] + runcmd[1:]
+
                     cmd = []
                     cmd.extend(runcmd)
                     cmd.extend([str(batches), str(batch_size), input, output])
