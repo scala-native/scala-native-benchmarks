@@ -588,6 +588,7 @@ if __name__ == "__main__":
                         runnable = runcmd[0]
                         saved_binary = os.path.join(resultsdir, "binary")
                         sh.copyfile(runnable, saved_binary)
+                        os.chmod(saved_binary, 0775)
                         runcmd = [saved_binary] + runcmd[1:]
 
                     cmd = []
