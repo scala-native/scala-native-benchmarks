@@ -280,9 +280,9 @@ def single_run(to_run):
 
     if perf == "sudo":
         myuser = os.environ.get('USER')
-        cmd = ["sudo","perf", "record", "-o", os.path.join(resultsdir, str(n) + ".perf"), "-g", "-F", "25000", "--", "sudo" , "-u", str(myuser)]
+        cmd = ["sudo","perf", "record", "-o", os.path.join(resultsdir, str(n) + ".perf"), "-g", "-F", "15000", "--", "sudo" , "-u", str(myuser)]
     elif perf == "normal":
-        cmd = ["perf", "record", "-o", os.path.join(resultsdir, str(n) + ".perf"), "-g", "-F", "25000", "--"]
+        cmd = ["perf", "record", "-o", os.path.join(resultsdir, str(n) + ".perf"), "-g", "-F", "15000", "--"]
     else:
         cmd = []
     for token in unexpanded_cmd:
