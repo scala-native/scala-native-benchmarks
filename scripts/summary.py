@@ -153,19 +153,21 @@ def gc_events_for_last_n_collections(bench, conf, run=3, n=1):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     main_file_name = str(run) + ".gc.csv"
-    main_file = os.path.join("results", conf, bench, main_file_name)
     parts = []
     for file in files:
         if file.startswith(main_file_name):
             parts.append(file)
 
-    try:
-        with open(main_file) as data:
-            header = data.readline().strip()
-            collection_events, _, _, _ = parse_events(data, main_file, header)
-    except IOError:
-        print "run does not exist", main_file
-        return [], dict(), dict(), dict()
+    collection_events = []
+    for part in parts:
+        try:
+            file = os.path.join("results", conf, bench, part)
+            with open(file) as data:
+                header = data.readline().strip()
+                collection_events0, _, _, _ = parse_events(data, file, header)
+                collection_events += collection_events0
+        except IOError:
+            pass
 
     collection_events = collection_events[-n:]
     if len(collection_events) == 0:
