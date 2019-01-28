@@ -634,14 +634,14 @@ def size_compare_chart_gc_sweep(plt, parent_configurations, bench, p):
     return plt
 
 
-def percentiles_chart_generic(plt, configurations, bench, get_data, limit):
+def percentiles_chart_generic(plt, configurations, bench, get_data, first , last):
     plt.clf()
     plt.cla()
     for conf in configurations:
         data = get_data(bench, conf)
         if data.size > 0:
             step = 0.1
-            percentiles = np.arange(0, limit + step, step)
+            percentiles = np.arange(first, last + step, step)
             percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
             plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
@@ -650,15 +650,15 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, limit):
     return plt
 
 
-def percentiles_chart(plt, configurations, bench, limit=100):
-    plt = percentiles_chart_generic(plt, configurations, bench, config_data, limit)
+def percentiles_chart(plt, configurations, bench, first=0, last=100):
+    plt = percentiles_chart_generic(plt, configurations, bench, config_data, first, last)
     plt.title(bench)
     plt.ylabel("Run time (ms)")
     return plt
 
 
-def gc_pause_time_chart(plt, configurations, bench, limit=100):
-    plt = percentiles_chart_generic(plt, configurations, bench, gc_stats_total, limit)
+def gc_pause_time_chart(plt, configurations, bench, first=0, last=100):
+    plt = percentiles_chart_generic(plt, configurations, bench, gc_stats_total, first, last)
     plt.title(bench + ": Garbage Collector Pause Times")
     plt.ylabel("GC pause time (ms)")
     return plt
@@ -931,9 +931,12 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         md_file.write("\n")
 
         chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
+        chart_md(md_file, percentiles_chart(plt, configurations, bench, first=80), rootdir, "percentile_80plus_" + bench + ".png")
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
+            chart_md(md_file, gc_pause_time_chart(plt, configurations, bench, first=80), rootdir,
+                     "gc_pause_times_80plus_" + bench + ".png")
             if size_charts:
                 for p in interesting_percentiles:
                     chart_md(md_file, size_compare_chart_gc_mark(plt, parent_configurations, bench, p), rootdir,
