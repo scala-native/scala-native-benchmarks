@@ -496,22 +496,29 @@ def bar_chart_gc_absolute(plt, configurations, benchmarks, percentile):
     return plt
 
 
-def example_run_plot(plt, configurations, bench, run=3):
+def example_run_plot(plt, configurations, bench, run=3, lastn=-1):
     plt.clf()
     plt.cla()
 
     for conf in configurations:
-        points = []
+        rawpoints = []
         try:
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
                 for line in data.readlines():
                     try:
-                        points.append(float(line) / 1000000)
+                        rawpoints.append(float(line) / 1000000)
                     except Exception as e:
                         print e
         except IOError:
             pass
-        ind = np.arange(len(points))
+
+        total_len = len(rawpoints)
+        if lastn != -1:
+            first = total_len - lastn
+        else:
+            first = 0
+        ind = np.arange(first, total_len)
+        points = rawpoints[first:]
         plt.plot(ind, points, label=conf)
     plt.title("{} run #{}".format(bench, str(run)))
     plt.xlabel("Iteration")
@@ -949,8 +956,10 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
             run -= 1
 
         if run >= 0:
+            chart_md(md_file, example_run_plot(plt, configurations, bench, run, 1000), rootdir,
+                     "example_run_last1000_" + str(run) + "_" + bench + ".png")
             chart_md(md_file, example_run_plot(plt, configurations, bench, run), rootdir,
-                     "example_run_" + str(run) + "_" + bench + ".png")
+                     "example_run_full_" + str(run) + "_" + bench + ".png")
             if gc_charts:
                 for conf in configurations:
                     gc_data = gc_events_for_last_n_collections(bench, conf, run)
