@@ -640,7 +640,8 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, limit):
     for conf in configurations:
         data = get_data(bench, conf)
         if data.size > 0:
-            percentiles = np.arange(0, limit)
+            step = 0.1
+            percentiles = np.arange(0, limit + step, step)
             percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
             plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
@@ -891,7 +892,7 @@ def chart_md(md_file, plt, rootdir, name):
 
 def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=False,
                   size_charts=False):
-    interesting_percentiles = [50, 90, 99]
+    interesting_percentiles = [50, 90, 99, 99.9]
     md_file.write("# Summary\n")
     for p in interesting_percentiles:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
