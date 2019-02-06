@@ -1,10 +1,12 @@
 #!/usr/bin/env python2
 from run import mkdir, expand_wild_cards, generate_choices
 
-import numpy as np
-import time
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import numpy as np
+import time
 import os
 import argparse
 
