@@ -640,7 +640,7 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, first, last,
     for conf in configurations:
         data = get_data(bench, conf)
         if data.size > 0:
-            percentiles = np.arange(first, last + step, step)
+            percentiles = filter(lambda x: 0 <= x <= 100, np.arange(first, last + step, step))
             percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
             plt.plot(percentiles, percvalue, label=conf)
     plt.legend()
