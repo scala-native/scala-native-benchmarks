@@ -328,11 +328,13 @@ def gc_stats_total(bench, conf):
 
 def gc_stats_mark_batches(bench, conf):
     mark,_ = gc_batch_times(bench, conf)
-    return mark
+    return np.array(mark)
+
 
 def gc_stats_sweep_batches(bench, conf):
     _, sweep = gc_batch_times(bench, conf)
-    return sweep
+    return np.array(sweep)
+
 
 def percentile_gc(configurations, benchmarks, percentile):
     out_mark = []
