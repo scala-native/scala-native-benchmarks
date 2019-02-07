@@ -259,10 +259,80 @@ def parse_events(data, file, header, timeFilter=(lambda t: True)):
     return collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread
 
 
+def parse_batch_times(data, file, header):
+
+    mark_batches = []
+    sweep_batches = []
+
+    event_type_index = 0
+    start_ns_index = -1
+    time_ns_index = -1
+    thread_index = -1
+    ns_to_ms_div = 1000 * 1000
+    for i, h in enumerate(header.split(',')):
+        if h == "start_ns":
+            start_ns_index = i
+        if h == "time_ns":
+            time_ns_index = i
+        if h == "gc_thread":
+            thread_index = i
+
+    if start_ns_index == -1:
+        print "Header does not have start_ns", header, "at", file
+    if time_ns_index == -1:
+        print "Header does not have time_ns", header, "at", file
+    if thread_index == -1:
+        print "Header does not have gc_thread", header, "at", file
+    if start_ns_index == -1 or time_ns_index == -1 or thread_index == -1:
+        return mark_batches, sweep_batches
+
+    for line in data.readlines():
+        arr = line.split(",")
+        event = arr[event_type_index]
+        time = float(arr[time_ns_index]) / ns_to_ms_div
+        if event == "mark_batch":
+            mark_batches.append(time)
+        elif event == "sweep_batch":
+            sweep_batches.append(time)
+
+    return mark_batches, sweep_batches
+
+
+def gc_batch_times(bench, conf):
+    benchmark_dir = os.path.join("results", conf, bench)
+    files = next(os.walk(benchmark_dir), [[], [], []])[2]
+    parts = []
+    for file in files:
+        if ".gc.csv" in file:
+            parts.append(file)
+    sweep_batches = []
+    mark_batches = []
+    for part in parts:
+        try:
+            file = os.path.join("results", conf, bench, part)
+            with open(file) as data:
+                header = data.readline().strip()
+                mark_batches0, sweep_batches0 = parse_batch_times(data, file, header)
+                mark_batches += mark_batches0
+                sweep_batches += sweep_batches0
+        except IOError:
+            pass
+
+    return mark_batches, sweep_batches
+
+
 def gc_stats_total(bench, conf):
     _, _, total = gc_pauses_main_thread(bench, conf)
     return total
 
+
+def gc_stats_mark_batches(bench, conf):
+    mark,_ = gc_batch_times(bench, conf)
+    return mark
+
+def gc_stats_sweep_batches(bench, conf):
+    _, sweep = gc_batch_times(bench, conf)
+    return sweep
 
 def percentile_gc(configurations, benchmarks, percentile):
     out_mark = []
@@ -663,6 +733,19 @@ def gc_pause_time_chart(plt, configurations, bench, first=0, last=100, step=0.1)
     return plt
 
 
+def gc_mark_batch_time_chart(plt, configurations, bench, first=0, last=100, step=0.1):
+    plt = percentiles_chart_generic(plt, configurations, bench, gc_stats_mark_batches, first, last, step)
+    plt.title(bench + ": Mark Batch Times")
+    plt.ylabel("Mark Batch Time (ms)")
+    return plt
+
+def gc_sweep_batch_time_chart(plt, configurations, bench, first=0, last=100, step=0.1):
+    plt = percentiles_chart_generic(plt, configurations, bench, gc_stats_sweep_batches, first, last, step)
+    plt.title(bench + ": Sweep Batch Times")
+    plt.ylabel("Sweep Batch Time (ms)")
+    return plt
+
+
 def print_table(configurations, benchmarks, data):
     leading = ['name']
     for conf in configurations:
@@ -936,6 +1019,10 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
                      "gc_pause_times_" + bench + ".png")
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench, first=95, step=0.01), rootdir,
                      "gc_pause_times_80plus_" + bench + ".png")
+            chart_md(md_file, gc_mark_batch_time_chart(plt, configurations, bench), rootdir,
+                     "gc_mark_batches_" + bench + ".png")
+            chart_md(md_file, gc_sweep_batch_time_chart(plt, configurations, bench), rootdir,
+                     "gc_sweep_batches_" + bench + ".png")
             if size_charts:
                 for p in interesting_percentiles:
                     chart_md(md_file, size_compare_chart_gc_mark(plt, parent_configurations, bench, p), rootdir,
