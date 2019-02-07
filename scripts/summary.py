@@ -1015,16 +1015,20 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         md_file.write("\n")
 
         chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
-        chart_md(md_file, percentiles_chart(plt, configurations, bench, first=95, step=0.01), rootdir, "percentile_80plus_" + bench + ".png")
+        chart_md(md_file, percentiles_chart(plt, configurations, bench, first=95, step=0.01), rootdir, "percentile_95plus_" + bench + ".png")
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench, first=95, step=0.01), rootdir,
-                     "gc_pause_times_80plus_" + bench + ".png")
+                     "gc_pause_times_95plus_" + bench + ".png")
             chart_md(md_file, gc_mark_batch_time_chart(plt, configurations, bench), rootdir,
                      "gc_mark_batches_" + bench + ".png")
+            chart_md(md_file, gc_mark_batch_time_chart(plt, configurations, bench, first=95, step=0.01), rootdir,
+                     "gc_mark_batches_95plus_" + bench + ".png")
             chart_md(md_file, gc_sweep_batch_time_chart(plt, configurations, bench), rootdir,
                      "gc_sweep_batches_" + bench + ".png")
+            chart_md(md_file, gc_sweep_batch_time_chart(plt, configurations, bench, first=95, step=0.01), rootdir,
+                     "gc_sweep_batches_95plus_" + bench + ".png")
             if size_charts:
                 for p in interesting_percentiles:
                     chart_md(md_file, size_compare_chart_gc_mark(plt, parent_configurations, bench, p), rootdir,
