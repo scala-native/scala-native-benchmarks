@@ -237,7 +237,7 @@ def parse_events(data, file, header, timeFilter=(lambda t: True)):
     if thread_index == -1:
         print "Header does not have gc_thread", header, "at", file
     if start_ns_index == -1 or time_ns_index == -1 or thread_index == -1:
-        return collection_events, phase_events_by_thread, batch_events_by_thread
+        return collection_events, phase_events_by_thread, batch_events_by_thread, internal_events_by_thread
 
     for line in data.readlines():
         arr = line.split(",")
