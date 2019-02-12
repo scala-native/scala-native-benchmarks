@@ -1,15 +1,17 @@
 #!/usr/bin/env python2
 from run import mkdir, expand_wild_cards, generate_choices
 
-import numpy as np
-import time
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
+import numpy as np
+import time
 import os
 import argparse
 
 
-def config_data(bench, conf):
+def config_data(bench, conf, warmup):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
@@ -29,8 +31,7 @@ def config_data(bench, conf):
                         points.append(float(line) / 1000000)
                     except Exception as e:
                         print e
-            # take only last 1000 to account for startup
-            out += points[-1000:]
+            out += points[warmup:]
         except IOError:
             pass
     return np.array(out)
@@ -410,35 +411,35 @@ def percentile_gc_bench_total(configurations, bench, p):
     return total
 
 
-def percentile(configurations, benchmarks, p):
+def percentile(configurations, benchmarks, warmup, p):
     out = []
     for bench in benchmarks:
-        out.append(percentile_bench(configurations, bench, p))
+        out.append(percentile_bench(configurations, warmup, bench, p))
     return out
 
 
-def percentile_bench(configurations, bench, p):
+def percentile_bench(configurations, bench, warmup, p):
     res = []
     for conf in configurations:
         try:
-            res.append(np.percentile(config_data(bench, conf), p))
+            res.append(np.percentile(config_data(bench, conf, warmup), p))
         except IndexError:
             res.append(0)
     return res
 
 
-def totals(configurations, benchmarks):
+def totals(configurations, benchmarks, warmup):
     out = []
     for bench in benchmarks:
-        out.append(totals_bench(configurations, bench))
+        out.append(totals_bench(configurations, bench, warmup))
     return out
 
 
-def totals_bench(configurations, bench):
+def totals_bench(configurations, bench, warmup):
     res = []
     for conf in configurations:
         try:
-            res.append(np.sum(config_data(bench, conf)))
+            res.append(np.sum(config_data(bench, conf, warmup)))
         except IndexError:
             res.append(0)
     return res
@@ -678,8 +679,8 @@ def size_compare_chart_gc_combined(plt, parent_configurations, bench):
     return plt
 
 
-def size_compare_chart(plt, parent_configurations, bench, p):
-    plt = size_compare_chart_generic(plt, parent_configurations, bench, percentile_bench, p)
+def size_compare_chart(plt, parent_configurations, bench, warmup, p):
+    plt = size_compare_chart_generic(plt, parent_configurations, bench, lambda configurations, benchmark, p: percentile_bench(configurations, benchmark, warmup, p), p)
     plt.title("{} at {} percentile".format(bench, p))
     plt.ylabel("Run time (ms)")
     return plt
@@ -721,8 +722,8 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, first, last,
     return plt
 
 
-def percentiles_chart(plt, configurations, bench, first=0, last=100, step=0.1):
-    plt = percentiles_chart_generic(plt, configurations, bench, config_data, first, last, step)
+def percentiles_chart(plt, configurations, bench, warmup, first=0, last=100, step=0.1):
+    plt = percentiles_chart_generic(plt, configurations, bench, lambda bench, conf : config_data(bench, conf, warmup), first, last, step)
     plt.title(bench)
     plt.ylabel("Run time (ms)")
     return plt
@@ -974,19 +975,19 @@ def chart_md(md_file, plt, rootdir, name):
     md_file.write("![Chart]({})\n\n".format(name))
 
 
-def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, gc_charts=False,
+def write_md_file(rootdir, md_file, parent_configurations, configurations, benchmarks, warmup, gc_charts=False,
                   size_charts=False):
     interesting_percentiles = [50, 90, 99, 99.9]
     md_file.write("# Summary\n")
     for p in interesting_percentiles:
         md_file.write("## Benchmark run time (ms) at {} percentile \n".format(p))
-        data = percentile(configurations, benchmarks, p)
+        data = percentile(configurations, benchmarks, warmup, p)
         chart_md(md_file, relative_execution_times(plt, configurations, benchmarks, data, p), rootdir,
                  "relative_percentile_" + str(p) + ".png")
         write_md_table(md_file, configurations, benchmarks, data)
 
     md_file.write("## Benchmark total run time (ms) \n")
-    data = totals(configurations, benchmarks)
+    data = totals(configurations, benchmarks, warmup)
     chart_md(md_file, total_execution_times(plt, configurations, benchmarks, data), rootdir,
              "relative_total.png")
     write_md_table(md_file, configurations, benchmarks, data)
@@ -1014,8 +1015,8 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
         md_file.write(bench)
         md_file.write("\n")
 
-        chart_md(md_file, percentiles_chart(plt, configurations, bench), rootdir, "percentile_" + bench + ".png")
-        chart_md(md_file, percentiles_chart(plt, configurations, bench, first=95, step=0.01), rootdir, "percentile_95plus_" + bench + ".png")
+        chart_md(md_file, percentiles_chart(plt, configurations, bench, warmup), rootdir, "percentile_" + bench + ".png")
+        chart_md(md_file, percentiles_chart(plt, configurations, bench, warmup, first=95, step=0.01), rootdir, "percentile_95plus_" + bench + ".png")
         if gc_charts:
             chart_md(md_file, gc_pause_time_chart(plt, configurations, bench), rootdir,
                      "gc_pause_times_" + bench + ".png")
@@ -1044,7 +1045,7 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
 
         if size_charts:
             for p in interesting_percentiles:
-                chart_md(md_file, size_compare_chart(plt, parent_configurations, bench, p), rootdir,
+                chart_md(md_file, size_compare_chart(plt, parent_configurations, bench, warmup, p), rootdir,
                          "size_chart_" + bench + "percentile_" + str(p) + ".png")
 
         run = 3
@@ -1101,6 +1102,9 @@ def is_subconfig(subconf):
     return subconf.startswith("size_") or subconf.startswith("gcthreads_")
 
 
+default_warmup = 2000
+
+
 if __name__ == '__main__':
     all_configs = next(os.walk("results"))[1]
     # added subconfigurations
@@ -1117,6 +1121,7 @@ if __name__ == '__main__':
     parser.add_argument("--comment", help="comment at the suffix of the report name")
     parser.add_argument("--gc", help="enable charts about garbage collector", action="store_true")
     parser.add_argument("--vssize", help="enable charts against heap size", action="store_true")
+    parser.add_argument("--warmup", help="number of iterations to skip before calculating percentiles", type=int, default=default_warmup)
     parser.add_argument("--benchmark", help="benchmarks to use in comparision", action='append')
     parser.add_argument("comparisons", nargs='*', choices=results + ["all"],
                         default="all")
@@ -1157,6 +1162,6 @@ if __name__ == '__main__':
     plt.rcParams["font.size"] = 20.0
     mkdir(report_dir)
     with open(os.path.join(report_dir, "Readme.md"), 'w+') as md_file:
-        write_md_file(report_dir, md_file, parent_configurations, configurations, benchmarks, args.gc, args.vssize)
+        write_md_file(report_dir, md_file, parent_configurations, configurations, benchmarks, args.warmup, args.gc, args.vssize)
 
     print report_dir
