@@ -414,7 +414,7 @@ def percentile_gc_bench_total(configurations, bench, p):
 def percentile(configurations, benchmarks, warmup, p):
     out = []
     for bench in benchmarks:
-        out.append(percentile_bench(configurations, warmup, bench, p))
+        out.append(percentile_bench(configurations, bench, warmup, p))
     return out
 
 
