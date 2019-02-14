@@ -172,7 +172,7 @@ all_benchmarks = default_benchmarks + [
 ]
 
 stable = 'scala-native-0.3.8'
-latest = 'scala-native-0.3.9-SNAPSHOT'
+latest = 'scala-native-0.4.0-SNAPSHOT'
 baseline = [
     'jvm',
     stable,
