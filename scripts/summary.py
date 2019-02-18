@@ -1130,17 +1130,17 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
             run -= 1
 
         if run >= 0:
-            chart_md(md_file, example_run_plot(plt, configurations, bench, run, 1000), rootdir,
-                     "example_run_last1000_" + str(run) + "_" + bench + ".png")
+            # chart_md(md_file, example_run_plot(plt, configurations, bench, run, 1000), rootdir,
+            #          "example_run_last1000_" + str(run) + "_" + bench + ".png")
             chart_md(md_file, example_run_plot(plt, configurations, bench, run), rootdir,
                      "example_run_full_" + str(run) + "_" + bench + ".png")
             for conf in configurations:
                 chart_md(md_file, percentiles_chart_runs(plt, conf, bench, warmup), rootdir, "percentile_" + bench + "_conf" + str(configurations.index(conf))+ ".png")
                 chart_md(md_file, percentiles_chart_runs(plt, conf, bench, warmup, first=95, step=0.01), rootdir, "percentile_95plus_" + bench + "_conf" + str(configurations.index(conf))+ ".png")
-                chart_md(md_file, example_all_runs_plot(plt, conf, bench, 1000), rootdir,
-                         "example_allruns_last1000_conf" + str(configurations.index(conf)) + "_" + bench + ".png")
-                chart_md(md_file, example_all_runs_plot(plt, conf, bench), rootdir,
-                         "example_allruns_full_conf" + str(configurations.index(conf)) + "_" + bench + ".png")
+                # chart_md(md_file, example_all_runs_plot(plt, conf, bench, 1000), rootdir,
+                #          "example_allruns_last1000_conf" + str(configurations.index(conf)) + "_" + bench + ".png")
+                # chart_md(md_file, example_all_runs_plot(plt, conf, bench), rootdir,
+                #          "example_allruns_full_conf" + str(configurations.index(conf)) + "_" + bench + ".png")
                 if gc_charts:
                     gc_data = gc_events_for_last_n_collections(bench, conf, run)
                     chart_md(md_file,
