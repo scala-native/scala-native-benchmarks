@@ -37,6 +37,23 @@ def config_data(bench, conf, warmup):
     return np.array(out)
 
 
+def config_data_run(bench, conf, run, warmup):
+    out = []
+    try:
+        points = []
+        with open(os.path.join("results", conf, bench, str(run))) as data:
+            for line in data.readlines():
+                try:
+                    # in ms
+                    points.append(float(line) / 1000000)
+                except Exception as e:
+                    print e
+        out = points[warmup:]
+    except IOError:
+        pass
+    return np.array(out)
+
+
 def gc_pauses_main_thread(bench, conf):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
@@ -600,6 +617,40 @@ def example_run_plot(plt, configurations, bench, run=3, lastn=-1):
     return plt
 
 
+def example_all_runs_plot(plt, conf, bench, lastn=-1):
+    plt.clf()
+    plt.cla()
+    max_run = find_last_run(conf, bench)
+
+    for run in np.arange(0, max_run + 1):
+        rawpoints = []
+        try:
+            with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
+                for line in data.readlines():
+                    try:
+                        rawpoints.append(float(line) / 1000000)
+                    except Exception as e:
+                        print e
+        except IOError:
+            pass
+
+        total_len = len(rawpoints)
+        if total_len == 0:
+            continue
+        if lastn != -1:
+            first = total_len - lastn
+        else:
+            first = 0
+        ind = np.arange(first, total_len)
+        points = rawpoints[first:]
+        plt.plot(ind, points, label=run)
+    plt.title("{} all runs for {}".format(bench, conf))
+    plt.xlabel("Iteration")
+    plt.ylabel("Run time (ms)")
+    plt.legend()
+    return plt
+
+
 def to_gb(size_str):
     if size_str[-1] == "k" or size_str[-1] == "K":
         return float(size_str[:-1]) / 1024 / 1024
@@ -707,6 +758,23 @@ def size_compare_chart_gc_sweep(plt, parent_configurations, bench, p):
     return plt
 
 
+def percentiles_chart_generic_runs(plt, conf, bench, get_data, first, last, step):
+    plt.clf()
+    plt.cla()
+    max_run = find_last_run(conf, bench)
+
+    for run in np.arange(0, max_run + 1):
+        data = get_data(bench, conf, run)
+        if data.size > 0:
+            percentiles = filter(lambda x: 0 <= x <= 100, np.arange(first, last + step, step))
+            percvalue = np.array([np.percentile(data, perc) for perc in percentiles])
+            plt.plot(percentiles, percvalue, label=run)
+    plt.legend()
+    plt.ylim(ymin=0)
+    plt.xlabel("Percentile")
+    return plt
+
+
 def percentiles_chart_generic(plt, configurations, bench, get_data, first, last, step):
     plt.clf()
     plt.cla()
@@ -725,6 +793,15 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, first, last,
 def percentiles_chart(plt, configurations, bench, warmup, first=0, last=100, step=0.1):
     plt = percentiles_chart_generic(plt, configurations, bench, lambda bench, conf : config_data(bench, conf, warmup), first, last, step)
     plt.title(bench)
+    plt.ylabel("Run time (ms)")
+    return plt
+
+
+def percentiles_chart_runs(plt, conf, bench, warmup, first=0, last=100, step=0.1):
+    plt = percentiles_chart_generic_runs(plt, conf, bench,
+                                         lambda bench, conf, run: config_data_run(bench, conf, run, warmup), first,
+                                         last, step)
+    plt.title(bench + " " + conf)
     plt.ylabel("Run time (ms)")
     return plt
 
@@ -1053,12 +1130,18 @@ def write_md_file(rootdir, md_file, parent_configurations, configurations, bench
             run -= 1
 
         if run >= 0:
-            chart_md(md_file, example_run_plot(plt, configurations, bench, run, 1000), rootdir,
-                     "example_run_last1000_" + str(run) + "_" + bench + ".png")
+            # chart_md(md_file, example_run_plot(plt, configurations, bench, run, 1000), rootdir,
+            #          "example_run_last1000_" + str(run) + "_" + bench + ".png")
             chart_md(md_file, example_run_plot(plt, configurations, bench, run), rootdir,
                      "example_run_full_" + str(run) + "_" + bench + ".png")
-            if gc_charts:
-                for conf in configurations:
+            for conf in configurations:
+                chart_md(md_file, percentiles_chart_runs(plt, conf, bench, warmup), rootdir, "percentile_" + bench + "_conf" + str(configurations.index(conf))+ ".png")
+                chart_md(md_file, percentiles_chart_runs(plt, conf, bench, warmup, first=95, step=0.01), rootdir, "percentile_95plus_" + bench + "_conf" + str(configurations.index(conf))+ ".png")
+                # chart_md(md_file, example_all_runs_plot(plt, conf, bench, 1000), rootdir,
+                #          "example_allruns_last1000_conf" + str(configurations.index(conf)) + "_" + bench + ".png")
+                # chart_md(md_file, example_all_runs_plot(plt, conf, bench), rootdir,
+                #          "example_allruns_full_conf" + str(configurations.index(conf)) + "_" + bench + ".png")
+                if gc_charts:
                     gc_data = gc_events_for_last_n_collections(bench, conf, run)
                     chart_md(md_file,
                              gc_gantt_chart(plt, conf, bench, gc_data),
@@ -1080,6 +1163,19 @@ def any_run_exists(bench, configurations, run):
             exits = True
             break
     return exits
+
+
+def find_last_run(conf, bench):
+    max_run = 0
+    while True:
+        file = 'results/{}/{}/{}'.format(conf, bench, max_run)
+        if not os.path.exists(file):
+            break
+        max_run += 1
+    max_run -= 1
+
+    return max_run
+
 
 
 def discover_benchmarks(configurations):
