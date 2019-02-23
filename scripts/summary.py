@@ -11,7 +11,7 @@ import os
 import argparse
 
 
-def config_data(bench, conf, warmup):
+def config_data_goodruns(bench, conf, warmup):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
@@ -20,21 +20,28 @@ def config_data(bench, conf, warmup):
             # regular benchmark data
             runs.append(file)
 
-    out = []
+    points_with_50percentile = []
     for run in runs:
         try:
-            points = []
+            raw_points = []
             with open(os.path.join("results", conf, bench, run)) as data:
                 for line in data.readlines():
                     try:
                         # in ms
-                        points.append(float(line) / 1000000)
+                        raw_points.append(float(line) / 1000000)
                     except Exception as e:
                         print e
-            out += points[warmup:]
+            points = raw_points[warmup:]
+            points_with_50percentile += [(points, np.percentile(points, 50))]
         except IOError:
             pass
-    return np.array(out)
+    to_discard = int(0.2 * len(points_with_50percentile))
+    if to_discard > 0:
+        sorted_arr = sorted(points_with_50percentile, key=lambda x: -x[1])
+        out = map(lambda x: x[0], sorted_arr[to_discard:])
+    else:
+        out = map(lambda x: x[0], points_with_50percentile)
+    return np.array(sum(out, []))
 
 
 def config_data_run(bench, conf, run, warmup):
@@ -439,7 +446,7 @@ def percentile_bench(configurations, bench, warmup, p):
     res = []
     for conf in configurations:
         try:
-            res.append(np.percentile(config_data(bench, conf, warmup), p))
+            res.append(np.percentile(config_data_goodruns(bench, conf, warmup), p))
         except IndexError:
             res.append(0)
     return res
@@ -456,7 +463,7 @@ def totals_bench(configurations, bench, warmup):
     res = []
     for conf in configurations:
         try:
-            res.append(np.sum(config_data(bench, conf, warmup)))
+            res.append(np.sum(config_data_goodruns(bench, conf, warmup)))
         except IndexError:
             res.append(0)
     return res
@@ -791,7 +798,7 @@ def percentiles_chart_generic(plt, configurations, bench, get_data, first, last,
 
 
 def percentiles_chart(plt, configurations, bench, warmup, first=0, last=100, step=0.1):
-    plt = percentiles_chart_generic(plt, configurations, bench, lambda bench, conf : config_data(bench, conf, warmup), first, last, step)
+    plt = percentiles_chart_generic(plt, configurations, bench, lambda bench, conf : config_data_goodruns(bench, conf, warmup), first, last, step)
     plt.title(bench)
     plt.ylabel("Run time (ms)")
     return plt
