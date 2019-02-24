@@ -1257,7 +1257,7 @@ if __name__ == '__main__':
         for b in args.benchmark:
             benchmarks += filter(lambda s: s.startswith(b), all_benchmarks)
     else:
-        excluded_benchmarks = ['list.ListBenchmark']
+        excluded_benchmarks = ['list.ListBenchmark', 'mandelbrot.MandelbrotBenchmark']
         benchmarks = [x for x in all_benchmarks if x not in excluded_benchmarks]
 
     report_dir = "reports/summary_" + time.strftime('%Y%m%d_%H%M%S') + "_" + comment + "/"

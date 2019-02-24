@@ -151,7 +151,6 @@ sbt = where('sbt')
 
 default_benchmarks = [
     'bounce.BounceBenchmark',
-    'list.ListBenchmark',
     'richards.RichardsBenchmark',
     'queens.QueensBenchmark',
     'permute.PermuteBenchmark',
@@ -162,13 +161,14 @@ default_benchmarks = [
     'cd.CDBenchmark',
     'kmeans.KmeansBenchmark',
     'gcbench.GCBenchBenchmark',
-    'mandelbrot.MandelbrotBenchmark',
     'nbody.NbodyBenchmark',
     'sudoku.SudokuBenchmark',
 ]
 
 all_benchmarks = default_benchmarks + [
     'histogram.Histogram',
+    'list.ListBenchmark',
+    'mandelbrot.MandelbrotBenchmark',
 ]
 
 stable = 'scala-native-0.3.8'
