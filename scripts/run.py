@@ -265,13 +265,24 @@ def single_run(to_run):
 
     if minsize != "default":
         my_env["SCALANATIVE_MIN_HEAP_SIZE"] = minsize
-    elif "SCALANATIVE_MIN_HEAP_SIZE" in my_env:
-        del my_env["SCALANATIVE_MIN_HEAP_SIZE"]
+        # in 0.4.0 the heap settings names changed.
+        my_env["SCALANATIVE_MIN_SIZE"] = minsize
+    else:
+        if "SCALANATIVE_MIN_HEAP_SIZE" in my_env:
+            del my_env["SCALANATIVE_MIN_HEAP_SIZE"]
+        if "SCALANATIVE_MIN_SIZE" in my_env:
+            del my_env["SCALANATIVE_MIN_SIZE"]
+
 
     if maxsize != "default":
         my_env["SCALANATIVE_MAX_HEAP_SIZE"] = maxsize
-    elif "SCALANATIVE_MAX_HEAP_SIZE" in my_env:
-        del my_env["SCALANATIVE_MAX_HEAP_SIZE"]
+        # in 0.4.0 the heap settings names changed.
+        my_env["SCALANATIVE_MAX_SIZE"] = maxsize
+    else:
+        if "SCALANATIVE_MAX_HEAP_SIZE" in my_env:
+            del my_env["SCALANATIVE_MAX_HEAP_SIZE"]
+        if "SCALANATIVE_MAX_SIZE" in my_env:
+            del my_env["SCALANATIVE_MAX_SIZE"]
 
     if gcThreads != "default":
         my_env["SCALANATIVE_GC_THREADS"] = gcThreads
