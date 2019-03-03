@@ -11,7 +11,7 @@ import os
 import argparse
 
 
-def config_data_goodruns(bench, conf, warmup):
+def config_data_goodruns(bench, conf, warmup, p=50):
     benchmark_dir = os.path.join("results", conf, bench)
     files = next(os.walk(benchmark_dir), [[], [], []])[2]
     runs = []
@@ -32,7 +32,7 @@ def config_data_goodruns(bench, conf, warmup):
                     except Exception as e:
                         print e
             points = raw_points[warmup:]
-            points_with_50percentile += [(points, np.percentile(points, 50))]
+            points_with_50percentile += [(points, np.percentile(points, p))]
         except IOError:
             pass
     to_discard = int(0.2 * len(points_with_50percentile))
@@ -446,7 +446,7 @@ def percentile_bench(configurations, bench, warmup, p):
     res = []
     for conf in configurations:
         try:
-            res.append(np.percentile(config_data_goodruns(bench, conf, warmup), p))
+            res.append(np.percentile(config_data_goodruns(bench, conf, warmup, p), p))
         except IndexError:
             res.append(0)
     return res
