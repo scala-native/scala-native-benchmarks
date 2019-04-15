@@ -35,7 +35,7 @@ def run(cmd):
     return subp.check_output(cmd)
 
 def compile(bench, compilecmd):
-    cmd = [sbt, '-J-Xmx2G', 'clean']
+    cmd = [sbt, '-J-Xmx6G', 'clean']
     cmd.append('set mainClass in Compile := Some("{}")'.format(bench))
     cmd.append(compilecmd)
     return run(cmd)
@@ -43,26 +43,29 @@ def compile(bench, compilecmd):
 sbt = where('sbt')
 
 benchmarks = [
-        'bounce.BounceBenchmark',
-        'list.ListBenchmark',
-        'richards.RichardsBenchmark',
-        'queens.QueensBenchmark',
-        'permute.PermuteBenchmark',
-        'deltablue.DeltaBlueBenchmark',
-        'tracer.TracerBenchmark',
-        'brainfuck.BrainfuckBenchmark',
-        'json.JsonBenchmark',
-        'cd.CDBenchmark',
-        'kmeans.KmeansBenchmark',
-        'gcbench.GCBenchBenchmark',
-        'mandelbrot.MandelbrotBenchmark',
-        'nbody.NbodyBenchmark',
-        'sudoku.SudokuBenchmark',
+    'bounce.BounceBenchmark',
+    'list.ListBenchmark',
+    'queens.QueensBenchmark',
+    'richards.RichardsBenchmark',
+    'permute.PermuteBenchmark',
+    'deltablue.DeltaBlueBenchmark',
+    'tracer.TracerBenchmark',
+    'json.JsonBenchmark',
+    'sudoku.SudokuBenchmark',
+    'brainfuck.BrainfuckBenchmark',
+    'cd.CDBenchmark',
+    'kmeans.KmeansBenchmark',
+    'nbody.NbodyBenchmark',
+    'rsc.RscBenchmark',
+    'gcbench.GCBenchBenchmark',
+    'mandelbrot.MandelbrotBenchmark',
 ]
 
 configurations = [
-        'jvm',
-        'scala-native-0.3.7',
+        # 'jvm',
+        # 'scala-native-0.3.8',
+        # 'baseline',
+        'current'
 ]
 
 if 'GRAALVM_HOME' in os.environ:
@@ -72,7 +75,7 @@ if 'GRAALVM_HOME' in os.environ:
     ]
 
 runs = 20
-batches = 3000
+batches = 4000
 batch_size = 1
 
 if __name__ == "__main__":

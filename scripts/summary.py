@@ -10,8 +10,8 @@ def config_data(bench, conf):
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
                 for line in data.readlines():
                     points.append(float(line))
-            # take only last 1000 to account for startup
-            points = points[-1000:]
+            # take only last 2000 to account for startup
+            points = points[-2000:]
             # filter out 1% worst measurements as outliers
             pmax = np.percentile(points, 99)
             for point in points:
