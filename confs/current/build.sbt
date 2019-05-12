@@ -1,3 +1,4 @@
+name := "scala-native-benchmarks"
 scalaVersion := "2.11.12"
 enablePlugins(ScalaNativePlugin)
 nativeLinkStubs := true

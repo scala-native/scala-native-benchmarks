@@ -1,3 +1,4 @@
+name := "scala-native-benchmarks"
 scalaVersion := "2.11.12"
 
 val nativeImage = taskKey[Unit]("Builds a native image of a benchmark.")
