@@ -1,3 +1,4 @@
+name := "scala-native-benchmarks"
 scalaVersion := "2.11.12"
 
 val instrumentedRuns = settingKey[Int]("The number of instrumented runs.")
