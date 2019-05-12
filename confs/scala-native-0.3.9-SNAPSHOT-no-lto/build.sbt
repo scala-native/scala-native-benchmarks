@@ -3,4 +3,4 @@ enablePlugins(ScalaNativePlugin)
 nativeLinkStubs := true
 nativeGC := "immix"
 nativeMode := "release"
-nativeLTO := "thin"
+nativeLTO := "none"

@@ -5,6 +5,7 @@ import errno
 import subprocess as subp
 import shutil as sh
 import time
+import argparse
 
 def mkdir(path):
     try:
@@ -66,15 +67,15 @@ benchmarks = [
     'histogram.Histogram',
 ]
 
-configurations = [
-        'scala-native-0.3.9',
-        'scala-native-0.4.0-M2',
-        'scala-native-0.4.0-2.11',
-        'scala-native-0.4.0-2.12',
-]
+stable = 'scala-native-0.4.0'
+latest = 'scala-native-0.4.1-SNAPSHOT'
+
+confs_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/confs"
+
+all_configs = next(os.walk(confs_path))[1]
 
 if 'GRAALVM_HOME' in os.environ:
-    configurations += [
+    all_configs += [
             'native-image',
             'native-image-pgo',
     ]
@@ -83,7 +84,34 @@ runs = 20
 batches = 2000
 batch_size = 1
 
+
+def expand_wild_cards(arg):
+    if arg == None:
+        return arg
+    elif arg.startswith("latest"):
+        return latest + arg[len("latest"):]
+    elif arg.startswith("stable"):
+        return stable + arg[len("stable"):]
+    else:
+        return arg
+
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("set", nargs='*', default=[None])
+    args = parser.parse_args()
+    print args
+
+    configurations = []
+    for choice in args.set:
+        expanded = expand_wild_cards(choice)
+        if expanded == None:
+            configurations = [stable, latest]
+        else:
+            configurations += [expanded]
+
+    print "configurations:", configurations
+
     for conf in configurations:
         for bench in benchmarks:
             print('--- conf: {}, bench: {}'.format(conf, bench))
