@@ -2,7 +2,7 @@
 import argparse
 
 from shared.benchmarks import all_benchmarks
-from shared.configurations import Configuration
+from shared.configurations import Configuration, default_runs, default_batches
 
 stable = 'scala-native-0.3.9'
 latest = 'scala-native-0.4.0-SNAPSHOT'
@@ -23,6 +23,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", help="interactive mode", action="store_true")
+    parser.add_argument("--runs", help="number of runs", type=int, default=default_runs)
+    parser.add_argument("--batches", help="number of batches per run", type=int, default=default_batches)
     parser.add_argument("set", nargs='*', default=[None])
     args = parser.parse_args()
     print args
@@ -42,4 +44,4 @@ if __name__ == "__main__":
         print "configurations:", configurations
 
         for conf_name in configurations:
-            Configuration(conf_name).run_benchmarks(all_benchmarks)
+            Configuration(conf_name, batches=args.batches, runs=args.runs).run_benchmarks(all_benchmarks)

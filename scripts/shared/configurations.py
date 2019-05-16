@@ -15,10 +15,17 @@ class Configuration:
     def __init__(self, name, batches=default_batches, runs=default_runs):
         self.name = name
         self.conf_dir = os.path.join(confs_path, self.name)
-        self.results_dir = os.path.join('results', self.name)
         self.batches = batches
         self.batch_size = 1
         self.runs = runs
+
+        suffix = ""
+        if runs != default_runs:
+            suffix += "-r" + str(runs)
+        if batches != default_batches:
+            suffix += "-b" + str(batches)
+
+        self.results_dir = os.path.join('results', self.name + suffix)
         print self.conf_dir
 
     def make_active(self):
