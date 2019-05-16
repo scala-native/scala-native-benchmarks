@@ -1,32 +1,11 @@
 #!/usr/bin/env python
 import argparse
-import os
 
-from shared.benchmarks import Benchmark
+from shared.benchmarks import all_benchmarks
 from shared.configurations import Configuration
 
-benchmarks = [
-    'bounce.BounceBenchmark',
-    'list.ListBenchmark',
-    'queens.QueensBenchmark',
-    'richards.RichardsBenchmark',
-    'permute.PermuteBenchmark',
-    'deltablue.DeltaBlueBenchmark',
-    'tracer.TracerBenchmark',
-    'json.JsonBenchmark',
-    'sudoku.SudokuBenchmark',
-    'brainfuck.BrainfuckBenchmark',
-    'cd.CDBenchmark',
-    'kmeans.KmeansBenchmark',
-    'nbody.NbodyBenchmark',
-    'rsc.RscBenchmark',
-    'gcbench.GCBenchBenchmark',
-    'mandelbrot.MandelbrotBenchmark',
-    'histogram.Histogram',
-]
-
-stable = 'scala-native-0.4.0'
-latest = 'scala-native-0.4.1-SNAPSHOT'
+stable = 'scala-native-0.3.9'
+latest = 'scala-native-0.4.0-SNAPSHOT'
 
 
 def expand_wild_cards(arg):
@@ -41,6 +20,7 @@ def expand_wild_cards(arg):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", help="interactive mode", action="store_true")
     parser.add_argument("set", nargs='*', default=[None])
@@ -62,19 +42,4 @@ if __name__ == "__main__":
         print "configurations:", configurations
 
         for conf_name in configurations:
-            conf = Configuration(conf_name)
-            conf.make_active()
-            for bench_name in benchmarks:
-                bench = Benchmark(bench_name)
-                print('--- conf: {}, bench: {}'.format(conf, bench))
-
-                bench.compile(conf)
-                resultsdir = bench.ensure_results_dir(conf)
-
-                runs = conf.runs
-                for n in xrange(runs):
-                    print('--- run {}/{}'.format(n, runs))
-
-                    out = bench.run(conf)
-                    with open(os.path.join(resultsdir, str(n)), 'wb') as resultfile:
-                        resultfile.write(out)
+            Configuration(conf_name).run_benchmarks(all_benchmarks)

@@ -1,7 +1,8 @@
 import os
 import shutil as sh
 
-from shared.file_utils import slurp, mkdir
+from benchmarks import Benchmark
+from file_utils import slurp, mkdir
 
 confs_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))) + "/confs"
 
@@ -32,6 +33,26 @@ class Configuration:
             sh.copyfile(plugins_sbt_src, 'project/plugins.sbt')
         else:
             os.remove('project/plugins.sbt')
+
+    def run_benchmarks(self, benchmarks):
+        self.make_active()
+        for item in benchmarks:
+            if isinstance(item, basestring):
+                bench = Benchmark(item)
+            else:
+                bench = item
+            print('--- conf: {}, bench: {}'.format(self.name, bench))
+
+            bench.compile(self)
+            resultsdir = bench.ensure_results_dir(self)
+
+            runs = self.runs
+            for n in xrange(runs):
+                print('--- run {}/{}'.format(n, runs))
+
+                out = bench.run(self)
+                with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
+                    resultfile.write(out)
 
     def run_cmd(self, bench):
         return slurp(os.path.join(self.conf_dir, 'run')) \

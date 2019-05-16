@@ -1,6 +1,25 @@
 import os
 
-from shared.file_utils import sbt, run, slurp, mkdir
+from file_utils import sbt, run, slurp, mkdir
+
+all_benchmarks = [
+    'bounce.BounceBenchmark',
+    'list.ListBenchmark',
+    'queens.QueensBenchmark',
+    'richards.RichardsBenchmark',
+    'permute.PermuteBenchmark',
+    'deltablue.DeltaBlueBenchmark',
+    'tracer.TracerBenchmark',
+    'json.JsonBenchmark',
+    'sudoku.SudokuBenchmark',
+    'brainfuck.BrainfuckBenchmark',
+    'cd.CDBenchmark',
+    'kmeans.KmeansBenchmark',
+    'nbody.NbodyBenchmark',
+    'rsc.RscBenchmark',
+    'gcbench.GCBenchBenchmark',
+    'mandelbrot.MandelbrotBenchmark',
+]
 
 
 class Benchmark:
