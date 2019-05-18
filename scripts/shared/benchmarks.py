@@ -29,9 +29,9 @@ class Benchmark:
         self.short_name = name.split(".")[0]
 
     def compile(self, conf):
-        cmd = [sbt, '-J-Xmx6G', 'clean']
-        cmd.append('set mainClass in Compile := Some("{}")'.format(self.name))
-        cmd.append(conf.compile_cmd())
+        cmd = [sbt, '-J-Xmx6G', 'clean',
+               'set mainClass in Compile := Some("{}")'.format(self.name),
+               conf.compile_cmd()]
         return run(cmd)
 
     def run(self, conf):
