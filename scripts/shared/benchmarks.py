@@ -34,12 +34,13 @@ class Benchmark:
         return run(cmd)
 
     def run(self, conf):
-        run_cmd = conf.run_cmd()
+        run_cmd = conf.run_cmd(self)
         input = slurp(os.path.join('input', self.name))
         output = slurp(os.path.join('output', self.name))
         cmd = []
         cmd.extend(run_cmd)
         cmd.extend([str(conf.batches), str(conf.batch_size), input, output])
+        return run(cmd)
 
     def ensure_results_dir(self, conf):
         dir = os.path.join(conf.ensure_results_dir(), self.name)

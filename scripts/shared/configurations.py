@@ -27,7 +27,6 @@ class Configuration:
             suffix += "-b" + str(batches)
 
         self.results_dir = os.path.join(results_path, self.name + suffix)
-        print self.conf_dir
 
     @classmethod
     def from_results(cls, full_name):
@@ -40,13 +39,14 @@ class Configuration:
         runs = None
         with open(os.path.join(full_path, 'settings.properties')) as settings:
             for line in settings.readlines():
-                key, value = line.split('=')
+                key, raw_value = line.split('=')
+                value = raw_value.strip()
                 if key == 'name':
                     name = value
                 elif key == 'batches':
-                    batches = value
+                    batches = int(value)
                 elif key == 'runs':
-                    runs = value
+                    runs = int(value)
         if batches is None:
             batches = default_batches
         if runs is None:
@@ -88,7 +88,7 @@ class Configuration:
 
     def run_cmd(self, bench):
         return slurp(os.path.join(self.conf_dir, 'run')) \
-            .replace('$BENCH', bench) \
+            .replace('$BENCH', bench.name) \
             .replace('$HOME', os.environ['HOME']) \
             .split(' ')
 
@@ -105,6 +105,7 @@ class Configuration:
     def ensure_results_dir(self):
         dir = self.results_dir
         mkdir(dir)
+        self.write_settings()
         return dir
 
     def __str__(self):
