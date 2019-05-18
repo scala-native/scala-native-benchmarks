@@ -26,6 +26,7 @@ class Benchmark:
 
     def __init__(self, name):
         self.name = name
+        self.short_name = name.split(".")[0]
 
     def compile(self, conf):
         cmd = [sbt, '-J-Xmx6G', 'clean']
@@ -47,5 +48,23 @@ class Benchmark:
         mkdir(dir)
         return dir
 
+    def results_dir(self, conf):
+        return os.path.join(conf.results_dir, self.name)
+
+    def __eq__(self, other):
+        if isinstance(other, Benchmark):
+            return self.name == other.name
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self.name)
+
     def __str__(self):
         return self.name
+
+    def __repr__(self):
+        return 'Benchmark(\'{}\')'.format(self.name)

@@ -26,7 +26,8 @@ class Configuration:
         if batches != default_batches:
             suffix += "-b" + str(batches)
 
-        self.results_dir = os.path.join(results_path, self.name + suffix)
+        self.full_name = self.name + suffix
+        self.results_dir = os.path.join(results_path, self.full_name)
 
     @classmethod
     def from_results(cls, full_name):
@@ -103,13 +104,41 @@ class Configuration:
             settings.write('runs={}\n'.format(self.runs))
 
     def ensure_results_dir(self):
-        dir = self.results_dir
-        mkdir(dir)
+        results_dir = self.results_dir
+        mkdir(results_dir)
         self.write_settings()
-        return dir
+        return results_dir
+
+    def finished_benchmarks(self):
+        benchmarks = []
+        results_dir = self.results_dir
+        all_subdirs = next(os.walk(results_dir))[1]
+        for subdir in all_subdirs:
+            all_runs_present = True
+            for run in xrange(self.runs):
+                if not os.path.isfile(os.path.join(results_dir, subdir, str(run))):
+                    all_runs_present = False
+                    break
+            if all_runs_present:
+                benchmarks.append(Benchmark(subdir))
+
+        return benchmarks
+
+    def benchmark_result_files(self, benchmark):
+        benchmark_dir = benchmark.results_dir(self)
+        for run in xrange(self.runs):
+            yield os.path.join(benchmark_dir, str(run))
 
     def __str__(self):
-        return self.name
+        s = '{}('.format(self.name)
+        s += 'runs={}'.format(str(self.runs))
+        if self.runs == default_runs:
+            s += '[default]'
+        s += ', batches={}'.format(str(self.batches))
+        if self.batches == default_batches:
+            s += '[default]'
+        s += ') = {}'.format(self.full_name)
+        return s
 
 
 all_configs = next(os.walk(confs_path))[1]
