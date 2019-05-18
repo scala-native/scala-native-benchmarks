@@ -24,22 +24,25 @@ class Comparison:
         self.common_benchmarks = common_benchmarks
         self.warmup = warmup
 
-    def peak_performances(self):
+    def percentile(self, p):
         out = []
         for bench in self.common_benchmarks:
-            res = []
-            for conf in self.configurations:
-                try:
-                    res.append(np.percentile(config_data(bench, conf, self.warmup), 50))
-                except IndexError:
-                    res.append(0)
-            out.append(res)
+            out.append(self.percentile_bench(bench, p))
         return out
+
+    def percentile_bench(self, bench, p):
+        res = []
+        for conf in self.configurations:
+            try:
+                res.append(np.percentile(config_data(bench, conf, self.warmup), p))
+            except IndexError:
+                res.append(0)
+        return res
 
     def simple_report(self):
         leading = ['name']
         for conf in self.configurations:
             leading.append(conf.full_name)
         print ','.join(leading)
-        for bench, res in zip(self.common_benchmarks, self.peak_performances()):
+        for bench, res in zip(self.common_benchmarks, self.percentile(50)):
             print ','.join([str(bench)] + list(map(str, res)))
