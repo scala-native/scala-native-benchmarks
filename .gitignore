@@ -5,3 +5,5 @@ bin/.scalafmt*
 results/
 *.iprof
 .idea
+build.sbt
+project/plugins.sbt
