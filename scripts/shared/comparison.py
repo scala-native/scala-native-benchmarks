@@ -18,11 +18,9 @@ class Comparison:
         self.configurations = configurations
 
         common_benchmarks = configurations[0].finished_benchmarks()
-        print common_benchmarks
         for other_conf in configurations[1:]:
             present = set(other_conf.finished_benchmarks())
             common_benchmarks = filter(lambda b: b in present, common_benchmarks)
-            print common_benchmarks
         self.common_benchmarks = common_benchmarks
         self.warmup = warmup
 
