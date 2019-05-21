@@ -1,6 +1,7 @@
 import numpy as np
 from configurations import Configuration
 from parser import config_data
+from reports import Report
 
 default_warmup = 2000
 
@@ -39,10 +40,16 @@ class Comparison:
                 res.append(0)
         return res
 
+    def csv_file(self, data, path):
+        with open(path, 'w+') as resultfile:
+            leading = ['name']
+            for conf in self.configurations:
+                leading.append(conf.full_name)
+            resultfile.write(','.join(leading) + '\n')
+            for bench, res in zip(self.common_benchmarks, data):
+                resultfile.write(','.join([str(bench)] + list(map(str, res))) + '\n')
+
     def simple_report(self):
-        leading = ['name']
-        for conf in self.configurations:
-            leading.append(conf.full_name)
-        print ','.join(leading)
-        for bench, res in zip(self.common_benchmarks, self.percentile(50)):
-            print ','.join([str(bench)] + list(map(str, res)))
+        report = Report(self)
+        report.generate()
+        return report
