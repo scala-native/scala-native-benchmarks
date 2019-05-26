@@ -2,6 +2,7 @@ import numpy as np
 from configurations import Configuration
 from parser import config_data
 from reports import Report
+from misc_utils import dict_write_arr, dict_get_arr
 
 default_warmup = 2000
 
@@ -53,3 +54,16 @@ class Comparison:
         report = Report(self)
         report.generate()
         return report
+
+    @classmethod
+    def from_dict(cls, kv):
+        warmup = int(kv.get('warmup', default_warmup))
+        confs = map(Configuration.from_dict, dict_get_arr(kv, 'confs'))
+        return cls(confs, warmup)
+
+    def to_dict(self):
+        kv = {'warmup': self.warmup}
+        conf_kvs = map(Configuration.to_dict, self.configurations)
+        dict_write_arr(kv, 'confs', conf_kvs)
+
+        return kv
