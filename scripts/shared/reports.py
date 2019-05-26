@@ -1,7 +1,8 @@
 import os
-from datetime import datetime, time
-from file_utils import mkdir, dict_to_file, dict_from_file
+from datetime import datetime
+
 from comparison import Comparison
+from file_utils import mkdir, dict_to_file, dict_from_file, touch
 
 date_format = '%Y%m%d_%H%M%S'
 
@@ -20,13 +21,27 @@ class Report:
         self.full_name = 'summary_' + datetime.strftime(self.date, date_format) + '_' + comment
         self.results_dir = os.path.join(reports_path, self.full_name)
         self.settings_file = os.path.join(self.results_dir, 'settings.properties')
+        self.done_file = os.path.join(self.results_dir, '.done')
 
     def generate(self):
-        c = self.comparison
-        results_dir = self.ensure_dir()
-        for p in [50,90,99]:
-            path = os.path.join(results_dir, 'percentile{}.csv'.format(str(p)))
-            c.csv_file(c.percentile(p), path)
+        if self.is_done():
+            copy = Report(self.comparison, date=None, comment=self.comment)
+            copy.generate()
+            return copy
+        else:
+            c = self.comparison
+            results_dir = self.ensure_dir()
+            for p in [50, 90, 99]:
+                path = os.path.join(results_dir, 'percentile{}.csv'.format(str(p)))
+                c.csv_file(c.percentile(p), path)
+            self.mark_done()
+            return self
+
+    def mark_done(self):
+        touch(self.done_file)
+
+    def is_done(self):
+        return os.path.isfile(self.done_file)
 
     def write_settings(self):
         settings_file = self.settings_file

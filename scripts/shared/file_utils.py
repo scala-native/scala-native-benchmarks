@@ -13,6 +13,9 @@ def mkdir(path):
             raise
 
 
+def touch(path):
+    open(path, 'w+').close()
+
 def slurp(path):
     with open(path) as f:
         return f.read().strip()
