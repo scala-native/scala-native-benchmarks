@@ -1,7 +1,6 @@
 import os
 from datetime import datetime
 
-from comparison import Comparison
 from file_utils import mkdir, dict_to_file, dict_from_file, touch
 
 date_format = '%Y%m%d_%H%M%S'
@@ -72,6 +71,7 @@ class Report:
             date = None
         else:
             date = datetime.strptime(raw_date, date_format)
+        from comparison import Comparison
         return cls(Comparison.from_dict(kv), date, comment)
 
     def to_dict(self):

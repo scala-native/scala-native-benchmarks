@@ -52,7 +52,7 @@ def dict_from_file(settings_file):
 def dict_to_file(settings_file, kv):
     with open(settings_file, 'w+') as settings:
         for k, v in kv.iteritems():
-            settings.write('{}={}'.format(k, v))
+            settings.write('{}={}\n'.format(k, v))
 
 
 sbt = where('sbt')

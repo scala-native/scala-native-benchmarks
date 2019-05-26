@@ -3,6 +3,7 @@ target/
 bin/.coursier
 bin/.scalafmt*
 results/
+reports/
 *.iprof
 .idea
 build.sbt
