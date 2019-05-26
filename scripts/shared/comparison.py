@@ -50,8 +50,8 @@ class Comparison:
             for bench, res in zip(self.common_benchmarks, data):
                 resultfile.write(','.join([str(bench)] + list(map(str, res))) + '\n')
 
-    def simple_report(self):
-        report = Report(self)
+    def simple_report(self, comment=None):
+        report = Report(self, comment=comment)
         report.generate()
         return report
 
