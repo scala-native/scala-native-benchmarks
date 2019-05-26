@@ -36,4 +36,20 @@ def run(cmd):
     return subp.check_output(cmd)
 
 
+def dict_from_file(settings_file):
+    kv = {}
+    with open(settings_file) as settings:
+        for line in settings.readlines():
+            key, raw_value = line.split('=')
+            value = raw_value.strip()
+            kv[key] = value
+    return kv
+
+
+def dict_to_file(settings_file, kv):
+    with open(settings_file, 'w+') as settings:
+        for k, v in kv.iteritems():
+            settings.write('{}={}'.format(k, v))
+
+
 sbt = where('sbt')

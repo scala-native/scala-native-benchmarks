@@ -2,7 +2,7 @@ import os
 import shutil as sh
 
 from benchmarks import Benchmark
-from file_utils import slurp, mkdir
+from file_utils import slurp, mkdir, dict_from_file, dict_to_file
 
 confs_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__)))) + "/confs"
 results_path = 'results'
@@ -28,6 +28,7 @@ class Configuration:
 
         self.full_name = self.name + suffix
         self.results_dir = os.path.join(results_path, self.full_name)
+        self.settings_file = os.path.join(self.results_dir, 'settings.properties')
 
     @classmethod
     def from_results(cls, full_name):
@@ -35,23 +36,15 @@ class Configuration:
 
     @classmethod
     def from_results_dir(cls, full_path):
-        name = None
-        batches = None
-        runs = None
-        with open(os.path.join(full_path, 'settings.properties')) as settings:
-            for line in settings.readlines():
-                key, raw_value = line.split('=')
-                value = raw_value.strip()
-                if key == 'name':
-                    name = value
-                elif key == 'batches':
-                    batches = int(value)
-                elif key == 'runs':
-                    runs = int(value)
-        if batches is None:
-            batches = default_batches
-        if runs is None:
-            runs = default_runs
+        settings_file = os.path.join(full_path, 'settings.properties')
+        kv = dict_from_file(settings_file)
+        return cls.from_dict(kv)
+
+    @classmethod
+    def from_dict(cls, kv):
+        batches = int(kv.get('batches', default_batches))
+        runs = int(kv.get('runs', default_runs))
+        name = kv.get('name')
         return cls(name, batches=batches, runs=runs)
 
     def make_active(self):
@@ -96,12 +89,13 @@ class Configuration:
     def compile_cmd(self):
         return slurp(os.path.join(self.conf_dir, 'compile'))
 
+    def to_dict(self):
+        return {'name': self.name, 'batches': self.batches, 'runs': self.runs}
+
     def write_settings(self):
-        results_dir = self.results_dir
-        with open(os.path.join(results_dir, 'settings.properties'), 'w+') as settings:
-            settings.write('name={}\n'.format(self.name))
-            settings.write('batches={}\n'.format(self.batches))
-            settings.write('runs={}\n'.format(self.runs))
+        settings_file = self.settings_file
+        kv = self.to_dict()
+        dict_to_file(settings_file, kv)
 
     def ensure_results_dir(self):
         results_dir = self.results_dir
