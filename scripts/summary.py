@@ -37,7 +37,6 @@ if __name__ == '__main__':
     leading = ['name']
     for conf in configurations:
         leading.append(conf)
-    print ','.join(leading)
+    print(','.join(leading))
     for bench, res in zip(benchmarks, peak_performance()):
-        print ','.join([bench] + list(map(str, res)))
-
+        print(','.join([bench] + list(map(str, res))))
