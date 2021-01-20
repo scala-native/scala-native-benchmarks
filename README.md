@@ -9,7 +9,7 @@ as-is and summarized in a separate post-processing step.
 
 ## Running benchmarks
 
-Use Python version 3.
+Use Python version 3.x.
 
 ```
 python scripts/run.py
