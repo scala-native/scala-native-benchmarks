@@ -4,7 +4,7 @@ import numpy as np
 
 def config_data(bench, conf):
     out = []
-    for run in xrange(runs):
+    for run in range(runs):
         try:
             points = []
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:

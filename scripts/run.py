@@ -63,7 +63,7 @@ benchmarks = [
 
 configurations = [
         # 'jvm',
-        # 'scala-native-0.3.8',
+        # 'scala-native-0.4.0',
         # 'baseline',
         'current'
 ]
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             resultsdir = os.path.join('results', conf, bench)
             mkdir(resultsdir)
 
-            for n in xrange(runs):
+            for n in range(runs):
                 print('--- run {}/{}'.format(n, runs))
 
                 cmd = []
@@ -111,4 +111,3 @@ if __name__ == "__main__":
                 out = run(cmd)
                 with open(os.path.join(resultsdir, str(n)), 'w+') as resultfile:
                     resultfile.write(out)
-

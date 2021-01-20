@@ -9,6 +9,8 @@ as-is and summarized in a separate post-processing step.
 
 ## Running benchmarks
 
+Use Python version 3.
+
 ```
 python scripts/run.py
 ```
