@@ -4,7 +4,7 @@ import numpy as np
 
 def config_data(bench, conf):
     out = []
-    for run in xrange(runs):
+    for run in range(runs):
         try:
             points = []
             with open('results/{}/{}/{}'.format(conf, bench, run)) as data:
@@ -27,7 +27,7 @@ def peak_performance():
         res = []
         for conf in configurations:
             try:
-                res.append(np.percentile(config_data(bench, conf), 50))
+                res.append(np.percentile(config_data(bench, conf), 10))
             except IndexError:
                 res.append(0)
         out.append(res)
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     leading = ['name']
     for conf in configurations:
         leading.append(conf)
-    print ','.join(leading)
+    print(','.join(leading))
     for bench, res in zip(benchmarks, peak_performance()):
-        print ','.join([bench] + list(map(str, res)))
+        print(','.join([bench] + list(map(str, res))))
 
