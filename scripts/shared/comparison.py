@@ -4,7 +4,7 @@ from shared.parser import config_data
 from shared.reports import Report
 from shared.misc_utils import dict_write_arr, dict_get_arr
 
-default_warmup = 2000
+default_warmup = 500
 
 class Comparison:
     def __init__(self, confs, warmup=default_warmup):
@@ -21,7 +21,7 @@ class Comparison:
         common_benchmarks = configurations[0].finished_benchmarks()
         for other_conf in configurations[1:]:
             present = set(other_conf.finished_benchmarks())
-            common_benchmarks = filter(lambda b: b in present, common_benchmarks)
+            common_benchmarks = list(filter(lambda b: b in present, common_benchmarks))
         self.common_benchmarks = common_benchmarks
         self.warmup = warmup
 
