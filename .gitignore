@@ -1,3 +1,5 @@
+binaries/
+target/
 bin/.coursier
 bin/.scalafmt*
 results/
