@@ -51,7 +51,7 @@ def dict_from_file(settings_file):
 
 def dict_to_file(settings_file, kv):
     with open(settings_file, 'w+') as settings:
-        for k, v in kv.iteritems():
+        for k, v in kv.items():
             settings.write('{}={}\n'.format(k, v))
 
 

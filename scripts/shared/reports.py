@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from file_utils import mkdir, dict_to_file, dict_from_file, touch
+from shared.file_utils import mkdir, dict_to_file, dict_from_file, touch
 
 date_format = '%Y%m%d_%H%M%S'
 

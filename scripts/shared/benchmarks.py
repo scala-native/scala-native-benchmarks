@@ -1,8 +1,11 @@
 import os
 
-from file_utils import sbt, run, slurp, mkdir
+from shared.file_utils import sbt, run, slurp, mkdir
+import time
+import subprocess
+import sys
 
-all_benchmarks = [
+benchmarks = [
     'bounce.BounceBenchmark',
     'list.ListBenchmark',
     'queens.QueensBenchmark',
@@ -19,6 +22,7 @@ all_benchmarks = [
     'rsc.RscBenchmark',
     'gcbench.GCBenchBenchmark',
     'mandelbrot.MandelbrotBenchmark',
+    'histogram.Histogram'
 ]
 
 
@@ -32,7 +36,10 @@ class Benchmark:
         cmd = [sbt, '-J-Xmx6G', 'clean',
                'set mainClass in Compile := Some("{}")'.format(self.name),
                conf.compile_cmd()]
-        return run(cmd)
+        start = time.time_ns()
+        subprocess.run(cmd, stdout=sys.stdout, stderr=subprocess.STDOUT)
+        end = time.time_ns()
+        return end - start
 
     def run(self, conf):
         run_cmd = conf.run_cmd(self)

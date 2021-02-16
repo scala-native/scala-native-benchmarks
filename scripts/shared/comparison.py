@@ -1,11 +1,10 @@
 import numpy as np
-from configurations import Configuration
-from parser import config_data
-from reports import Report
-from misc_utils import dict_write_arr, dict_get_arr
+from shared.configurations import Configuration
+from shared.parser import config_data
+from shared.reports import Report
+from shared.misc_utils import dict_write_arr, dict_get_arr
 
 default_warmup = 2000
-
 
 class Comparison:
     def __init__(self, confs, warmup=default_warmup):
@@ -13,7 +12,7 @@ class Comparison:
 
         configurations = []
         for item in confs:
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 configurations.append(Configuration.from_results(item))
             else:
                 configurations.append(item)
@@ -37,7 +36,7 @@ class Comparison:
         for conf in self.configurations:
             try:
                 res.append(np.percentile(config_data(bench, conf, self.warmup), p))
-            except IndexError:
+            except (IndexError, FileNotFoundError):
                 res.append(0)
         return res
 

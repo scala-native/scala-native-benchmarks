@@ -12,7 +12,7 @@ def config_data(bench, conf, warmup):
                         # in ms
                         raw_points.append(float(line) / 1000000)
                     except Exception as e:
-                        print e
+                        print(e)
             out += raw_points[warmup:]
         except IOError:
             pass

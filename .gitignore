@@ -8,3 +8,8 @@ reports/
 .idea
 build.sbt
 project/plugins.sbt
+/scripts/.ipynb_checkpoints/
+/.bloop/
+/.bsp/
+/.metals/
+/.vscode/
