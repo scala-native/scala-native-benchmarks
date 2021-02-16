@@ -5,13 +5,12 @@ from shared.benchmarks import Benchmark
 from shared.file_utils import slurp, mkdir, dict_from_file, dict_to_file
 
 base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-confs_path =  base_path + "/confs"
-binaries_path = base_path + "/binaries"
-results_path = base_path + '/results'
+confs_path    = base_path + '/confs'
+binaries_path = base_path + '/binaries'
+results_path  = base_path + '/results'
 
 default_batches = 2000
 default_runs = 20
-
 
 class Configuration:
 
