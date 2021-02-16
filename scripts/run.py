@@ -63,6 +63,7 @@ benchmarks = [
     'rsc.RscBenchmark',
     'gcbench.GCBenchBenchmark',
     'mandelbrot.MandelbrotBenchmark',
+    'histogram.Histogram',
 ]
 
 configurations = [
