@@ -84,17 +84,17 @@ class Configuration:
                 bench = item
             print('--- conf: {}, bench: {}'.format(self.name, bench))
             results_dir = bench.ensure_results_dir(self)
-
-            bin_file = os.path.join(self.bin_dir, bench.name)
-            if not os.path.exists(self.bin_dir):
-                mkdir(self.bin_dir)
-            if not os.path.exists(bin_file):
+            if self.isJVM or not os.path.exists(self.__bin_file(bench)):
                 self.make_active()
                 compile_time = bench.compile(self)
                 with open(os.path.join(results_dir, "compile_time"), 'w') as f:
                     f.write(str(compile_time))
 
-                sh.copyfile(self.run_cmd(bench)[0], bin_file)
+                if not self.isJVM:
+                    if not os.path.exists(self.bin_dir):
+                        mkdir(self.bin_dir)
+                    bin_file = self.__bin_file(bench)
+                    sh.move(self.__native_binary_path(), bin_file)
 
             runs = self.runs
             for n in range(runs):
@@ -103,11 +103,24 @@ class Configuration:
                 with open(os.path.join(results_dir, str(n)), 'wb') as resultfile:
                     resultfile.write(out)
 
+    def __bin_file(self, bench):
+        assert not self.isJVM
+        return os.path.join(self.bin_dir, bench.name)
+
+    def __native_binary_path(self):
+        assert not self.isJVM
+        return slurp(os.path.join(self.conf_dir, 'run')).split(' ')[0]
+
     def run_cmd(self, bench):
-        return slurp(os.path.join(self.conf_dir, 'run')) \
+        cmd = slurp(os.path.join(self.conf_dir, 'run')) \
             .replace('$BENCH', bench.name) \
             .replace('$HOME', os.environ['HOME']) \
             .split(' ')
+
+        if self.isJVM:
+            return cmd
+        else:
+            return [ self.__bin_file(bench) ] + cmd[1:]
 
     def compile_cmd(self):
         return slurp(os.path.join(self.conf_dir, 'compile'))
