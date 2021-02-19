@@ -3,5 +3,13 @@ target/
 bin/.coursier
 bin/.scalafmt*
 results/
+reports/
 *.iprof
 .idea
+build.sbt
+project/plugins.sbt
+/scripts/.ipynb_checkpoints/
+/.bloop/
+/.bsp/
+/.metals/
+/.vscode/
