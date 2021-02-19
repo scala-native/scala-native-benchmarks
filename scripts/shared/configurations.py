@@ -56,24 +56,24 @@ class Configuration:
         return cls(name, batches=batches, runs=runs)
 
     def make_active(self):
-        build_sbt_src = os.path.join(self.conf_dir, 'build.sbt')
-        if os.path.exists(build_sbt_src):
-            sh.copyfile(build_sbt_src, 'build.sbt')
-        else:
-            os.remove('build.sbt')
+        required = True
+        optional = False
 
-        plugins_sbt_src = os.path.join(self.conf_dir, 'plugins.sbt')
-        if os.path.exists(plugins_sbt_src):
-            sh.copyfile(plugins_sbt_src, 'project/plugins.sbt')
-        else:
-            os.remove('project/plugins.sbt')
-
-        properties_sbt_src = os.path.join(self.conf_dir, 'build.properties')
-        if os.path.exists(properties_sbt_src):
-            sh.copyfile(properties_sbt_src, 'project/build.properties')
-        else:
-            os.remove('project/build.properties')
-
+        files = [
+            ('build.sbt', 'build.sbt', required),
+            ('plugins.sbt', 'project/plugins.sbt', optional),
+            ('build.properties', 'project/build.properties', optional)
+        ]
+        for filename, destName, isRequired in files:
+            src_path = os.path.join(self.conf_dir, filename)
+            if os.path.exists(src_path):
+                sh.copyfile(src_path, destName)
+            elif isRequired:
+                raise Exception("Required file {} missing for config {}".format(filename, self.name))
+            elif os.path.exists(destName):
+                os.remove(destName)
+    
+    
     def run_benchmarks(self, benchmarks):
 
         for item in benchmarks:
