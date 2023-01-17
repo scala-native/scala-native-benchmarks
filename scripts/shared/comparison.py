@@ -4,7 +4,7 @@ from shared.parser import config_data
 from shared.reports import Report
 from shared.misc_utils import dict_write_arr, dict_get_arr
 
-default_warmup = 500
+default_warmup = 100
 
 class Comparison:
     def __init__(self, confs, warmup=default_warmup):
@@ -25,20 +25,39 @@ class Comparison:
         self.common_benchmarks = common_benchmarks
         self.warmup = warmup
 
-    def percentile(self, p):
-        out = []
-        for bench in self.common_benchmarks:
-            out.append(self.percentile_bench(bench, p))
-        return out
 
-    def percentile_bench(self, bench, p):
-        res = []
-        for conf in self.configurations:
-            try:
-                res.append(np.percentile(config_data(bench, conf, self.warmup), p))
-            except (IndexError, FileNotFoundError):
-                res.append(0)
-        return res
+    def percentile(self, p):
+        return self.__compareBench(lambda rawData: np.percentile(rawData, p))
+
+
+    def standardDerivation(self):
+        return self.__compareBench(lambda rawData: np.std(rawData))
+    
+    def relativeStandardDerivation(self): 
+        return self.__compareBench(lambda rawData: np.var(rawData) / np.average(rawData))
+
+    def min(self):
+        return self.__compareBench(lambda rawData: np.min(rawData))
+    
+    def max(self):
+        return self.__compareBench(lambda rawData: np.max(rawData))
+    
+    def average(self):
+        return self.__compareBench(lambda rawData: np.average(rawData))
+
+    def __compareBench(self, compareFn):
+        benchResults = []
+        for bench in self.common_benchmarks:
+            configResults = []
+            for conf in self.configurations:
+                try:
+                    rawData = config_data(bench, conf, self.warmup)
+                    configResults.append(compareFn(rawData))
+                except (IndexError, FileNotFoundError):
+                    configResults.append(0)
+            benchResults.append(configResults)
+        return benchResults
+
 
     def csv_file(self, data, path):
         with open(path, 'w+') as resultfile:

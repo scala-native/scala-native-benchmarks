@@ -19,7 +19,7 @@ trait Contexts {
 
   sealed trait TemplateContext
 
-  final case object DefnClassContext extends ParamContext with TemplateContext {
+  case object DefnClassContext extends ParamContext with TemplateContext {
     def allowsAnonymous = false
     def allowsContextBounds = true
     def allowsDefaults = true
@@ -31,9 +31,9 @@ trait Contexts {
     def allowsViewBounds = true
   }
 
-  final case object DefnObjectContext extends TemplateContext
+  case object DefnObjectContext extends TemplateContext
 
-  final case object DefnTraitContext extends ParamContext with TemplateContext {
+  case object DefnTraitContext extends ParamContext with TemplateContext {
     def allowsAnonymous = false
     def allowsContextBounds = false
     def allowsDefaults = true
@@ -45,7 +45,7 @@ trait Contexts {
     def allowsViewBounds = false
   }
 
-  final case object DefnDefContext extends ParamContext {
+  case object DefnDefContext extends ParamContext {
     def allowsAnonymous = false
     def allowsContextBounds = true
     def allowsDefaults = true
@@ -57,7 +57,7 @@ trait Contexts {
     def allowsViewBounds = true
   }
 
-  final case object DefnTypeContext extends ParamContext {
+  case object DefnTypeContext extends ParamContext {
     def allowsAnonymous = true
     def allowsContextBounds = false
     def allowsDefaults = false
@@ -69,7 +69,7 @@ trait Contexts {
     def allowsViewBounds = false
   }
 
-  final case object PrimaryCtorContext extends ParamContext {
+  case object PrimaryCtorContext extends ParamContext {
     def allowsAnonymous = false
     def allowsContextBounds = false
     def allowsDefaults = true
@@ -81,5 +81,5 @@ trait Contexts {
     def allowsViewBounds = false
   }
 
-  final case object TermNewContext extends TemplateContext
+  case object TermNewContext extends TemplateContext
 }

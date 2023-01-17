@@ -152,7 +152,7 @@ trait Pats {
         }
       case _ =>
         val errOffset = in.offset
-        reportOffset(errOffset, IllegalStartOfSimplePat)
+        reportOffset(errOffset, IllegalStartOfSimplePat(_))
         atPos(errOffset)(errorPat())
     }
   }

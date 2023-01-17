@@ -29,12 +29,21 @@ class Report:
             return copy
         else:
             c = self.comparison
-            results_dir = self.ensure_dir()
             for p in [50, 90, 99]:
-                path = os.path.join(results_dir, 'percentile{}.csv'.format(str(p)))
-                c.csv_file(c.percentile(p), path)
+                self.singleReport('percentile{}.csv'.format(str(p)), c.percentile(p))
+            self.singleReport('standardDerivation.csv', c.standardDerivation())
+            self.singleReport('relativeStandardDerivation.csv', c.relativeStandardDerivation())
+            self.singleReport('average.csv', c.average())
+            self.singleReport('min.csv', c.min())
+            self.singleReport('max.csv', c.max())
             self.mark_done()
             return self
+
+    def singleReport(self, filename, result):
+        results_dir = self.ensure_dir()
+        path = os.path.join(results_dir, filename)
+        self.comparison.csv_file(result, path)
+        return self
 
     def mark_done(self):
         touch(self.done_file)

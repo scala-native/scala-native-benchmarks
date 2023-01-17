@@ -1,5 +1,5 @@
 binaries/
-target/
+**/target/
 bin/.coursier
 bin/.scalafmt*
 results/
@@ -9,7 +9,10 @@ reports/
 build.sbt
 project/plugins.sbt
 /scripts/.ipynb_checkpoints/
-/.bloop/
-/.bsp/
-/.metals/
-/.vscode/
+**/.bloop/
+**/.bsp/
+**/.metals/
+**/.vscode/
+**/.scala
+**/.scala-build
+**/__pycache__

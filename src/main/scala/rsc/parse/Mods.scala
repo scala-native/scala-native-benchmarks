@@ -75,7 +75,7 @@ trait Mods {
   private def defnFlags(modTokens: BitSet): List[Mod] = {
     def addFlag(flags: List[Mod], flag: Mod): List[Mod] = {
       val isRepeated = flags.exists(_.productPrefix == flag.productPrefix)
-      if (isRepeated) reportOffset(in.offset, RepeatedModifier)
+      if (isRepeated) reportOffset(in.offset, RepeatedModifier(_))
       flags :+ flag
     }
     def loop(flags: List[Mod]): List[Mod] = {
@@ -154,7 +154,7 @@ trait Mods {
       }
     }
     if (flags.nonEmpty && extraFlags.isEmpty) {
-      reportOffset(in.offset, IllegalModifier)
+      reportOffset(in.offset, IllegalModifier(_))
     }
     flags ++ extraFlags
   }

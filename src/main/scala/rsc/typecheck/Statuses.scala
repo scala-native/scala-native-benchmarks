@@ -17,11 +17,11 @@ sealed trait Status extends Pretty with Product {
 }
 
 sealed trait IncompleteStatus extends Status
-final case object PendingStatus extends IncompleteStatus
+case object PendingStatus extends IncompleteStatus
 final case class BlockedStatus(scope: Scope) extends IncompleteStatus
 
 sealed trait CompleteStatus extends Status
 sealed trait FailedStatus extends CompleteStatus
 final case class CyclicStatus(scopes: List[Scope]) extends FailedStatus
-final case object ErrorStatus extends FailedStatus
-final case object SucceededStatus extends CompleteStatus
+case object ErrorStatus extends FailedStatus
+case object SucceededStatus extends CompleteStatus

@@ -97,7 +97,7 @@ final class Scanner private (
         } else if (isSymbolicIdStart(other)) {
           symbolicIdOrKeyword()
         } else {
-          val message = reportOffset(offset, IllegalCharacter)
+          val message = reportOffset(offset, IllegalCharacter(_))
           emit(ERROR, message)
           nextChar()
         }
@@ -147,12 +147,12 @@ final class Scanner private (
           nextChar()
           emit(LITCHAR, result.head)
         } else {
-          val message = reportOffset(offset, IllegalCharacter)
+          val message = reportOffset(offset, IllegalCharacter(_))
           emit(ERROR, message)
           nextChar()
         }
       } else {
-        val message = reportOffset(offset, UnclosedCharacter)
+        val message = reportOffset(offset, UnclosedCharacter(_))
         emit(ERROR, message)
       }
     }
@@ -170,7 +170,7 @@ final class Scanner private (
         nextChar()
         while (ch != '*' || ch1 != '/') {
           if (ch == SU) {
-            val message = reportOffset(offset, IllegalComment)
+            val message = reportOffset(offset, IllegalComment(_))
             emit(ERROR, message)
             return
           } else {
@@ -221,7 +221,7 @@ final class Scanner private (
             LITLONG
           } else {
             nextChar()
-            val message = reportOffset(offset, IllegalNumber)
+            val message = reportOffset(offset, IllegalNumber(_))
             emit(ERROR, message)
             return
           }
@@ -236,7 +236,7 @@ final class Scanner private (
       }
     }
     if (isAlphanumericIdPart(ch)) {
-      val message = reportOffset(offset, IllegalNumber)
+      val message = reportOffset(offset, IllegalNumber(_))
       emit(ERROR, message)
       return
     }
@@ -250,7 +250,7 @@ final class Scanner private (
       emit(token, number)
     } catch {
       case ex: NumberFormatException =>
-        val message = reportOffset(offset, IllegalNumber)
+        val message = reportOffset(offset, IllegalNumber(_))
         emit(ERROR, message)
     }
   }
@@ -283,7 +283,7 @@ final class Scanner private (
       emit(token, number)
     } catch {
       case ex: NumberFormatException =>
-        val message = reportOffset(offset, IllegalNumber)
+        val message = reportOffset(offset, IllegalNumber(_))
         emit(ERROR, message)
     }
   }
@@ -304,7 +304,7 @@ final class Scanner private (
       if (ch1 == 'x' || ch1 == 'X') {
         hexadecimalNumber()
       } else if (isDecimalDigit(ch1)) {
-        val message = reportOffset(offset, LeadingZero)
+        val message = reportOffset(offset, LeadingZero(_))
         emit(ERROR, message)
       } else {
         decimalNumber()
@@ -366,14 +366,14 @@ final class Scanner private (
               if (isHexadecimalDigit(ch)) {
                 unicode = unicode << 4 + Integer.parseInt(ch.toString, 16)
               } else {
-                reportOffset(uoffset, IllegalEscape)
+                reportOffset(uoffset, IllegalEscape(_))
               }
               nextChar()
               i += 1
             }
             buf += unicode.toChar
           case other =>
-            reportOffset(offset, IllegalEscape)
+            reportOffset(offset, IllegalEscape(_))
             nextChar()
         }
       } else {
@@ -393,7 +393,7 @@ final class Scanner private (
         val buf = new StringBuilder
         while (ch != '\"' || ch1 != '\"' || ch2 != '\"') {
           if (ch == SU) {
-            val message = reportOffset(offset, UnclosedMultilineString)
+            val message = reportOffset(offset, UnclosedMultilineString(_))
             emit(ERROR, message)
             return
           }
@@ -412,7 +412,7 @@ final class Scanner private (
         nextChar()
         emit(LITSTRING, result)
       } else {
-        val message = reportOffset(offset, UnclosedSinglelineString)
+        val message = reportOffset(offset, UnclosedSinglelineString(_))
         emit(ERROR, message)
       }
     }

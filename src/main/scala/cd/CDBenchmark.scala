@@ -22,10 +22,6 @@
 package cd
 
 import som._
-import scala.Predef.augmentString
-import scala.Predef.intWrapper
-import scala.{Int, Boolean}
-import java.lang.String
 
 object CDBenchmark extends communitybench.Benchmark {
   def run(input: String): Int = {

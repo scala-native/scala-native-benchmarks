@@ -30,10 +30,7 @@
 
 package deltablue
 
-import scala.{Int, Unit, Boolean}
 import java.lang.{Exception, String}
-import scala.Predef.intWrapper
-import scala.Predef.augmentString
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, Stack}
 
 /**
@@ -577,12 +574,13 @@ class Planner {
     c.removeFromGraph()
     val unsatisfied        = removePropagateFrom(out)
     var strength: Strength = REQUIRED
-    do {
+    while ({
       for (u <- unsatisfied) {
         if (u.strength == strength) incrementalAdd(u)
       }
       strength = strength.nextWeaker
-    } while (strength != WEAKEST)
+      strength != WEAKEST
+    }) ()
   }
 
   /// Select a previously unused mark value.

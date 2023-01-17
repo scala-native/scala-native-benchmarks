@@ -9,7 +9,7 @@ sealed trait Type extends Pretty with Product {
   def printRepl(p: Printer): Unit = PrettyType.repl(p, this)
 }
 
-final case object NoType extends Type
+case object NoType extends Type
 
 final case class SimpleType(sym: Symbol, targs: List[SimpleType]) extends Type
 

@@ -13,7 +13,7 @@ trait Paths {
     if (in.token == ID) {
       val value = in.idValue
       if (value == "<init>") {
-        reportOffset(in.offset, IllegalIdentifier)
+        reportOffset(in.offset, IllegalIdentifier(_))
         Error.value
       } else {
         in.nextToken()

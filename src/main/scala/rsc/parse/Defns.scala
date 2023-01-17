@@ -106,7 +106,7 @@ trait Defns {
           crash("abstract type members")
         case _ =>
           val errOffset = in.offset
-          reportOffset(in.offset, ExpectedTypeRhs)
+          reportOffset(in.offset, ExpectedTypeRhs(_))
           atPos(errOffset)(errorTpt())
       }
     }

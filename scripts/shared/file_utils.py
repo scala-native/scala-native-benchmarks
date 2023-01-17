@@ -35,7 +35,7 @@ def where(cmd):
 
 
 def run(cmd):
-    print(">>> " + str(cmd))
+    print(">>> " + str(cmd[:1]))
     return subp.check_output(cmd)
 
 
