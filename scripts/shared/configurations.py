@@ -76,11 +76,8 @@ class Configuration:
     
     def run_benchmarks(self, benchmarks):
 
-        for item in benchmarks:
-            if isinstance(item, str):
-                bench = Benchmark(item)
-            else:
-                bench = item
+        for (benchName, batchSize) in benchmarks:
+            bench = Benchmark(benchName, batchSize)
             print('--- conf: {}, bench: {}'.format(self.name, bench))
             results_dir = bench.ensure_results_dir(self)
             if self.isJVM or not os.path.exists(self.__bin_file(bench)):
@@ -149,7 +146,7 @@ class Configuration:
                     all_runs_present = False
                     break
             if all_runs_present:
-                benchmarks.append(Benchmark(subdir))
+                benchmarks.append(Benchmark(subdir, 1))
 
         return benchmarks
 

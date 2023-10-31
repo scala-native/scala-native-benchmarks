@@ -14,7 +14,7 @@ class Dictionary[K <: CustomHash, V <: AnyRef](
                     var value: V,
                     var next: Entry[K, V]) {
     def match_(hash: Int, key: K): Boolean =
-      this.hash == hash && key.equals(this.key)
+      this.hash == hash && key == this.key
   }
 
   def size() = _size

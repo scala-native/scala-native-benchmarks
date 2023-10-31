@@ -39,7 +39,7 @@ trait Templates {
   }
 
   private def templateInits(): List[Init] = {
-    tokenSeparated(WITH, templateInit)
+    tokenSeparated(WITH, templateInit())
   }
 
   private def templateInit(): Init = {
@@ -131,13 +131,13 @@ trait Templates {
                 defnField(start, mods :+ modVar)
               case _ =>
                 val errOffset = in.offset
-                reportOffset(errOffset, ExpectedStartOfDefinition)
+                reportOffset(errOffset, ExpectedStartOfDefinition(_))
                 atPos(errOffset)(errorStat())
             }
             stats += stat
           } else if (!in.token.isStatSep) {
             exitOnError = in.token.mustStartStat
-            reportOffset(in.offset, IllegalStartOfDefinition)
+            reportOffset(in.offset, IllegalStartOfDefinition(_))
           }
           acceptStatSepUnlessAtEnd()
         }

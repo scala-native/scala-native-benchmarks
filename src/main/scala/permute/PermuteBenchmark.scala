@@ -1,8 +1,5 @@
 package permute
 
-import scala.Predef.intWrapper
-import scala.Predef.augmentString
-import scala.{Int, Boolean, Unit}
 import java.lang.String
 
 object PermuteBenchmark extends communitybench.Benchmark {

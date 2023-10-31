@@ -32,7 +32,7 @@ trait Tpts {
           val ret = tpt()
           atPos(start)(TptFunction(List(ret)))
         } else {
-          val params = commaSeparated(paramTpt)
+          val params = commaSeparated(paramTpt())
           accept(RPAREN)
           if (in.token == ARROW) {
             in.nextToken()
@@ -126,12 +126,12 @@ trait Tpts {
             defnType(start, mods)
           case _ =>
             val errOffset = in.offset
-            reportOffset(errOffset, ExpectedStartOfDefinition)
+            reportOffset(errOffset, ExpectedStartOfDefinition(_))
             atPos(errOffset)(errorStat())
         }
         stats += stat
       } else if (!in.token.isStatSep) {
-        reportOffset(in.offset, IllegalStartOfDeclaration)
+        reportOffset(in.offset, IllegalStartOfDeclaration(_))
       }
       acceptStatSepUnlessAtEnd()
     }

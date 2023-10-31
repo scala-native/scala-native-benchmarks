@@ -290,7 +290,7 @@ trait Terms {
         } else {
           canApply = true
           val errOffset = in.offset
-          reportOffset(errOffset, IllegalStartOfSimpleTerm)
+          reportOffset(errOffset, IllegalStartOfSimpleTerm(_))
           atPos(errOffset)(errorTerm())
         }
     }
@@ -376,14 +376,14 @@ trait Terms {
             defnField(start, mods :+ modVar)
           case _ =>
             val errOffset = in.offset
-            reportOffset(errOffset, ExpectedStartOfDefinition)
+            reportOffset(errOffset, ExpectedStartOfDefinition(_))
             atPos(errOffset)(errorStat())
         }
         stats += stat
       } else if (!in.token.isStatSep && in.token != CASE) {
         exitOnError = in.token.mustStartStat
         val errOffset = in.offset
-        reportOffset(errOffset, IllegalStartOfStatement)
+        reportOffset(errOffset, IllegalStartOfStatement(_))
         stats += atPos(errOffset)(errorTerm())
       }
       acceptStatSepUnlessAtEnd(CASE)

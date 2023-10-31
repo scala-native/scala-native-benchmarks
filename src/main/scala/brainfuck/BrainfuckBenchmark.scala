@@ -25,11 +25,6 @@
 
 package brainfuck
 
-import scala.Predef.genericArrayOps
-import scala.Predef.wrapString
-import java.lang.String
-import scala.{Int, Unit, Char, Array}
-
 object BrainfuckBenchmark extends communitybench.Benchmark {
   def run(input: String): Int =
     new Program(input).run.size

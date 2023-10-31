@@ -16,7 +16,7 @@ trait Imports {
   }
 
   private def importers(): List[Importer] = {
-    commaSeparated(importer)
+    commaSeparated(importer())
   }
 
   private def importer(): Importer = {
@@ -50,7 +50,7 @@ trait Imports {
 
   private def importees(): List[Importee] = {
     if (in.token == RBRACE) Nil
-    else inBraces(commaSeparated(importee))
+    else inBraces(commaSeparated(importee()))
   }
 
   private def importee(): Importee = {

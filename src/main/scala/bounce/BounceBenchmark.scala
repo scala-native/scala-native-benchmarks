@@ -23,11 +23,6 @@
 package bounce
 
 import som.Random
-import scala.Predef.augmentString
-import scala.Predef.intWrapper
-import scala.Predef.genericArrayOps
-import scala.{Int, Boolean, Array}
-import java.lang.{Math, String}
 
 object BounceBenchmark extends communitybench.Benchmark {
   private class Ball(random: Random) {

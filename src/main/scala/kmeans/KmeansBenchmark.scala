@@ -2,10 +2,6 @@ package kmeans
 
 import scala.collection._
 import scala.util.Random
-import scala.Predef.augmentString
-import scala.Predef.intWrapper
-import scala.{Int, Double, Boolean}
-import java.lang.String
 
 class Point(val x: Double, val y: Double, val z: Double) {
   private def square(v: Double): Double = v * v
@@ -22,21 +18,18 @@ object KmeansBenchmark extends communitybench.Benchmark {
     val randx = new Random(1)
     val randy = new Random(3)
     val randz = new Random(5)
-    (0 until num)
-      .map({ i =>
+    Vector.tabulate(num){ i =>
         val x = ((i + 1) % k) * 1.0 / k + randx.nextDouble() * 0.5
         val y = ((i + 5) % k) * 1.0 / k + randy.nextDouble() * 0.5
         val z = ((i + 7) % k) * 1.0 / k + randz.nextDouble() * 0.5
         new Point(x, y, z)
-      })
-      .to[mutable.ArrayBuffer]
+      }
   }
 
   def initializeMeans(k: Int, points: Seq[Point]): Seq[Point] = {
     val rand = new Random(7)
     (0 until k)
       .map(_ => points(rand.nextInt(points.length)))
-      .to[mutable.ArrayBuffer]
   }
 
   def findClosest(p: Point, means: GenSeq[Point]): Point = {
@@ -69,7 +62,7 @@ object KmeansBenchmark extends communitybench.Benchmark {
       var x = 0.0
       var y = 0.0
       var z = 0.0
-      points.seq.foreach { p =>
+      points.foreach { p =>
         x += p.x
         y += p.y
         z += p.z

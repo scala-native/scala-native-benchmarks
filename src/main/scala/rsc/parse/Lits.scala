@@ -32,7 +32,7 @@ trait Lits {
       case LITSYMBOL =>
         in.value.asInstanceOf[StdlibSymbol]
       case _ =>
-        reportOffset(in.offset, IllegalLiteral)
+        reportOffset(in.offset, IllegalLiteral(_))
         null
     }
     in.nextToken()

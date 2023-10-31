@@ -11,14 +11,10 @@
 package sudoku
 
 import scala.language.implicitConversions
-import scala.Predef.wrapString
-import scala.Predef.require
-import java.lang.String
-import scala.{Int, Boolean, Unit, Option, Some, None, Nil}
 
 object SudokuBenchmark extends communitybench.Benchmark {
-  override def run(input: String): Option[Grid] =
-    solve(input)
+  override def run(input: String): Option[Fields] =
+    solve(input).map(_.toList.sorted)
 
   override def main(args: Array[String]): Unit =
     super.main(args)
@@ -42,10 +38,11 @@ object SudokuBenchmark extends communitybench.Benchmark {
   val peers =
     squares
       .map(s =>
-        (s, units(s).flatten(scala.Predef.conforms).toSet.filterNot(_ == s)))
+        (s, units(s).flatten(scala.Predef.identity).toSet.filterNot(_ == s)))
       .toMap
 
   type Grid = scala.collection.mutable.Map[String, String]
+  type Fields = List[(String, String)]
   val False                                       = scala.collection.mutable.Map[String, String]()
   implicit def gridToBoolean(grid: Grid): Boolean = grid.nonEmpty
 
@@ -215,8 +212,11 @@ object SudokuBenchmark extends communitybench.Benchmark {
   // ################ Utilities ################
 
   def center(s: String, max: Int, pad: String = " ") = {
-    def repeat(s: String, n: Int) =
-      s * n
+
+    // For some reason does not work in 2.13
+    def repeat(s: String, n: Int) = {
+      scala.Predef.augmentString(s) * n
+    }
 
     val padLen = max - s.length
     if (padLen <= 0)

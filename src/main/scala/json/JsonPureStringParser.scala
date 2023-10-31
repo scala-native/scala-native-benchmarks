@@ -71,11 +71,12 @@ final class JsonPureStringParser(input: String) {
     if (readChar("]")) {
       return array
     }
-    do {
+    while({
       skipWhiteSpace()
       array.add(readValue())
       skipWhiteSpace()
-    } while (readChar(","))
+      readChar(",")
+    })()
     if (!readChar("]")) {
       throw expected("',' or ']'")
     }
@@ -89,7 +90,7 @@ final class JsonPureStringParser(input: String) {
     if (readChar("}")) {
       return object_
     }
-    do {
+    while({
       skipWhiteSpace()
       val name = readName()
       skipWhiteSpace()
@@ -99,7 +100,8 @@ final class JsonPureStringParser(input: String) {
       skipWhiteSpace()
       object_.add(name, readValue())
       skipWhiteSpace()
-    } while (readChar(","))
+      readChar(",")
+    }) ()
 
     if (!readChar("}")) {
       throw expected("',' or '}'")

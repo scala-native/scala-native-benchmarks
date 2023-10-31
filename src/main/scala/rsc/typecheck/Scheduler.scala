@@ -119,7 +119,7 @@ final class Scheduler private (
         val templateScope = TemplateScope(tree)
         symtab.scopes(sym) = templateScope
         if (tree.isInstanceOf[DefnClass]) {
-          assignSym(templateScope, tree.ctor.id, tree.ctor)
+          assignSym(templateScope, tree.ctor.id.asInstanceOf[rsc.syntax.NamedId], tree.ctor)
         }
         todo.scopes.add(tparamEnv -> templateScope)
         tree.ctor.params.foreach(p => templateScope.enter(p.id.name, p.id.sym))

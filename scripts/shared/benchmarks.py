@@ -6,35 +6,35 @@ import subprocess
 import sys
 
 benchmarks = [
-    'bounce.BounceBenchmark',
-    'list.ListBenchmark',
-    'queens.QueensBenchmark',
-    'richards.RichardsBenchmark',
-    'permute.PermuteBenchmark',
-    'deltablue.DeltaBlueBenchmark',
-    'tracer.TracerBenchmark',
-    'json.JsonBenchmark',
-    'sudoku.SudokuBenchmark',
-    'brainfuck.BrainfuckBenchmark',
-    'cd.CDBenchmark',
-    'kmeans.KmeansBenchmark',
-    'nbody.NbodyBenchmark',
-    'rsc.RscBenchmark',
-    'gcbench.GCBenchBenchmark',
-    'mandelbrot.MandelbrotBenchmark',
-    'histogram.Histogram'
+    ('bounce.BounceBenchmark',50000),
+    ('list.ListBenchmark',50000),
+    ('richards.RichardsBenchmark',50000),
+    ('queens.QueensBenchmark',50000),
+    ('deltablue.DeltaBlueBenchmark',20000),
+    ('tracer.TracerBenchmark',20000),
+    ('json.JsonBenchmark',20000),
+    ('permute.PermuteBenchmark',10000),
+    ('brainfuck.BrainfuckBenchmark',10000),
+    ('sudoku.SudokuBenchmark',10000),
+    ('cd.CDBenchmark',1000),
+    ('histogram.Histogram',1000),
+    ('nbody.NbodyBenchmark',1000),
+    ('rsc.RscBenchmark',1000),
+    ('gcbench.GCBenchBenchmark',250),
+    ('kmeans.KmeansBenchmark',250),
+    ('mandelbrot.MandelbrotBenchmark', 250)
 ]
-
 
 class Benchmark:
 
-    def __init__(self, name):
+    def __init__(self, name, batches):
         self.name = name
+        self.batches = batches
         self.short_name = name.split(".")[0]
 
     def compile(self, conf):
         cmd = [sbt, '-J-Xmx6G', 'clean',
-               'set mainClass in Compile := Some("{}")'.format(self.name),
+               'set Compile / mainClass := Some("{}")'.format(self.name),
                conf.compile_cmd()]
         start = time.time_ns()
         subprocess.run(cmd, stdout=sys.stdout, stderr=subprocess.STDOUT)
@@ -47,7 +47,7 @@ class Benchmark:
         output = slurp(os.path.join('output', self.name))
         cmd = []
         cmd.extend(run_cmd)
-        cmd.extend([str(conf.batches), str(conf.batch_size), input, output])
+        cmd.extend([str(self.batches), str(conf.batch_size), input, output])
         return run(cmd)
 
     def ensure_results_dir(self, conf):

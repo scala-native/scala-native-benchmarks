@@ -72,22 +72,22 @@ trait Sources {
             } else {
               val id = termPath()
               newLineOptWhenFollowedBy(LBRACE)
-              inBraces(atPos(start)(DefnPackage(id, packageStats)))
+              inBraces(atPos(start)(DefnPackage(id, packageStats())))
             }
           case TRAIT =>
             in.nextToken()
             defnTrait(start, mods)
           case _ =>
             val errOffset = in.offset
-            reportOffset(errOffset, ExpectedStartOfDefinition)
+            reportOffset(errOffset, ExpectedStartOfDefinition(_))
             atPos(errOffset)(errorStat())
         }
         stats += stat
       } else if (!in.token.isStatSep) {
         if (in.token == CASE) {
-          reportOffset(in.offset, IllegalStartOfDefinition)
+          reportOffset(in.offset, IllegalStartOfDefinition(_))
         } else {
-          reportOffset(in.offset, ExpectedClassOrObjectDefinition)
+          reportOffset(in.offset, ExpectedClassOrObjectDefinition(_))
         }
       }
       acceptStatSepUnlessAtEnd()
