@@ -4,7 +4,7 @@ from shared.parser import config_data
 from shared.reports import Report
 from shared.misc_utils import dict_write_arr, dict_get_arr
 
-default_warmup = 100
+default_warmup = 1
 
 class Comparison:
     def __init__(self, confs, warmup=default_warmup):

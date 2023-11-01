@@ -5,24 +5,26 @@ import time
 import subprocess
 import sys
 
+multiplier = 1
+# Iterations of each benchmark taking ~1 second
 benchmarks = [
-    ('bounce.BounceBenchmark',50000),
-    ('list.ListBenchmark',50000),
-    ('richards.RichardsBenchmark',50000),
-    ('queens.QueensBenchmark',50000),
-    ('deltablue.DeltaBlueBenchmark',20000),
-    ('tracer.TracerBenchmark',20000),
-    ('json.JsonBenchmark',20000),
-    ('permute.PermuteBenchmark',10000),
-    ('brainfuck.BrainfuckBenchmark',10000),
-    ('sudoku.SudokuBenchmark',10000),
-    ('cd.CDBenchmark',1000),
-    ('histogram.Histogram',1000),
-    ('nbody.NbodyBenchmark',1000),
-    ('rsc.RscBenchmark',1000),
-    ('gcbench.GCBenchBenchmark',250),
-    ('kmeans.KmeansBenchmark',250),
-    ('mandelbrot.MandelbrotBenchmark', 250)
+    ('bounce.BounceBenchmark', 42000 * multiplier),
+    ('brainfuck.BrainfuckBenchmark', 500 * multiplier),
+    ('cd.CDBenchmark', 50 * multiplier),
+    ('deltablue.DeltaBlueBenchmark', 9000 * multiplier),
+    ('gcbench.GCBenchBenchmark', 10 * multiplier),
+    ('histogram.Histogram', 650 * multiplier),
+    ('json.JsonBenchmark', 960 * multiplier),
+    ('kmeans.KmeansBenchmark', 20 * multiplier),
+    ('list.ListBenchmark', 18400 * multiplier),
+    ('mandelbrot.MandelbrotBenchmark', 10 * multiplier),
+    ('nbody.NbodyBenchmark', 20 * multiplier),
+    ('permute.PermuteBenchmark', 8000 * multiplier),
+    ('queens.QueensBenchmark', 23000 * multiplier),
+    ('richards.RichardsBenchmark', 19000 * multiplier),
+    ('rsc.RscBenchmark', 45 * multiplier),
+    ('sudoku.SudokuBenchmark', 880 * multiplier),
+    ('tracer.TracerBenchmark', 2500 * multiplier)
 ]
 
 class Benchmark:

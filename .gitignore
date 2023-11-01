@@ -6,7 +6,7 @@ results/
 reports/
 *.iprof
 .idea
-build.sbt
+/build.sbt
 project/plugins.sbt
 /scripts/.ipynb_checkpoints/
 **/.bloop/

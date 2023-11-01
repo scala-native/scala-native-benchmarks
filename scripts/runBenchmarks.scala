@@ -1,14 +1,11 @@
-val lastVersion = "0.4.9"
-val versions = List(
-  lastVersion
-  // "0.4.0",
-)
-val scalaVersions = List("3")
+val lastVersion   = "0.4.16"
+val versions      = List(lastVersion)
+val scalaVersions = List("2.12", "2.13", "3")
 
-@main()
-def main() = {
+@main def RunBechmarks() = {
   val customRuns = List(
-    // s"scala-native-0.4.0-2.11",
+    // "scala-native-0.4.16-3",
+    // "scala-native-0.5.0-SNAPSHOT-3"
   )
   val standardRuns = for {
     scalaVersion <- scalaVersions
@@ -27,6 +24,6 @@ def main() = {
 
   run(List("python3", "scripts/run.py") ++ configsToRun)
   run(List("python3", "scripts/summary.py") ++ configsToRun)
-  run(List("python3", "scripts/compiletime-summary.py") ++ configsToRun)
+  // run(List("python3", "scripts/compiletime-summary.py") ++ configsToRun)
 
 }
